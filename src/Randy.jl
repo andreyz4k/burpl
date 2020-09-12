@@ -2,11 +2,24 @@ module Randy
 using ArgParse
 import JSON
 
-function generate_solution(train_data, fname, debug)
-end
+include("solution.jl")
+using .SolutionOps
 
-function validate_solution(solution, taskdata)
-    
+function convert_grids(taskdata)
+    Dict(
+        "train" => [
+            Dict(
+                "input" => hcat(task["input"]...),
+                "output" => hcat(task["output"]...),
+            ) for task in taskdata["train"]
+        ],
+        "test" => [
+            Dict(
+                "input" => hcat(task["input"]...),
+                "output" => hcat(task["output"]...),
+            ) for task in taskdata["test"]
+        ]
+    )
 end
 
 function main()
@@ -21,6 +34,8 @@ function main()
     end
     parsed_args = parse_args(ARGS, s)
     taskdata = JSON.parsefile(parsed_args["filename"])
+    # println(taskdata["train"][1])
+    taskdata = convert_grids(taskdata)
 
     solution = generate_solution(taskdata["train"], split(split(parsed_args["filename"], '/')[end], '.')[1], parsed_args["debug"])
     println(solution)
@@ -30,4 +45,4 @@ end
 
 main()
 
-end # module
+end
