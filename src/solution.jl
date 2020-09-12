@@ -1,12 +1,47 @@
+include("operation.jl")
+include("perceptors.jl")
+include("complexity.jl")
 module SolutionOps
 export generate_solution
 export validate_solution
 
+using ..Operations: Operation
+
 struct Block
-    operations::Array
+    operations::Array{Operation}
 end
 
 Block() = Block([])
+
+function insert_operation(block::Block, operation::Operation, from_start=true)::Tuple{Block,Int}
+    operations = copy(block.operations)
+    if from_start
+        needed_fields = Set(operation.input_keys)
+    else
+        needed_fields = Set(operation.output_keys)
+        if isempty(needed_fields)
+            push!(operations, operation)
+            return Block(operations), length(operations)
+        end
+    end
+    for index in length(operations):-1:1
+        op = operations[index]
+        if from_start
+            if any(in(key, needed_fields) for key in op.output_keys)
+                insert!(operations, index, operation)
+                return Block(operations), index
+            end
+        else
+            needed_fields -= Set(op.input_keys)
+            if isempty(needed_fields)
+                insert!(operations, index, operation)
+                return Block(operations), index
+            end
+        end
+    end
+    insert!(operations, 1, operation)
+    Block(operations), 1
+end
 
 Base.show(io::IO, b::Block) =
     print(io, "Block([\n\t\t", b.operations..., "\n\t])")
@@ -27,18 +62,24 @@ struct UnfilledFields
     # TODO: fill
 end
 
-mutable struct Solution
+struct Solution
     taskdata::Array
     blocks::Array{Block}
     projected_grid::Array{Array{Int,2}}
     observed_data::Array{Dict}
-    unfilled_fields::Dict
+    unfilled_fields::Set
     filled_fields::Set
     transformed_fields::Set
     unused_fields::Set
     used_fields::Set
-    score::Union{Nothing,Int}
     complexity_score::Int
+    score::Int
+    Solution(taskdata, blocks, projected_grid, observed_data, unfilled_fields,
+             filled_fields, transformed_fields, unused_fields, used_fields,
+             complexity_score) = new(taskdata, blocks, projected_grid,
+             observed_data, unfilled_fields, filled_fields, transformed_fields,
+             unused_fields, used_fields, complexity_score,
+             get_score(taskdata, projected_grid, complexity_score))
 end
 
 Solution(taskdata) = Solution(
@@ -46,31 +87,105 @@ Solution(taskdata) = Solution(
     [Block()],
     [Array{Int}(undef, 0, 0) for _ in 1:length(taskdata)],
     [Dict() for _ in 1:length(taskdata)],
-    Dict(),
     Set(),
     Set(),
     Set(),
     Set(),
-    nothing,
+    Set(),
     0
 )
 
-function Solution(solution::Solution, operation; for_output=false, reversed_op=nothing)
+function move_to_next_block(blocks)
     # TODO: fill
-    solution
+    blocks
+end
+
+function Solution(solution::Solution, operation; for_output=false, reversed_op=nothing)
+    blocks = copy(solution.blocks)
+    blocks[end], index = insert_operation(blocks[end], operation, !for_output)
+
+    op = for_output ? reversed_op : operation
+    grid_key = for_output ? "output" : "input"
+
+    outputs = [
+        op(task[grid_key], projected_grid, task_data)
+        for (task, projected_grid, task_data)
+        in zip(solution.taskdata, solution.projected_grid, solution.observed_data)
+    ]
+    projected_grid = [item[1] for item in outputs]
+    observed_data = [item[2] for item in outputs]
+    unfilled_fields = copy(solution.unfilled_fields)
+    transformed_fields = copy(solution.transformed_fields)
+    unused_fields = copy(solution.unused_fields)
+    used_fields = copy(solution.used_fields)
+    filled_fields = copy(solution.filled_fields)
+    if for_output
+        union!(unfilled_fields, key for key in operation.input_keys if !in(key, solution.filled_fields))
+        for key in operation.output_keys
+            if in(key, unfilled_fields)
+                delete!(unfilled_fields, key)
+                push!(transformed_fields, key)
+            end
+        end
+    else
+        need_next_block = false
+        union!(unused_fields, operation.output_keys)
+        for key in operation.input_keys
+            if in(key, unused_fields)
+                delete!(unused_fields, key)
+                push!(used_fields, key)
+            end
+        end
+        for op in blocks[end].operations[index:end]
+            if all(!in(key, unfilled_fields) && !in(key, transformed_fields)
+                    for key in op.input_keys)
+                for key in op.output_keys
+                    if in(key, unfilled_fields)
+                        need_next_block = true
+                        delete!(unfilled_fields, key)
+                        push!(filled_fields, key)
+                        if in(key, unused_fields)
+                            delete!(unused_fields, key)
+                            push!(used_fields, key)
+                        end
+                    end
+                    if in(key, transformed_fields)
+                        delete!(transformed_fields, key)
+                        push!(filled_fields, key)
+                    end
+                end
+            end
+        end
+        if need_next_block
+            blocks = move_to_next_block(blocks)
+        end
+    end
+
+    Solution(
+        solution.taskdata,
+        blocks,
+        projected_grid,
+        observed_data,
+        unfilled_fields,
+        filled_fields,
+        transformed_fields,
+        unused_fields,
+        used_fields,
+        solution.complexity_score,
+    )
 end
 
 Base.show(io::IO, s::Solution) =
-    print(io, "Solution(", get_score(s), ", ",
+    print(io, "Solution(", s.score, ", ",
           get_unmatched_complexity_score(s), ", ",
-          keys(s.unfilled_fields), "\n\t",
+          s.unfilled_fields, "\n\t",
           s.transformed_fields, "\n\t",
           s.filled_fields, "\n\t",
           s.unused_fields, "\n\t",
           s.used_fields, "\n\t[\n\t",
           s.blocks..., "\n\t]\n\t",
           [Dict(key => value for (key, value) in pairs(task_data)
-            if in(key, s.unfilled_fields) || in(key, s.unused_fields))
+            if (in(key, s.unfilled_fields) || in(key, s.unused_fields)))
             for task_data in s.observed_data],
           "\n)")
 
@@ -99,29 +214,46 @@ function compare_grids(target::Array{Int,2}, output::Array{Int,2})
     sum(output .!= target)
 end
 
-function get_score(solution::Solution)
-    if isa(solution.score, Int)
-        return solution.score
-    end
+function get_score(taskdata, projected_grids, complexity_score)::Int
     score = sum(compare_grids(task["output"], projected_grid)
                 for (task, projected_grid)
-                in zip(solution.taskdata, solution.projected_grid))
-    if solution.complexity_score > 100
-        score += solution.complexity_score
+                in zip(taskdata, projected_grids))
+    if complexity_score > 100
+        score += complexity_score
     end
-    solution.score = score
+    score
 end
 
+using ..Complexity:get_complexity
+
 function get_unmatched_complexity_score(solution::Solution)
-    # TODO: fill
-    0
+    unmatched_data_score = [
+        reduce(
+            +,
+            (get_complexity(value) for (key, value) in pairs(task_data) if in(key, solution.unfilled_fields)),
+            init=0.0
+        ) for task_data in solution.observed_data
+    ]
+    unused_data_score = [
+        reduce(
+            +,
+            (startswith(key, "projected|") ? get_complexity(value) / 3  : get_complexity(value)
+            for (key, value) in pairs(task_data) if in(key, solution.unused_fields)),
+            init=0.0
+        ) for task_data in solution.observed_data
+    ]
+    return (
+            sum(unmatched_data_score) +
+            sum(unused_data_score) +
+            solution.complexity_score
+    ) / length(solution.observed_data)
 end
 
 function match_fields(solution::Solution)
     return []
 end
 
-include("perceptors.jl")
+import ..Perceptors
 
 function get_next_perceptors(solution::Solution, source, grids)
     res = reduce(vcat, (Perceptors.create(op_class, solution, source, grids)
@@ -138,10 +270,11 @@ function get_new_output_perceptors(solution::Solution)::Array{Tuple{Int,Solution
         operation = perceptor.from_abstract
         new_solution = Solution(solution, operation, for_output=true,
                                 reversed_op=perceptor.to_abstract)
+        println(new_solution)
         for matched_solution in match_fields(new_solution)
             push!(output,
                   (priority * get_unmatched_complexity_score(matched_solution) *
-                   get_score(matched_solution), matched_solution))
+                   matched_solution.score, matched_solution))
         end
     end
     output
@@ -197,8 +330,8 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
             if in(new_solution, visited) || !check_border(new_solution, border)
                 continue
             end
-            new_error = get_score(new_solution)
-            if new_error > get_score(solution)
+            new_error = new_solution.score
+            if new_error > solution.score
                 continue
             end
             if new_error == 0
@@ -206,7 +339,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
                 return new_solution
             end
             i += 1
-            if new_error < get_score(best_solution)
+            if new_error < best_solution.score
                 best_solution = new_solution
             end
             enqueue!(queue, (new_solution, i - 1), priority * (i + 1) / 2)
