@@ -96,5 +96,5 @@ function from_abstract(p::GridPerceptor, cls::SolidObjects, data::Dict, existing
 end
 
 
-classes = [GridSize()]
+classes = [GridSize(), SolidObjects()]
 end
