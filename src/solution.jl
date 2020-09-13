@@ -1,11 +1,8 @@
-include("operation.jl")
-include("perceptors.jl")
-include("complexity.jl")
 module SolutionOps
 export generate_solution
 export validate_solution
 
-using ..Operations: Operation
+using ..Operations:Operation
 
 struct Block
     operations::Array{Operation}
@@ -13,7 +10,7 @@ end
 
 Block() = Block([])
 
-function insert_operation(block::Block, operation::Operation, from_start=true)::Tuple{Block,Int}
+function insert_operation(block::Block, operation::Operation, from_start::Bool=true)::Tuple{Block,Int}
     operations = copy(block.operations)
     if from_start
         needed_fields = Set(operation.input_keys)
@@ -44,7 +41,7 @@ function insert_operation(block::Block, operation::Operation, from_start=true)::
 end
 
 Base.show(io::IO, b::Block) =
-    print(io, "Block([\n\t\t", b.operations..., "\n\t])")
+    print(io, "Block([\n", (vcat((["\t\t", op,",\n"] for op in b.operations)...))..., "\t])")
 
 function (block::Block)(input_grid::Array{Int,2}, output_grid::Array{Int,2},
              observed_data::Dict)::Tuple{Array{Int,2},Dict}
@@ -54,7 +51,7 @@ function (block::Block)(input_grid::Array{Int,2}, output_grid::Array{Int,2},
     output_grid, observed_data
 end
 
-==(a::Block, b::Block) = a.operations == b.operations
+Base.:(==)(a::Block, b::Block) = a.operations == b.operations
 
 hash(b::Block, h) = hash(b.operations, h)
 
@@ -72,11 +69,11 @@ struct Solution
     transformed_fields::Set
     unused_fields::Set
     used_fields::Set
-    complexity_score::Int
+    complexity_score::Float64
     score::Int
     Solution(taskdata, blocks, projected_grid, observed_data, unfilled_fields,
              filled_fields, transformed_fields, unused_fields, used_fields,
-             complexity_score) = new(taskdata, blocks, projected_grid,
+             complexity_score::Float64) = new(taskdata, blocks, projected_grid,
              observed_data, unfilled_fields, filled_fields, transformed_fields,
              unused_fields, used_fields, complexity_score,
              get_score(taskdata, projected_grid, complexity_score))
@@ -92,73 +89,89 @@ Solution(taskdata) = Solution(
     Set(),
     Set(),
     Set(),
-    0
+    0.0
 )
 
-function move_to_next_block(blocks)
-    # TODO: fill
-    blocks
-end
-
-function Solution(solution::Solution, operation; for_output=false, reversed_op=nothing)
+function move_to_next_block(solution::Solution)::Solution
     blocks = copy(solution.blocks)
-    blocks[end], index = insert_operation(blocks[end], operation, !for_output)
+    new_block = Block()
 
-    op = for_output ? reversed_op : operation
-    grid_key = for_output ? "output" : "input"
+    unused_projected_fields = Set(f for f in solution.unused_fields if startswith(f, "projected|"))
+    used_projected_fields = Set()
 
-    outputs = [
-        op(task[grid_key], projected_grid, task_data)
-        for (task, projected_grid, task_data)
-        in zip(solution.taskdata, solution.projected_grid, solution.observed_data)
+    prev_block_ops = []
+    for operation in reverse(blocks[end].operations)
+
+        if any(in(key, unused_projected_fields) for key in operation.output_keys)
+            setdiff!(unused_projected_fields, operation.output_keys)
+            union!(unused_projected_fields, (f for f in operation.input_keys if startswith(f, "projected|")))
+            continue
+        end
+        union!(used_projected_fields, (f for f in operation.input_keys if startswith(f, "projected|")))
+        setdiff!(used_projected_fields, operation.output_keys)
+        if any(in(key, solution.unfilled_fields) || in(key, solution.transformed_fields) for key in operation.input_keys)
+            push!(new_block.operations, operation)
+        else
+            push!(prev_block_ops, operation)
+        end
+    end
+
+    blocks[end] = Block(reverse(prev_block_ops))
+
+    last_block_output = [
+        blocks[end](task["input"], projected_grid,
+                        Dict(key => value for (key, value) in pairs(task_data)
+                            if !in(key, solution.unfilled_fields) && !in(key, solution.transformed_fields)))
+        for (task, projected_grid, task_data) in
+        zip(solution.taskdata, solution.projected_grid, solution.observed_data)
     ]
-    projected_grid = [item[1] for item in outputs]
-    observed_data = [item[2] for item in outputs]
-    unfilled_fields = copy(solution.unfilled_fields)
-    transformed_fields = copy(solution.transformed_fields)
-    unused_fields = copy(solution.unused_fields)
-    used_fields = copy(solution.used_fields)
-    filled_fields = copy(solution.filled_fields)
-    if for_output
-        union!(unfilled_fields, key for key in operation.input_keys if !in(key, solution.filled_fields))
-        for key in operation.output_keys
-            if in(key, unfilled_fields)
-                delete!(unfilled_fields, key)
-                push!(transformed_fields, key)
-            end
+    projected_grid = [item[1] for item in last_block_output]
+
+    if length(blocks) > 1
+        if isempty(used_projected_fields)
+            blocks[end - 1] = Block(cat(blocks[end - 1].operations[1:end - 1], blocks[end].operations))
+            pop!(blocks)
+        else
+            blocks[end - 1] = Block(blocks[end - 1].operations[1:end - 1])
+            push!(blocks[end - 1].operations, Project(old_project_op.operations,
+                                                    Set(replace(key, "projected|" => "") for key in used_projected_fields)))
         end
-    else
-        need_next_block = false
-        union!(unused_fields, operation.output_keys)
-        for key in operation.input_keys
-            if in(key, unused_fields)
-                delete!(unused_fields, key)
-                push!(used_fields, key)
-            end
-        end
-        for op in blocks[end].operations[index:end]
-            if all(!in(key, unfilled_fields) && !in(key, transformed_fields)
-                    for key in op.input_keys)
-                for key in op.output_keys
-                    if in(key, unfilled_fields)
-                        need_next_block = true
-                        delete!(unfilled_fields, key)
-                        push!(filled_fields, key)
-                        if in(key, unused_fields)
-                            delete!(unused_fields, key)
-                            push!(used_fields, key)
-                        end
-                    end
-                    if in(key, transformed_fields)
-                        delete!(transformed_fields, key)
-                        push!(filled_fields, key)
-                    end
+    end
+
+    reverse!(new_block.operations)
+    observed_data = solution.observed_data
+    unused_fields = solution.unused_fields
+
+    if !isempty(solution.unfilled_fields) && !isempty(new_block.operations)
+        project_op = Project(new_block.operations, union(solution.unfilled_fields, solution.transformed_fields))
+        push!(blocks[end].operations, project_op)
+
+        projected_output = [
+            project_op(task["input"], block_output[1], block_output[2])
+            for (task, block_output)
+            in zip(solution.taskdata, last_block_output)
+        ]
+        projected_grid = [item[1] for item in projected_output]
+
+        observed_data = [
+            Dict(key => value for (key, value) in pairs(task_data)
+                if !startswith(key, "projected|"))
+            for task_data in solution.observed_data
+        ]
+        unused_fields = Set(key for key in solution.unused_fields if !startswith(key, "projected|"))
+
+        for (observed_task, output) in zip(observed_data, projected_output)
+            for key in project_op.output_keys
+                if haskey(output[2], key)
+                    observed_task[key] = output[2][key]
+                    push!(unused_fields, key)
                 end
             end
         end
-        if need_next_block
-            blocks = move_to_next_block(blocks)
-        end
+    end
+
+    if !isempty(new_block.operations)
+        push!(blocks, new_block)
     end
 
     Solution(
@@ -166,11 +179,108 @@ function Solution(solution::Solution, operation; for_output=false, reversed_op=n
         blocks,
         projected_grid,
         observed_data,
+        solution.unfilled_fields,
+        solution.filled_fields,
+        solution.transformed_fields,
+        unused_fields,
+        solution.used_fields,
+        solution.complexity_score
+    )
+end
+
+function Solution(solution::Solution, operation::Operation; added_complexity::Float64=0.0)
+    blocks = copy(solution.blocks)
+    blocks[end], index = insert_operation(blocks[end], operation, true)
+
+    outputs = [
+        operation(task["input"], projected_grid, task_data)
+        for (task, projected_grid, task_data)
+        in zip(solution.taskdata, solution.projected_grid, solution.observed_data)
+    ]
+    observed_data = [item[2] for item in outputs]
+    unfilled_fields = copy(solution.unfilled_fields)
+    transformed_fields = copy(solution.transformed_fields)
+    unused_fields = copy(solution.unused_fields)
+    used_fields = copy(solution.used_fields)
+    filled_fields = copy(solution.filled_fields)
+
+    need_next_block = false
+    union!(unused_fields, operation.output_keys)
+    for key in operation.input_keys
+        if in(key, unused_fields)
+            delete!(unused_fields, key)
+            push!(used_fields, key)
+        end
+    end
+    for op in blocks[end].operations[index:end]
+        if all(!in(key, unfilled_fields) && !in(key, transformed_fields)
+                for key in op.input_keys)
+            for key in op.output_keys
+                if in(key, unfilled_fields)
+                    need_next_block = true
+                    delete!(unfilled_fields, key)
+                    push!(filled_fields, key)
+                    if in(key, unused_fields)
+                        delete!(unused_fields, key)
+                        push!(used_fields, key)
+                    end
+                end
+                if in(key, transformed_fields)
+                    delete!(transformed_fields, key)
+                    push!(filled_fields, key)
+                end
+            end
+        end
+    end
+    new_solution = Solution(
+        solution.taskdata,
+        blocks,
+        solution.projected_grid,
+        observed_data,
         unfilled_fields,
         filled_fields,
         transformed_fields,
         unused_fields,
         used_fields,
+        solution.complexity_score + added_complexity,
+    )
+    if need_next_block
+        return move_to_next_block(new_solution)
+    end
+    new_solution
+end
+
+function Solution(solution::Solution, operation::Operation, reversed_op::Operation)
+    blocks = copy(solution.blocks)
+    blocks[end], index = insert_operation(blocks[end], operation, false)
+
+    outputs = [
+        reversed_op(task["output"], projected_grid, task_data)
+        for (task, projected_grid, task_data)
+        in zip(solution.taskdata, solution.projected_grid, solution.observed_data)
+    ]
+    observed_data = [item[2] for item in outputs]
+    unfilled_fields = copy(solution.unfilled_fields)
+    transformed_fields = copy(solution.transformed_fields)
+
+    union!(unfilled_fields, key for key in operation.input_keys if !in(key, solution.filled_fields))
+    for key in operation.output_keys
+        if in(key, unfilled_fields)
+            delete!(unfilled_fields, key)
+            push!(transformed_fields, key)
+        end
+    end
+
+    Solution(
+        solution.taskdata,
+        blocks,
+        solution.projected_grid,
+        observed_data,
+        unfilled_fields,
+        solution.filled_fields,
+        transformed_fields,
+        solution.unused_fields,
+        solution.used_fields,
         solution.complexity_score,
     )
 end
@@ -198,7 +308,7 @@ function (solution::Solution)(input_grid::Array{Int,2})::Array{Int,2}
     output_grid
 end
 
-==(a::Solution, b::Solution)::Bool = a.blocks == b.blocks
+Base.:(==)(a::Solution, b::Solution)::Bool = a.blocks == b.blocks
 
 hash(s::Solution, h::Int) = hash(s.blocks, h)
 
@@ -249,8 +359,113 @@ function get_unmatched_complexity_score(solution::Solution)
     ) / length(solution.observed_data)
 end
 
-function match_fields(solution::Solution)
+function compare_values(val1, val2)
+    if isnothing(val1) || val1 == val2
+        return val2
+    end
+    if isa(val1, Dict) && isa(val2, Dict)
+        if Set(keys(val1)) != Set(keys(val2))
+            return nothing
+        end
+        match = Dict()
+        for key in val1
+            m = compare_values(val1[key], val2[key])
+            if isnothing(m)
+                return nothing
+            end
+            match[key] = m
+        end
+        return match
+    end
+    # if isinstance(val2, Matcher)
+    #     return val2.match(val1)
+    # end
+    # if isinstance(val1, Matcher)
+    #     return val1.match(val2)
+    # end
+    return nothing
+end
+
+function find_const(solution::Solution, key::String)::Array
+    result = nothing
+    for task_data in solution.observed_data
+        if !haskey(task_data, key)
+            continue
+        end
+        possible_value = compare_values(result, task_data[key])
+        if isnothing(possible_value)
+            return []
+        end
+        result = possible_value
+    end
+    # if isa(result, Matcher)
+    #     return result.get_values()
+    # end
+    return [result]
+end
+
+using ..DataTransformers:SetConst
+
+function check_const_values(key::String, solution::Solution)
+    new_solutions = []
+    const_options = find_const(solution, key)
+    for value in const_options
+        transformer = SetConst(key, value)
+        new_solution = Solution(solution, transformer,
+                                added_complexity=transformer.complexity)
+        push!(new_solutions, new_solution)
+    end
+    return new_solutions
+end
+
+function exact_match_fields(solution::Solution)
+    for key in solution.unfilled_fields
+        new_solutions = check_const_values(key, solution)
+        find_matches_funcs = [
+            # find_exactly_matched_fields,
+            # find_proportionate_matched_fields,
+            # find_shifted_matched_fields,
+            # find_proportionate_by_key_matched_fields,
+            # find_shifted_by_key_matched_fields
+        ]
+        for func in find_matches_funcs
+            if lenght(new_solutions) == 1
+                break
+            end
+            new_solutions += func(key, solution)
+        end
+        if !isempty(new_solutions)
+            return reduce(
+                vcat,
+                (exact_match_fields(new_solution) for new_solution in new_solutions),
+                init=[]
+            )
+        end
+    end
+    return [solution]
+end
+
+function find_mapped_fields(key, solution)
+    # TODO: fill
     return []
+end
+
+function match_fields(solution::Solution)
+    out = []
+    for new_solution in exact_match_fields(solution)
+        mapped_solutions = Set([new_solution])
+        for key in new_solution.unfilled_fields
+            next_solutions = Set()
+            for cur_solution in mapped_solutions
+                union!(next_solutions, find_mapped_fields(key, cur_solution))
+            end
+            union!(mapped_solutions, next_solutions)
+        end
+        for mapped_solution in mapped_solutions
+            push!(out, mapped_solution)
+        end
+    end
+    return out
 end
 
 import ..Perceptors
@@ -258,18 +473,15 @@ import ..Perceptors
 function get_next_perceptors(solution::Solution, source, grids)
     res = reduce(vcat, (Perceptors.create(op_class, solution, source, grids)
                  for op_class in Perceptors.classes), init=[])
-    println(res)
     return res
 end
 
 
-function get_new_output_perceptors(solution::Solution)::Array{Tuple{Int,Solution}}
+function get_new_output_perceptors(solution::Solution)::Array{Tuple{Float64,Solution}}
     output = []
     for (priority, perceptor) in get_next_perceptors(solution, "output",
             [task["output"] for task in solution.taskdata])
-        operation = perceptor.from_abstract
-        new_solution = Solution(solution, operation, for_output=true,
-                                reversed_op=perceptor.to_abstract)
+        new_solution = Solution(solution, perceptor.from_abstract, perceptor.to_abstract)
         println(new_solution)
         for matched_solution in match_fields(new_solution)
             push!(output,
@@ -281,7 +493,7 @@ function get_new_output_perceptors(solution::Solution)::Array{Tuple{Int,Solution
 end
 
 
-function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Int,Solution}}
+function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64,Solution}}
     new_solutions = get_new_output_perceptors(solution)
     # TODO: add additional methods
     if debug
@@ -334,6 +546,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
             if new_error > solution.score
                 continue
             end
+            println((priority, new_error))
             if new_error == 0
                 println((real_visited, length(queue)))
                 return new_solution
