@@ -1,3 +1,4 @@
+export Perceptors
 module Perceptors
 
 abstract type GridPerceptorClass end

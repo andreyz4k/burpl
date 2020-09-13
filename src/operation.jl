@@ -1,3 +1,4 @@
+export Operations
 module Operations
 
 export Operation

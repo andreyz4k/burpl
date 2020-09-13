@@ -1,12 +1,12 @@
-include("../src/solution.jl")
 make_sample_taskdata(len) =
     fill(Dict("input" => Array{Int}(undef, 0, 0), "output" => Array{Int}(undef, 0, 0)), len)
 
 make_dummy_solution(len, data, unfilled=[]) =
-    Solution(make_sample_taskdata(len), [],
-    [Array{Int}(undef, 0, 0) for _ in 1:len], data, Set(unfilled), Set(), Set(), Set(), Set(), 0)
+    Solution(make_sample_taskdata(len), [Block()],
+    [Array{Int}(undef, 0, 0) for _ in 1:len], data, Set(unfilled), Set(), Set(), Set(), Set(), 0.0)
 
-using .SolutionOps:Solution, find_const, match_fields
+using .SolutionOps:Solution, find_const, match_fields, Block
+using .DataTransformers:SetConst
 
 @testset "Patten Matching" begin
     @testset "Find const" begin
@@ -87,7 +87,7 @@ using .SolutionOps:Solution, find_const, match_fields
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 1
         new_solution = new_solutions[1]
-        @test new_solution.blocks[end].operations == [SetConst("background", 1).get_operation()]
+        @test new_solution.blocks[end].operations == [SetConst("background", 1)]
     end
 
 end

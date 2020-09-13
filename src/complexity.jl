@@ -1,3 +1,4 @@
+export Complexity
 module Complexity
 
 get_complexity(v::Any)::Float64 = length(repr(v))
