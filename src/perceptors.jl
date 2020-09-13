@@ -9,6 +9,7 @@ priority(p::GridPerceptorClass) = 2
 
 import ..Operations.Operation
 
+
 struct GridPerceptor <: Operation
     cls::GridPerceptorClass
     to_abstract::Bool
@@ -35,23 +36,6 @@ Base.show(io::IO, p::GridPerceptor) = print(io, string(nameof(typeof(p.cls))),
 
 Base.:(==)(a::GridPerceptor, b::GridPerceptor) = a.cls == b.cls && a.to_abstract == b.to_abstract
 
-struct GridSize <: GridPerceptorClass end
-
-abs_keys(p::GridSize) = ["grid_size"]
-priority(p::GridSize) = 2
-
-function to_abstract(p::GridPerceptor, cls::GridSize, grid::Array{Int,2}, previous_data::Dict)::Dict
-    data = invoke(to_abstract, Tuple{GridPerceptor,GridPerceptorClass,Array{Int,2},Dict}, p, cls, grid, previous_data)
-    data[p.output_keys[1]] = size(grid)
-    data
-end
-
-function from_abstract(p::GridPerceptor, cls::GridSize, data::Dict, existing_grid::Array{Int,2})::Array{Int,2}
-    size = data[p.input_keys[1]]
-    grid = zeros(size)
-    grid
-end
-
 try_apply(perceptor, grids, observed_data) =
     any(to_abstract(perceptor, perceptor.cls, grid, data) != data for (grid, data) in zip(grids, observed_data))
 
@@ -69,6 +53,46 @@ function create(cls, solution, source, grids)::Array{Tuple{Float64,NamedTuple{(:
     else
         return []
     end
+end
+
+
+struct GridSize <: GridPerceptorClass end
+
+abs_keys(p::GridSize) = ["grid_size"]
+priority(p::GridSize) = 1
+
+function to_abstract(p::GridPerceptor, cls::GridSize, grid::Array{Int,2}, previous_data::Dict)::Dict
+    data = invoke(to_abstract, Tuple{GridPerceptor,GridPerceptorClass,Array{Int,2},Dict}, p, cls, grid, previous_data)
+    data[p.output_keys[1]] = size(grid)
+    data
+end
+
+function from_abstract(p::GridPerceptor, cls::GridSize, data::Dict, existing_grid::Array{Int,2})::Array{Int,2}
+    size = data[p.input_keys[1]]
+    grid = zeros(size)
+    grid
+end
+
+
+struct SolidObjects <: GridPerceptorClass end
+
+abs_keys(p::SolidObjects) = ["spatial_objects"]
+
+using ..ObjectPrior:find_objects,draw_object!
+
+function to_abstract(p::GridPerceptor, cls::SolidObjects, grid::Array{Int,2}, previous_data::Dict)::Dict
+    data = invoke(to_abstract, Tuple{GridPerceptor,GridPerceptorClass,Array{Int,2},Dict}, p, cls, grid, previous_data)
+    objects = find_objects(grid)
+    data[p.output_keys[1]] = objects
+    data
+end
+
+function from_abstract(p::GridPerceptor, cls::SolidObjects, data::Dict, existing_grid::Array{Int,2})::Array{Int,2}
+    grid = invoke(from_abstract, Tuple{GridPerceptor,GridPerceptorClass,Array{Int,2},Dict}, p, cls, data, existing_grid)
+    for obj in data[p.input_keys[1]]
+        draw_object!(grid, obj)
+    end
+    grid
 end
 
 

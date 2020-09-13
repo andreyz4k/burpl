@@ -365,7 +365,7 @@ function compare_values(val1, val2)
         return val2
     end
     if isa(val1, Dict) && isa(val2, Dict)
-        if Set(keys(val1)) != Set(keys(val2))
+        if !issetequal(keys(val1), keys(val2))
             return nothing
         end
         match = Dict()
