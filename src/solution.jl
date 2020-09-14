@@ -133,7 +133,7 @@ function move_to_next_block(solution::Solution)::Solution
 
     if length(blocks) > 1
         if isempty(used_projected_fields)
-            blocks[end - 1] = Block(cat(blocks[end - 1].operations[1:end - 1], blocks[end].operations))
+            blocks[end - 1] = Block(vcat(blocks[end - 1].operations[1:end - 1], blocks[end].operations))
             pop!(blocks)
         else
             blocks[end - 1] = Block(blocks[end - 1].operations[1:end - 1])

@@ -21,10 +21,8 @@ Base.:(==)(a::Project, b::Project) = a.operations == b.operations
 function (p::Project)(input_grid, output_grid, observed_data)
     processed_data = observed_data
     for operation in p.operations
-        try
+        if all(haskey(processed_data, key) for key in operation.input_keys)
             output_grid, processed_data = operation(input_grid, output_grid, processed_data)
-        catch KeyError
-
         end
     end
     out_data = filter(keyval -> !startswith(keyval[1], "projected|"), observed_data)
