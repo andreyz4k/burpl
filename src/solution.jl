@@ -542,14 +542,39 @@ function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64
     return new_solutions
 end
 
-function check_border(solution::Solution, border::Set)
-    # TODO: fill
+
+function is_subsolution(parent_sol::Solution, child_sol::Solution)::Bool
+    equals = true
+    for (child_task_data, parent_task_data) in zip(child_sol.observed_data, parent_sol.observed_data)
+        for (key, value) in pairs(child_task_data)
+            if !haskey(parent_task_data, key) || value != parent_task_data[key]
+                return false
+            end
+        end
+        if !issetequal(keys(child_task_data), keys(parent_task_data))
+            equals = false
+        end
+    end
+    if equals && parent_sol != child_sol
+        return false
+    end
     return true
 end
 
+check_border(solution::Solution, border::Set)::Bool =
+    all(!is_subsolution(border_sol, solution) for border_sol in border)
+
 function update_border!(border::Set, solution::Solution)
-    # TODO: fill
+    obsolete = []
+    for border_sol in border
+        if is_subsolution(solution, border_sol)
+            push!(obsolete, border_sol)
+        end
+    end
+    setdiff!(border, obsolete)
+    push!(border, solution)
 end
+
 
 using DataStructures
 
