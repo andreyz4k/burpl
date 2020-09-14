@@ -27,7 +27,7 @@ function (p::Project)(input_grid, output_grid, observed_data)
 
         end
     end
-    out_data = Dict(key => value for (key, value) in pairs(observed_data) if !startswith(key, "projected|"))
+    out_data = filter(keyval -> !startswith(keyval[1], "projected|"), observed_data)
     for key in p.output_keys
         stripped_key = replace(key, "projected|" => "")
         if haskey(processed_data, stripped_key)

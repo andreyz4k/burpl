@@ -124,8 +124,8 @@ function move_to_next_block(solution::Solution)::Solution
 
     last_block_output = [
         blocks[end](task["input"], projected_grid,
-                        Dict(key => value for (key, value) in pairs(task_data)
-                            if !in(key, solution.unfilled_fields) && !in(key, solution.transformed_fields)))
+                    filter(keyval -> !in(keyval[1], solution.unfilled_fields) &&
+                            !in(keyval[1], solution.transformed_fields), task_data))
         for (task, projected_grid, task_data) in
         zip(solution.taskdata, solution.projected_grid, solution.observed_data)
     ]
@@ -158,11 +158,10 @@ function move_to_next_block(solution::Solution)::Solution
         projected_grid = [item[1] for item in projected_output]
 
         observed_data = [
-            Dict(key => value for (key, value) in pairs(task_data)
-                if !startswith(key, "projected|"))
+            filter(keyval -> !startswith(keyval[1], "projected|"), task_data)
             for task_data in solution.observed_data
         ]
-        unused_fields = Set(key for key in solution.unused_fields if !startswith(key, "projected|"))
+        unused_fields = filter(key -> !startswith(key, "projected|"), solution.unused_fields)
 
         for (observed_task, output) in zip(observed_data, projected_output)
             for key in project_op.output_keys
@@ -298,9 +297,11 @@ Base.show(io::IO, s::Solution) =
           s.unused_fields, "\n\t",
           s.used_fields, "\n\t[\n\t",
           s.blocks..., "\n\t]\n\t",
-          [Dict(key => value for (key, value) in pairs(task_data)
-            if (in(key, s.unfilled_fields) || in(key, s.unused_fields)))
-            for task_data in s.observed_data],
+          [
+              filter(keyval -> in(keyval[1], s.unfilled_fields) || in(keyval[1], s.unused_fields),
+                     task_data)
+              for task_data in s.observed_data
+          ],
           "\n)")
 
 function (solution::Solution)(input_grid::Array{Int,2})::Array{Int,2}
@@ -342,18 +343,14 @@ using ..Complexity:get_complexity
 
 function get_unmatched_complexity_score(solution::Solution)
     unmatched_data_score = [
-        reduce(
-            +,
-            (get_complexity(value) for (key, value) in pairs(task_data) if in(key, solution.unfilled_fields)),
-            init=0.0
+        sum(
+            Float64[get_complexity(value) for (key, value) in task_data if in(key, solution.unfilled_fields)],
         ) for task_data in solution.observed_data
     ]
     unused_data_score = [
-        reduce(
-            +,
-            (startswith(key, "projected|") ? get_complexity(value) / 3  : get_complexity(value)
-            for (key, value) in pairs(task_data) if in(key, solution.unused_fields)),
-            init=0.0
+        sum(
+            Float64[startswith(key, "projected|") ? get_complexity(value) / 3  : get_complexity(value)
+            for (key, value) in task_data if in(key, solution.unused_fields)],
         ) for task_data in solution.observed_data
     ]
     return (
@@ -546,7 +543,7 @@ end
 function is_subsolution(parent_sol::Solution, child_sol::Solution)::Bool
     equals = true
     for (child_task_data, parent_task_data) in zip(child_sol.observed_data, parent_sol.observed_data)
-        for (key, value) in pairs(child_task_data)
+        for (key, value) in child_task_data
             if !haskey(parent_task_data, key) || value != parent_task_data[key]
                 return false
             end
