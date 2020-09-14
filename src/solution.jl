@@ -3,7 +3,7 @@ module SolutionOps
 export generate_solution
 export validate_solution
 
-using ..Operations:Operation
+using ..Operations:Operation,Project
 
 struct Block
     operations::Array{Operation}
@@ -11,30 +11,33 @@ end
 
 Block() = Block([])
 
-function insert_operation(block::Block, operation::Operation, from_start::Bool=true)::Tuple{Block,Int}
+function insert_operation(block::Block, operation::Operation, ::Val{true})::Tuple{Block,Int}
     operations = copy(block.operations)
-    if from_start
-        needed_fields = Set(operation.input_keys)
-    else
-        needed_fields = Set(operation.output_keys)
-        if isempty(needed_fields)
-            push!(operations, operation)
-            return Block(operations), length(operations)
-        end
-    end
+    needed_fields = Set(operation.input_keys)
     for index in length(operations):-1:1
         op = operations[index]
-        if from_start
-            if any(in(key, needed_fields) for key in op.output_keys)
-                insert!(operations, index, operation)
-                return Block(operations), index
-            end
-        else
-            needed_fields -= Set(op.input_keys)
-            if isempty(needed_fields)
-                insert!(operations, index, operation)
-                return Block(operations), index
-            end
+        if any(in(key, needed_fields) for key in op.output_keys)
+            insert!(operations, index + 1, operation)
+            return Block(operations), index + 1
+        end
+    end
+    insert!(operations, 1, operation)
+    Block(operations), 1
+end
+
+function insert_operation(block::Block, operation::Operation, ::Val{false})::Tuple{Block,Int}
+    operations = copy(block.operations)
+    if isempty(operation.output_keys)
+        push!(operations, operation)
+        return Block(operations), length(operations)
+    end
+    needed_fields = Set(operation.output_keys)
+    for index in length(operations):-1:1
+        op = operations[index]
+        setdiff!(needed_fields, op.input_keys)
+        if isempty(needed_fields)
+            insert!(operations, index, operation)
+            return Block(operations), index
         end
     end
     insert!(operations, 1, operation)
@@ -144,31 +147,31 @@ function move_to_next_block(solution::Solution)::Solution
     unused_fields = solution.unused_fields
 
     if !isempty(solution.unfilled_fields) && !isempty(new_block.operations)
-        # project_op = Project(new_block.operations, union(solution.unfilled_fields, solution.transformed_fields))
-        # push!(blocks[end].operations, project_op)
+        project_op = Project(new_block.operations, union(solution.unfilled_fields, solution.transformed_fields))
+        push!(blocks[end].operations, project_op)
 
-        # projected_output = [
-        #     project_op(task["input"], block_output[1], block_output[2])
-        #     for (task, block_output)
-        #     in zip(solution.taskdata, last_block_output)
-        # ]
-        # projected_grid = [item[1] for item in projected_output]
+        projected_output = [
+            project_op(task["input"], block_output[1], block_output[2])
+            for (task, block_output)
+            in zip(solution.taskdata, last_block_output)
+        ]
+        projected_grid = [item[1] for item in projected_output]
 
-        # observed_data = [
-        #     Dict(key => value for (key, value) in pairs(task_data)
-        #         if !startswith(key, "projected|"))
-        #     for task_data in solution.observed_data
-        # ]
-        # unused_fields = Set(key for key in solution.unused_fields if !startswith(key, "projected|"))
+        observed_data = [
+            Dict(key => value for (key, value) in pairs(task_data)
+                if !startswith(key, "projected|"))
+            for task_data in solution.observed_data
+        ]
+        unused_fields = Set(key for key in solution.unused_fields if !startswith(key, "projected|"))
 
-        # for (observed_task, output) in zip(observed_data, projected_output)
-        #     for key in project_op.output_keys
-        #         if haskey(output[2], key)
-        #             observed_task[key] = output[2][key]
-        #             push!(unused_fields, key)
-        #         end
-        #     end
-        # end
+        for (observed_task, output) in zip(observed_data, projected_output)
+            for key in project_op.output_keys
+                if haskey(output[2], key)
+                    observed_task[key] = output[2][key]
+                    push!(unused_fields, key)
+                end
+            end
+        end
     end
 
     if !isempty(new_block.operations)
@@ -191,7 +194,7 @@ end
 
 function Solution(solution::Solution, operation::Operation; added_complexity::Float64=0.0)
     blocks = copy(solution.blocks)
-    blocks[end], index = insert_operation(blocks[end], operation, true)
+    blocks[end], index = insert_operation(blocks[end], operation, Val(true))
 
     outputs = [
         operation(task["input"], projected_grid, task_data)
@@ -253,7 +256,7 @@ end
 
 function Solution(solution::Solution, operation::Operation, reversed_op::Operation)
     blocks = copy(solution.blocks)
-    blocks[end], index = insert_operation(blocks[end], operation, false)
+    blocks[end], index = insert_operation(blocks[end], operation, Val(false))
 
     outputs = [
         reversed_op(task["output"], projected_grid, task_data)
@@ -484,8 +487,8 @@ function get_new_output_perceptors(solution::Solution)::Array{Tuple{Float64,Solu
     for (priority, perceptor) in get_next_perceptors(solution, "output",
             [task["output"] for task in solution.taskdata])
         new_solution = Solution(solution, perceptor.from_abstract, perceptor.to_abstract)
-        println(new_solution)
         for matched_solution in match_fields(new_solution)
+            println(matched_solution)
             push!(output,
                   (priority * get_unmatched_complexity_score(matched_solution) *
                    matched_solution.score, matched_solution))
@@ -495,8 +498,42 @@ function get_new_output_perceptors(solution::Solution)::Array{Tuple{Float64,Solu
 end
 
 
+function get_new_input_perceptors(solution::Solution)::Array{Tuple{Float64,Solution}}
+    # unfilled_data_types = Set()
+    # for key_info in solution.unfilled_fields.params.values()
+    #     unfilled_data_types.update(key_info.precursor_data_types)
+    #     unfilled_data_types.add(key_info.data_type)
+    # end
+    output = []
+    for (priority, perceptor_pair) in get_next_perceptors(solution, "input",
+                                                   [task["input"] for task in solution.taskdata])
+        perceptor = perceptor_pair.to_abstract
+        new_solution = Solution(solution, perceptor)
+        # for abs_key in perceptor.output_keys
+        #     if new_solution.get_key_data_type(abs_key) in unfilled_data_types
+        #         priority /= 2
+        #         break
+        #     end
+        # else
+        #     priority *= 2
+        # end
+
+        for matched_solution in match_fields(new_solution)
+            push!(output,
+                  (priority * get_unmatched_complexity_score(matched_solution) *
+                   matched_solution.score, matched_solution))
+        end
+    end
+    output
+
+end
+
+
 function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64,Solution}}
     new_solutions = get_new_output_perceptors(solution)
+    if !isempty(solution.unfilled_fields)
+        append!(new_solutions, get_new_input_perceptors(solution))
+    end
     # TODO: add additional methods
     if debug
         println(new_solutions)
@@ -564,6 +601,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
         end
     end
     println((real_visited, length(queue)))
+    # println(visited)
     return best_solution
 end
 

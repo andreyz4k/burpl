@@ -102,7 +102,7 @@ function to_abstract(p::GridPerceptor, cls::SolidObjects, grid::Array{Int,2}, pr
 end
 
 function from_abstract(p::GridPerceptor, cls::SolidObjects, data::Dict, existing_grid::Array{Int,2})::Array{Int,2}
-    grid = invoke(from_abstract, Tuple{GridPerceptor,GridPerceptorClass,Array{Int,2},Dict}, p, cls, data, existing_grid)
+    grid = invoke(from_abstract, Tuple{GridPerceptor,GridPerceptorClass,Dict,Array{Int,2}}, p, cls, data, existing_grid)
     for obj in data[p.input_keys[1]]
         draw_object!(grid, obj)
     end
