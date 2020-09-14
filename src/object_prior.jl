@@ -7,7 +7,11 @@ struct Object
     position::Tuple{Int,Int}
 end
 
+Object(a::Array{Int,1}, pos::Tuple{Int,Int}) = Object(hcat(a), pos)
+
 Base.:(==)(a::Object, b::Object) = a.shape == b.shape && a.position == b.position
+
+Base.show(io::IO, obj::Object) = print(io, "Object(", obj.shape, ", ", obj.position, ")")
 
 function candidates(i, j, grid)
     res = []

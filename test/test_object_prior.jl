@@ -17,7 +17,7 @@ using .ObjectPrior:find_objects,Object,draw_object!
                 (1, 1)
             ),
             Object(
-                fill(1, 1, 1),
+                [1],
                 (2, 2)
             )
         ]
@@ -59,7 +59,7 @@ using .ObjectPrior:find_objects,Object,draw_object!
         grid = [1 0 1; 0 0 0; 0 0 0]
         @test find_objects(grid) == [
             Object(
-                fill(1, 1, 1),
+                [1],
                 (1, 1)
             ),
             Object(
@@ -67,7 +67,7 @@ using .ObjectPrior:find_objects,Object,draw_object!
                 (1, 1)
             ),
             Object(
-                fill(1, 1, 1),
+                [1],
                 (1, 3)
             )
         ]
@@ -75,7 +75,7 @@ using .ObjectPrior:find_objects,Object,draw_object!
 
     @testset "draw object" begin
         grid = [0 0 0; 0 0 0; 0 0 0]
-        obj = Object(fill(1, 1, 1), (1, 1))
+        obj = Object([1], (1, 1))
         draw_object!(grid, obj)
         @test grid == [1 0 0; 0 0 0; 0 0 0]
     end

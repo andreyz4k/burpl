@@ -1,5 +1,6 @@
 using .SolutionOps:Solution, get_unmatched_complexity_score
 using .Complexity:get_complexity
+using .ObjectPrior:Object
 
 @testset "Complexity" begin
     @testset "ideal solution" begin
@@ -27,46 +28,40 @@ using .Complexity:get_complexity
         @test get_complexity([34, 234, 32]) == 7.7075
     end
 
-    @testset "position" begin
-        @test_broken get_complexity(Pos(0, 1)) == 4
-    end
-
     @testset "shape" begin
-        @test_broken get_complexity(Shape(Dict(Pos(0, 0) => 0))) == 10
-        @test_broken get_complexity(Shape(Dict(Pos(0, 0) => 0, Pos(0, 1) => 0))) == 13.6
+        @test get_complexity(fill(0, 1, 1)) == 9
+        @test get_complexity(fill(0, 1, 2)) == 12.6
     end
 
     @testset "object" begin
-        @test_broken get_complexity(make_object_single_color(0, (Pos(0, 0),), Pos(0, 0))) == 14
-        @test_broken get_complexity(make_object_single_color(0, (Pos(0, 0), Pos(0, 1)), Pos(0, 0))) == 17.6
+        @test get_complexity(Object([0], (1, 1))) == 13.9
+        @test get_complexity(Object([0 1], (1, 1))) == 17.5
     end
 
     @testset "reshape" begin
-        val1 = Set(
-            make_object_single_color(0, (Pos(0, 0),), Pos(0, 0)),
-            make_object_single_color(0, (Pos(0, 0),), Pos(1, 0)),
-        )
-        val2 = Shape(Dict(Pos(0, 0) => 0))
-        val3 = Set(
-            Pos(0, 0),
-            Pos(1, 0)
-        )
-        @test_broken get_complexity(val1) == 31.599999999999998
-        @test_broken get_complexity(val2) == 10
-        @test_broken get_complexity(val3) == 12.6
-        @test_broken get_complexity(val1) > get_complexity(val2) + get_complexity(val3)
+        val1 = [
+            Object([0], (1, 1)),
+            Object([0], (2, 1))
+        ]
+        val2 = fill(0, 1, 1)
+        val3 = [
+            (1, 1),
+            (2, 1)
+        ]
+        @test get_complexity(val1) == 31.41
+        @test get_complexity(val2) == 9
+        @test get_complexity(val3) == 14.31
+        @test get_complexity(val1) > get_complexity(val2) + get_complexity(val3)
 
-        val1 = Set(
-            make_object_single_color(0, (Pos(0, 0),), Pos(0, 0)),
-        )
-        val2 = Shape(Dict(Pos(0, 0) => 0))
-        val3 = Set(
-            Pos(0, 0),
-        )
-        @test_broken get_complexity(val1) == 19
-        @test_broken get_complexity(val2) == 10
-        @test_broken get_complexity(val3) == 9
-        @test_broken get_complexity(val1) == get_complexity(val2) + get_complexity(val3)
+        val1 = [
+            Object([0], (1, 1))
+        ]
+        val2 = fill(0, 1, 1)
+        val3 = [(1, 1)]
+        @test get_complexity(val1) == 18.9
+        @test get_complexity(val2) == 9
+        @test get_complexity(val3) == 9.9
+        @test get_complexity(val1) == get_complexity(val2) + get_complexity(val3)
     end
 
     @testset "dict" begin
@@ -76,70 +71,69 @@ using .Complexity:get_complexity
         )
         @test get_complexity(data) == 5
         data = Dict(
-            "a" => make_object_single_color(0, (Pos(0, 0),), Pos(0, 0)),
-            "b" => make_object_single_color(0, (Pos(0, 0),), Pos(0, 0)),
+            "a" => Object([0], (1, 1)),
+            "b" => Object([0], (2, 1)),
         )
-        @test get_complexity(data) == 31
+        @test get_complexity(data) == 30.8
     end
 
     @testset "group" begin
         val1 = [
-            make_object_single_color(0, (Pos(0, 0),), Pos(0, 0)),
-            make_object_single_color(0, (Pos(0, 0),), Pos(1, 0)),
+            Object([0], (1, 1)),
+            Object([0], (2, 1))
         ]
         val2 = Dict(
             0 => [
-                make_object_single_color(0, (Pos(0, 0),), Pos(0, 0)),
-                make_object_single_color(0, (Pos(0, 0),), Pos(1, 0)),
+                Object([0], (1, 1)),
+                Object([0], (2, 1))
             ]
         )
-        @test_broken get_complexity(val1) < get_complexity(val2)
+        @test get_complexity(val1) < get_complexity(val2)
         val1 = [
-            make_object_single_color(0, (Pos(0, 0),), Pos(0, 0)),
-            make_object_single_color(0, (Pos(0, 0),), Pos(1, 0)),
-            make_object_single_color(1, (Pos(0, 0),), Pos(0, 0)),
-            make_object_single_color(1, (Pos(0, 0),), Pos(1, 0)),
+            Object([0], (1, 1)),
+            Object([0], (2, 1)),
+            Object([1], (1, 1)),
+            Object([1], (2, 1)),
         ]
         val2 = Dict(
             0 => [
-                make_object_single_color(0, (Pos(0, 0),), Pos(0, 0)),
-                make_object_single_color(0, (Pos(0, 0),), Pos(1, 0)),
+            Object([0], (1, 1)),
+            Object([0], (2, 1)),
             ],
             1 => [
-                make_object_single_color(1, (Pos(0, 0),), Pos(0, 0)),
-                make_object_single_color(1, (Pos(0, 0),), Pos(1, 0)),
+            Object([1], (1, 1)),
+            Object([1], (2, 1)),
             ]
         )
-        @test_broken get_complexity(val1) > get_complexity(val2)
+        @test get_complexity(val1) > get_complexity(val2)
         val1 = [
-            make_object_single_color(0, (Pos(0, 0),), Pos(0, 0)),
-            make_object_single_color(1, (Pos(0, 0),), Pos(1, 0)),
+            Object([0], (1, 1)),
+            Object([1], (2, 1)),
         ]
         val2 = Dict(
             0 => [
-                make_object_single_color(0, (Pos(0, 0),), Pos(0, 0)),
+            Object([0], (1, 1)),
             ],
             1 => [
-                make_object_single_color(1, (Pos(0, 0),), Pos(1, 0)),
+            Object([1], (2, 1)),
             ]
         )
-        @test_broken get_complexity(val1) < get_complexity(val2)
+        @test get_complexity(val1) < get_complexity(val2)
     end
 
     @testset "similar objects" begin
-        a = Set(
-            make_object_single_color(1, (Pos(0, 0),), Pos(1, 3)),
-            make_object_single_color(0, (Pos(0, 1), Pos(1, 0), Pos(1, 1), Pos(1, 2), Pos(2, 0), Pos(2, 1), Pos(2, 2)), Pos(1, 1)),
-            make_object_single_color(1, (Pos(0, 0),), Pos(1, 1))
-        )
-        b = Set(
-            make_object_single_color(0, (Pos(0, 1), Pos(1, 0), Pos(1, 1), Pos(1, 2), Pos(2, 0), Pos(2, 1), Pos(2, 2)), Pos(1, 1)),
-            make_object_single_color(1, (Pos(0, 0),), Pos(1, 3)),
-            make_object_single_color(1, (Pos(0, 0),), Pos(1, 1))
-        )
-        @test a == b
+        a = [
+            Object([1], (1, 3)),
+            Object([-1 0 -1; 0 0 0; 0 0 0], (1, 1)),
+            Object([1], (1, 1)),
+        ]
+        b = [
+            Object([-1 0 -1; 0 0 0; 0 0 0], (1, 1)),
+            Object([1], (1, 3)),
+            Object([1], (1, 1)),
+        ]
         @test get_complexity(a) == get_complexity(b)
-        @test get_complexity(a) == 57.870772076093736
+        @test get_complexity(a) == 57.600022076093744
     end
 
 end

@@ -144,31 +144,31 @@ function move_to_next_block(solution::Solution)::Solution
     unused_fields = solution.unused_fields
 
     if !isempty(solution.unfilled_fields) && !isempty(new_block.operations)
-        project_op = Project(new_block.operations, union(solution.unfilled_fields, solution.transformed_fields))
-        push!(blocks[end].operations, project_op)
+        # project_op = Project(new_block.operations, union(solution.unfilled_fields, solution.transformed_fields))
+        # push!(blocks[end].operations, project_op)
 
-        projected_output = [
-            project_op(task["input"], block_output[1], block_output[2])
-            for (task, block_output)
-            in zip(solution.taskdata, last_block_output)
-        ]
-        projected_grid = [item[1] for item in projected_output]
+        # projected_output = [
+        #     project_op(task["input"], block_output[1], block_output[2])
+        #     for (task, block_output)
+        #     in zip(solution.taskdata, last_block_output)
+        # ]
+        # projected_grid = [item[1] for item in projected_output]
 
-        observed_data = [
-            Dict(key => value for (key, value) in pairs(task_data)
-                if !startswith(key, "projected|"))
-            for task_data in solution.observed_data
-        ]
-        unused_fields = Set(key for key in solution.unused_fields if !startswith(key, "projected|"))
+        # observed_data = [
+        #     Dict(key => value for (key, value) in pairs(task_data)
+        #         if !startswith(key, "projected|"))
+        #     for task_data in solution.observed_data
+        # ]
+        # unused_fields = Set(key for key in solution.unused_fields if !startswith(key, "projected|"))
 
-        for (observed_task, output) in zip(observed_data, projected_output)
-            for key in project_op.output_keys
-                if haskey(output[2], key)
-                    observed_task[key] = output[2][key]
-                    push!(unused_fields, key)
-                end
-            end
-        end
+        # for (observed_task, output) in zip(observed_data, projected_output)
+        #     for key in project_op.output_keys
+        #         if haskey(output[2], key)
+        #             observed_task[key] = output[2][key]
+        #             push!(unused_fields, key)
+        #         end
+        #     end
+        # end
     end
 
     if !isempty(new_block.operations)
