@@ -3,7 +3,7 @@ module SolutionOps
 export generate_solution
 export validate_solution
 
-using ..Operations:Operation,Project
+using ..Operations:Operation,Project,get_sorting_keys
 
 struct Block
     operations::Array{Operation}
@@ -27,11 +27,11 @@ end
 
 function insert_operation(block::Block, operation::Operation, ::Val{false})::Tuple{Block,Int}
     operations = copy(block.operations)
-    if isempty(operation.output_keys)
+    needed_fields = Set(get_sorting_keys(operation))
+    if isempty(needed_fields)
         push!(operations, operation)
         return Block(operations), length(operations)
     end
-    needed_fields = Set(operation.output_keys)
     for index in length(operations):-1:1
         op = operations[index]
         setdiff!(needed_fields, op.input_keys)

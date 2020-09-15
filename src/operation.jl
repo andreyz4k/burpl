@@ -6,6 +6,8 @@ export Project
 
 abstract type Operation end
 
+get_sorting_keys(operation::Operation) = operation.output_keys
+
 struct Project <: Operation
     operations
     input_keys

@@ -13,17 +13,17 @@ abstract type GridPerceptorClass end
 @memoize pr_abs_keys(cls::GridPerceptorClass, source::String) = [source * "|" * key for key in abs_keys(cls)]
 @memoize pr_detail_keys(cls::GridPerceptorClass, source::String) = [source * "|" * key for key in detail_keys(cls)]
 
-import ..Operations.Operation
+import ..Operations
 
 
-struct GridPerceptor <: Operation
+struct GridPerceptor <: Operations.Operation
     cls::GridPerceptorClass
     to_abstract::Bool
     input_keys::Array{String}
     output_keys::Array{String}
 end
 
-function GridPerceptor(cls, source)
+function GridPerceptor(cls::GridPerceptorClass, source::String)
     if source == "output"
         return GridPerceptor(cls, false, pr_abs_keys(cls, source), [])
     else
@@ -66,6 +66,9 @@ function create(cls, solution, source, grids)::Array{Tuple{Float64,NamedTuple{(:
         return []
     end
 end
+
+Operations.get_sorting_keys(p::GridPerceptor) = (println("get sorting"); get_sorting_keys(p, p.cls))
+get_sorting_keys(p::GridPerceptor, cls::GridPerceptorClass) = p.output_keys
 
 
 struct GridSize <: GridPerceptorClass end
@@ -162,6 +165,12 @@ function to_abstract(p::GridPerceptor, cls::SplittedBackground, grid::Array{Int,
     end
     return out_data
 end
+
+from_abstract(p::GridPerceptor, cls::SplittedBackground, data::Dict, existing_grid::Array{Int,2})::Array{Int,2} =
+    from_abstract(p, BackgroundColor(), data, existing_grid)
+
+get_sorting_keys(p::GridPerceptor, cls::Union{BackgroundColor,SplittedBackground}) = p.to_abstract ? p.output_keys : pr_detail_keys(cls, "output")
+
 
 classes = [GridSize(), SolidObjects(), BackgroundColor(), SplittedBackground()]
 end
