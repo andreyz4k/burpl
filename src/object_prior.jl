@@ -64,7 +64,7 @@ function normalize_component(points, grid)
 end
 
 function find_objects(grid::Array{Int,2})
-    objects = []
+    objects = Object[]
 
     visited = Set()
     s = size(grid)

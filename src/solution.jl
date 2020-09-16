@@ -485,7 +485,6 @@ function get_new_output_perceptors(solution::Solution)::Array{Tuple{Float64,Solu
             [task["output"] for task in solution.taskdata])
         new_solution = Solution(solution, perceptor.from_abstract, perceptor.to_abstract)
         for matched_solution in match_fields(new_solution)
-            println(matched_solution)
             push!(output,
                   (priority * get_unmatched_complexity_score(matched_solution) *
                    matched_solution.score, matched_solution))

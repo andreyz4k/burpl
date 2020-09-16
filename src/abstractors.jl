@@ -40,6 +40,14 @@ function (p::Abstractor)(_, output_grid, task_data)
     end
 end
 
+Base.show(io::IO, p::Abstractor) = print(io,
+        string(nameof(typeof(p.cls))),
+        "(\"",
+        p.to_abstract ? p.input_keys[1] : p.output_keys[1],
+        "\", ",
+        p.to_abstract,
+        ")"
+    )
 
 function to_abstract(p::Abstractor, cls::AbstractorClass, previous_data::Dict)::Dict
     out_data = copy(previous_data)
@@ -205,7 +213,7 @@ function create_abstractors(cls::GroupObjectsByColor, data, key)
 end
 
 function to_abstract_value(p::Abstractor, cls::GroupObjectsByColor, source_value, aux_values)
-    results = DefaultDict(() -> [])
+    results = DefaultDict(() -> Object[])
     for obj in source_value
         key = get_color(obj)
         push!(results[key], obj)
@@ -220,8 +228,8 @@ function from_abstract_value(p::Abstractor, cls::GroupObjectsByColor, source_val
     data, keys = source_values
     results = reduce(
         vcat,
-        (isa(it, Array) ? it : [it] for it in [isa(data, AbstractDict) ? data[key] : data for key in keys]),
-        init=Array{Any,1}[]
+        [isa(data, AbstractDict) ? data[key] : data for key in keys],
+        init=Array{Object,1}[]
     )
     return Dict(p.output_keys[1] => results)
 end
