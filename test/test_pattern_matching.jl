@@ -1,17 +1,16 @@
 make_sample_taskdata(len) =
     fill(Dict("input" => Array{Int}(undef, 0, 0), "output" => Array{Int}(undef, 0, 0)), len)
 
-make_dummy_solution(len, data, unfilled=[]) =
-    Solution(make_sample_taskdata(len), [Block()],
-    [Array{Int}(undef, 0, 0) for _ in 1:len], data, Set(unfilled), Set(), Set(), Set(), Set(), 0.0)
+make_dummy_solution(data, unfilled=[]) =
+    Solution(make_sample_taskdata(length(data)), [Block()],
+    [Array{Int}(undef, 0, 0) for _ in 1:length(data)], data, Set(unfilled), Set(), Set(), Set(), Set(), 0.0)
 
 using .SolutionOps:Solution, find_const, match_fields, Block
 using .DataTransformers:SetConst
 
 @testset "Patten Matching" begin
     @testset "Find const" begin
-        solution = make_dummy_solution(2,
-            [
+        solution = make_dummy_solution([
                 Dict(
                     "background" => 1
                 ),
@@ -22,8 +21,7 @@ using .DataTransformers:SetConst
         )
         @test find_const(solution, "background") == [1]
 
-        solution = make_dummy_solution(2,
-            [
+        solution = make_dummy_solution([
                 Dict(
                     "background" => 1
                 ),
@@ -34,8 +32,7 @@ using .DataTransformers:SetConst
         )
         @test find_const(solution, "background") == [1]
 
-        solution = make_dummy_solution(2,
-            [
+        solution = make_dummy_solution([
                 Dict(
                     "background" => Either.create_simple(Set([1, 2]))
                 ),
@@ -46,8 +43,7 @@ using .DataTransformers:SetConst
         )
         @test find_const(solution, "background") == [1]
 
-        solution = make_dummy_solution(2,
-            [
+        solution = make_dummy_solution([
                 Dict(
                     "background" => Either.create_simple(Set([1, 2]))
                 ),
@@ -58,8 +54,7 @@ using .DataTransformers:SetConst
         )
         @test find_const(solution, "background") == [1]
 
-        solution = make_dummy_solution(2,
-            [
+        solution = make_dummy_solution([
                 Dict(
                     "background" => Either.create_simple(Set([1, 2]))
                 ),
@@ -73,8 +68,7 @@ using .DataTransformers:SetConst
     end
 
     @testset "Match data" begin
-        solution = make_dummy_solution(2,
-            [
+        solution = make_dummy_solution([
                Dict(
                     "background" => 1
                 ),

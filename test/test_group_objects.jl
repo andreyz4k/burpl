@@ -43,7 +43,7 @@ import .ObjectPrior:Object
     end
 
     @testset "get grouper" begin
-        solution = make_dummy_solution(3, [
+        solution = make_dummy_solution([
                 Dict(
                     "key" => [
                         Object([1], (1, 1)),
@@ -83,7 +83,7 @@ import .ObjectPrior:Object
     end
 
     @testset "get no grouper" begin
-        solution = make_dummy_solution(3, [
+        solution = make_dummy_solution([
                 Dict(
                     "key" => [
                         ([1], (1, 1)),

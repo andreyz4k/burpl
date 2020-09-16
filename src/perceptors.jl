@@ -172,5 +172,6 @@ from_abstract(p::GridPerceptor, cls::SplittedBackground, data::Dict, existing_gr
 get_sorting_keys(p::GridPerceptor, cls::Union{BackgroundColor,SplittedBackground}) = p.to_abstract ? p.output_keys : detail_keys(cls, "output")
 
 
-classes = [GridSize(), SolidObjects(), BackgroundColor(), SplittedBackground()]
+using InteractiveUtils:subtypes
+classes = [cls() for cls in subtypes(GridPerceptorClass)]
 end

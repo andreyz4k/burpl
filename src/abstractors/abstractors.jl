@@ -49,6 +49,8 @@ Base.show(io::IO, p::Abstractor) = print(io,
         ")"
     )
 
+Base.:(==)(a::Abstractor, b::Abstractor) = a.cls == b.cls && a.to_abstract == b.to_abstract && a.input_keys == b.input_keys && a.output_keys == b.output_keys
+
 function to_abstract(p::Abstractor, cls::AbstractorClass, previous_data::Dict)::Dict
     out_data = copy(previous_data)
     input_values = fetch_detailed_value(p, out_data)
@@ -157,91 +159,9 @@ create_abstractors(cls::AbstractorClass, data, key) =
     [(priority(cls), (to_abstract = Abstractor(cls, key, true), from_abstract = Abstractor(cls, key, false)))]
 
 
-struct IgnoreBackground <: AbstractorClass end
+include("ignore_background.jl")
+include("group_obj_by_color.jl")
 
-IgnoreBackground(key, to_abs) = Abstractor(IgnoreBackground(), key, to_abs)
-@memoize aux_keys(p::IgnoreBackground) = ["background"]
-@memoize priority(p::IgnoreBackground) = 3
-
-function create(cls::IgnoreBackground, solution, key)::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{Abstractor,Abstractor}}},1}
-    if startswith(key, "projected|") || (!in(key, solution.unused_fields) && !in(key, solution.unfilled_fields))
-        return []
-    end
-    invoke(create, Tuple{AbstractorClass,Any,Any}, cls, solution, key)
-end
-
-import ..ObjectPrior:Object,get_color
-
-check_task_value(cls::IgnoreBackground, value, data, aux_values) = false
-check_task_value(cls::IgnoreBackground, value::Array{Object,1}, data, aux_values) =
-    all(get_color(obj) == aux_values[1] for obj in value)
-
-# function get_aux_values_for_task(cls::IgnoreBackground, task_data, key, solution)
-#     bgr_key = get_aux_keys_for_key(cls, key)[1]
-#     if haskey(task_data, bgr_key) && !in(bgr_key, solution.unfilled_fields)
-#         return [task_data[bgr_key]]
-#     else
-#         return [0]
-#     end
-# end
-
-to_abstract_value(p::Abstractor, cls::IgnoreBackground, source_value, aux_values) = Dict()
-from_abstract_value(p::Abstractor, cls::IgnoreBackground, source_values) = Dict()
-
-
-struct GroupObjectsByColor <: AbstractorClass end
-
-GroupObjectsByColor(key, to_abs) = Abstractor(GroupObjectsByColor(), key, to_abs)
-@memoize abs_keys(p::GroupObjectsByColor) = ["grouped", "group_keys"]
-
-init_create_check_data(cls::GroupObjectsByColor, key, solution) = []
-
-check_task_value(cls::GroupObjectsByColor, value, data, aux_values) = false
-function check_task_value(cls::GroupObjectsByColor, value::Array{Object,1}, data, aux_values)
-    colors = Set()
-    for obj in value
-        push!(colors, get_color(obj))
-    end
-    push!(data, colors)
-    return true
-end
-
-function create_abstractors(cls::GroupObjectsByColor, data, key)
-    if any(length(colors) > 1 for colors in data)
-        invoke(create_abstractors, Tuple{AbstractorClass,Any,Any}, cls, data, key)
-    end
-end
-
-function to_abstract_value(p::Abstractor, cls::GroupObjectsByColor, source_value, aux_values)
-    results = DefaultDict(() -> Object[])
-    for obj in source_value
-        key = get_color(obj)
-        push!(results[key], obj)
-    end
-    return Dict(
-        p.output_keys[1] => results,
-        p.output_keys[2] => sort(collect(keys(results)))
-    )
-end
-
-function from_abstract_value(p::Abstractor, cls::GroupObjectsByColor, source_values)
-    data, keys = source_values
-    results = reduce(
-        vcat,
-        [isa(data, AbstractDict) ? data[key] : data for key in keys],
-        init=Array{Object,1}[]
-    )
-    return Dict(p.output_keys[1] => results)
-end
-
-function from_abstract(p::Abstractor, cls::GroupObjectsByColor, previous_data::Dict)::Dict
-    out_data = copy(previous_data)
-    source_values = fetch_abs_values(p, cls, out_data)
-
-    merge!(out_data, from_abstract_value(p, cls, source_values))
-
-    return out_data
-end
-
-classes = [IgnoreBackground(), GroupObjectsByColor()]
+using InteractiveUtils:subtypes
+classes = [cls() for cls in subtypes(AbstractorClass)]
 end
