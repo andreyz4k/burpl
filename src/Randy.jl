@@ -5,6 +5,7 @@ include("object_prior.jl")
 include("complexity.jl")
 include("data_transformers.jl")
 include("perceptors.jl")
+include("abstractors.jl")
 include("solution.jl")
 
 end

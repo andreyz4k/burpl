@@ -5,4 +5,5 @@ using .Randy
     include("test_complexity.jl")
     include("test_pattern_matching.jl")
     include("test_object_prior.jl")
+    include("test_group_objects.jl")
 end

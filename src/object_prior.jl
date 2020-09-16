@@ -13,6 +13,8 @@ Base.:(==)(a::Object, b::Object) = a.shape == b.shape && a.position == b.positio
 
 Base.show(io::IO, obj::Object) = print(io, "Object(", obj.shape, ", ", obj.position, ")")
 
+get_color(obj::Object) = maximum(obj.shape)
+
 function candidates(i, j, grid)
     res = []
     if j > 1

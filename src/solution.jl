@@ -522,12 +522,51 @@ function get_new_input_perceptors(solution::Solution)::Array{Tuple{Float64,Solut
         end
     end
     output
+end
 
+
+import ..Abstractors
+
+function get_next_operations(solution, key)
+    res = reduce(vcat, (Abstractors.create(op_class, solution, key)
+                        for op_class in Abstractors.classes), init=[])
+    return res
+end
+
+
+function get_new_solutions_for_unfilled_key(solution::Solution, key::String)
+    output = []
+    for (priority, abstractor) in get_next_operations(solution, key)
+        # precursors = []
+        # for key in abstractor.detailed_keys
+        #     precursors.append(new_solution.unfilled_fields[key])
+        # end
+
+        new_solution = Solution(solution, abstractor.from_abstract, abstractor.to_abstract)
+
+        # for abs_key in abstractor.abs_keys
+        #     new_solution.unfilled_fields[abs_key].precursor_data_types = {
+        #         data_type
+        #         for precursor in precursors
+        #         for data_type in {precursor.data_type}.union(precursor.precursor_data_types)
+        #     }
+        # end
+
+        for matched_solution in match_fields(new_solution)
+            push!(output,
+                  (priority * get_unmatched_complexity_score(matched_solution) *
+                   matched_solution.score, matched_solution))
+        end
+    end
+    output
 end
 
 
 function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64,Solution}}
     new_solutions = get_new_output_perceptors(solution)
+    for key in solution.unfilled_fields
+        append!(new_solutions, get_new_solutions_for_unfilled_key(solution, key))
+    end
     if !isempty(solution.unfilled_fields)
         append!(new_solutions, get_new_input_perceptors(solution))
     end
