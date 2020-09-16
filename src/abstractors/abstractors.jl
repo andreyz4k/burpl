@@ -161,6 +161,7 @@ create_abstractors(cls::AbstractorClass, data, key) =
 
 include("ignore_background.jl")
 include("group_obj_by_color.jl")
+include("compact_similar_objects.jl")
 
 using InteractiveUtils:subtypes
 classes = [cls() for cls in subtypes(AbstractorClass)]

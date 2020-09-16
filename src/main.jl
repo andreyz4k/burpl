@@ -1,9 +1,9 @@
 
+
+
 using ArgParse
 import JSON
-include("Randy.jl")
-
-using Randy.SolutionOps
+using .SolutionOps
 function convert_grids(taskdata)
     Dict(
         "train" => [
@@ -42,4 +42,4 @@ function main()
     println(validate_solution(solution, taskdata["test"]))
 end
 
-main()
+# main()
