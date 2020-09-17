@@ -6,8 +6,7 @@ GroupObjectsByColor(key, to_abs) = Abstractor(GroupObjectsByColor(), key, to_abs
 
 init_create_check_data(cls::GroupObjectsByColor, key, solution) = []
 
-check_task_value(cls::GroupObjectsByColor, value, data, aux_values) = false
-function check_task_value(cls::GroupObjectsByColor, value::Array{Object,1}, data, aux_values)
+function check_task_value(cls::GroupObjectsByColor, value::AbstractVector{Object}, data, aux_values)
     colors = Set()
     for obj in value
         push!(colors, get_color(obj))

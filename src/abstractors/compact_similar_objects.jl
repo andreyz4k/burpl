@@ -4,8 +4,7 @@ struct CompactSimilarObjects <: AbstractorClass end
 CompactSimilarObjects(key, to_abs) = Abstractor(CompactSimilarObjects(), key, to_abs)
 @memoize abs_keys(p::CompactSimilarObjects) = ["common_shape", "positions"]
 
-check_task_value(cls::CompactSimilarObjects, value, data, aux_values) = false
-check_task_value(cls::CompactSimilarObjects, value::Array{Object,1}, data, aux_values) =
+check_task_value(cls::CompactSimilarObjects, value::AbstractVector{Object}, data, aux_values) =
     (length(value) > 0) ? all(obj.shape == value[1].shape for obj in view(value, 2:length(value))) : true
 
 

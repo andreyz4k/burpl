@@ -47,8 +47,7 @@ PREFIX_VALUES = Dict(
 )
 
 
-check_task_value(cls::SelectColor, value, data, task_data) = false
-function check_task_value(cls::SelectColor, value::Array{Object,1}, data, task_data)
+function check_task_value(cls::SelectColor, value::AbstractVector{Object}, data, task_data)
     index_values = DefaultDict(() -> Set())
     for obj in value
         if !haskey(data, "allowed_choices")
@@ -108,7 +107,7 @@ function create(cls::SelectColor, solution, key)::Array{Tuple{Float64,NamedTuple
 end
 
 
-to_abstract_value(p::Abstractor, cls::SelectColor, source_value::Array{Object,1}, aux_values) =
+to_abstract_value(p::Abstractor, cls::SelectColor, source_value::AbstractVector{Object}, aux_values) =
     Dict(
         p.output_keys[1] => filter(obj -> get_color(obj) == aux_values[1], source_value),
         p.output_keys[2] => filter(obj -> get_color(obj) != aux_values[1], source_value),

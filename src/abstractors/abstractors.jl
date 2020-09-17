@@ -64,7 +64,7 @@ fetch_detailed_value(p::Abstractor, task_data) =
 
 using DataStructures:DefaultDict
 
-function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value::Dict, aux_values)
+function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value::AbstractDict, aux_values)
     result = DefaultDict(() -> Dict())
     for (key, value) in source_value
         for (out_key, out_value) in wrap_to_abstract_value(p, cls, value, aux_values)
@@ -128,7 +128,7 @@ function create(cls::AbstractorClass, solution, key)::Array{Tuple{Float64,NamedT
     end
     data = init_create_check_data(cls, key, solution)
 
-    if !all(check_task_value(
+    if !all(wrap_check_task_value(
                 cls, task_data[key], data,
                 get_aux_values_for_task(cls, task_data, key, solution))
             for task_data in solution.observed_data)
@@ -146,8 +146,10 @@ init_create_check_data(cls::AbstractorClass, key, solution) = nothing
 wrap_check_task_value(cls::AbstractorClass, value, data, aux_values) =
     check_task_value(cls, value, data, aux_values)
 
-wrap_check_task_value(cls::AbstractorClass, value::Dict, data, aux_values) =
+wrap_check_task_value(cls::AbstractorClass, value::AbstractDict, data, aux_values) =
     all(wrap_check_task_value(cls, v, data, aux_values) for v in values(value))
+
+check_task_value(cls::AbstractorClass, value, data, aux_values) = false
 
 # wrap_check_task_value(cls::AbstractorClass, value::Matcher, data, aux_values) =
 #     all(wrap_check_task_value(cls, v, data, aux_values) for v in value.get_values())
@@ -163,6 +165,7 @@ include("ignore_background.jl")
 include("group_obj_by_color.jl")
 include("compact_similar_objects.jl")
 include("select_color.jl")
+include("sort_array.jl")
 
 using InteractiveUtils:subtypes
 classes = [cls() for cls in subtypes(AbstractorClass)]

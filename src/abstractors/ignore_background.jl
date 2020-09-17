@@ -14,8 +14,7 @@ end
 
 import ..ObjectPrior:Object,get_color
 
-check_task_value(cls::IgnoreBackground, value, data, aux_values) = false
-check_task_value(cls::IgnoreBackground, value::Array{Object,1}, data, aux_values) =
+check_task_value(cls::IgnoreBackground, value::AbstractVector{Object}, data, aux_values) =
     all(get_color(obj) == aux_values[1] for obj in value)
 
 # function get_aux_values_for_task(cls::IgnoreBackground, task_data, key, solution)
