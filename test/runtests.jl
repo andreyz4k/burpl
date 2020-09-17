@@ -7,4 +7,6 @@ using .Randy
     include("test_object_prior.jl")
     include("test_group_objects.jl")
     include("test_ignore_background.jl")
+    include("test_compact_similar_objects.jl")
+    include("test_select_by_color.jl")
 end

@@ -654,7 +654,9 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
             if new_error < best_solution.score
                 best_solution = new_solution
             end
-            enqueue!(queue, (new_solution, i - 1), priority * (i + 1) / 2)
+            new_priority = priority * (i + 1) / 2
+            new_priority = min(new_priority, get(queue, (new_solution, i - 1), new_priority))
+            queue[(new_solution, i - 1)] = new_priority
         end
         if real_visited > 1000
             break

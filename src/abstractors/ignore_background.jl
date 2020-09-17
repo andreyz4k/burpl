@@ -28,4 +28,5 @@ check_task_value(cls::IgnoreBackground, value::Array{Object,1}, data, aux_values
 # end
 
 to_abstract_value(p::Abstractor, cls::IgnoreBackground, source_value, aux_values) = Dict()
-from_abstract_value(p::Abstractor, cls::IgnoreBackground, source_values) = Dict()
+from_abstract_value(p::Abstractor, cls::IgnoreBackground, source_values) =
+    Dict(p.output_keys[1] => Object[])

@@ -18,8 +18,9 @@ end
 
 function create_abstractors(cls::GroupObjectsByColor, data, key)
     if any(length(colors) > 1 for colors in data)
-        invoke(create_abstractors, Tuple{AbstractorClass,Any,Any}, cls, data, key)
+        return invoke(create_abstractors, Tuple{AbstractorClass,Any,Any}, cls, data, key)
     end
+    return []
 end
 
 function to_abstract_value(p::Abstractor, cls::GroupObjectsByColor, source_value, aux_values)
