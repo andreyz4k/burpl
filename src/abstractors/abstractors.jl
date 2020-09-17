@@ -128,7 +128,7 @@ function create(cls::AbstractorClass, solution, key)::Array{Tuple{Float64,NamedT
     end
     data = init_create_check_data(cls, key, solution)
 
-    if !all(wrap_check_task_value(
+    if !all(haskey(task_data, key) && wrap_check_task_value(
                 cls, task_data[key], data,
                 get_aux_values_for_task(cls, task_data, key, solution))
             for task_data in solution.observed_data)
@@ -166,6 +166,7 @@ include("group_obj_by_color.jl")
 include("compact_similar_objects.jl")
 include("select_color.jl")
 include("sort_array.jl")
+include("split_list.jl")
 
 using InteractiveUtils:subtypes
 classes = [cls() for cls in subtypes(AbstractorClass)]

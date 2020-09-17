@@ -369,7 +369,7 @@ function compare_values(val1, val2)
             return nothing
         end
         match = Dict()
-        for key in val1
+        for key in keys(val1)
             m = compare_values(val1[key], val2[key])
             if isnothing(m)
                 return nothing

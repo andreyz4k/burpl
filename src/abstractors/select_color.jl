@@ -4,12 +4,9 @@ struct SelectColor <: AbstractorClass end
 @memoize priority(p::SelectColor) = 2
 
 @memoize abs_keys(p::SelectColor) = ["selected_by_color", "rejected_by_color"]
-@memoize aux_keys(p::AbstractorClass) = []
-@memoize priority(p::AbstractorClass) = 8
 
-@memoize abs_keys(cls::AbstractorClass, key::String, param_key::String) = [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
-@memoize aux_keys(cls::AbstractorClass, key::String, param_key::String) = [param_key]
-@memoize detail_keys(cls::AbstractorClass, key::String) = [key]
+@memoize abs_keys(cls::SelectColor, key::String, param_key::String) = [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
+@memoize aux_keys(cls::SelectColor, key::String, param_key::String) = [param_key]
 
 
 SelectColor(key, selector_key, to_abs) = Abstractor(SelectColor(), key, selector_key, to_abs)
@@ -93,7 +90,7 @@ create_abstractors(cls::SelectColor, data, key) =
 function create(cls::SelectColor, solution, key)::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{Abstractor,Abstractor}}},1}
     data = init_create_check_data(cls, key, solution)
 
-    if !all(check_task_value(
+    if !all(haskey(task_data, key) && wrap_check_task_value(
                 cls, task_data[key], data,
                 task_data)
             for task_data in solution.observed_data)
