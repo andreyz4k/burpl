@@ -1,4 +1,6 @@
 
+using ..ObjectPrior:Object
+
 struct GroupObjectsByColor <: AbstractorClass end
 
 GroupObjectsByColor(key, to_abs) = Abstractor(GroupObjectsByColor(), key, to_abs)

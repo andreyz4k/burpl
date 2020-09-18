@@ -1,11 +1,7 @@
 
-
-export Abstractors
-module Abstractors
-
 using Memoization
 
-abstract type AbstractorClass end
+abstract type AbstractorClass <: OperationClass end
 
 @memoize abs_keys(p::AbstractorClass) = []
 @memoize aux_keys(p::AbstractorClass) = []
@@ -15,7 +11,6 @@ abstract type AbstractorClass end
 @memoize aux_keys(cls::AbstractorClass, key::String) = [split(key, '|')[1] * "|" * a_key for a_key in aux_keys(cls)]
 @memoize detail_keys(cls::AbstractorClass, key::String) = [key]
 
-import ..Operations.Operation
 
 struct Abstractor <: Operation
     cls::AbstractorClass
@@ -32,11 +27,20 @@ function Abstractor(cls::AbstractorClass, key::String, to_abs::Bool)
     end
 end
 
-function (p::Abstractor)(_, output_grid, task_data)
+# function GridPerceptor(cls::GridPerceptorClass, source::String)
+#     if source == "output"
+#         return GridPerceptor(cls, false, abs_keys(cls, source), [])
+#     else
+#         return GridPerceptor(cls, true, detail_keys(cls, source), abs_keys(cls, source))
+#     end
+# end
+
+
+function (p::Abstractor)(task_data)
     if p.to_abstract
-        return output_grid, to_abstract(p, p.cls, task_data)
+        return to_abstract(p, p.cls, task_data)
     else
-        return output_grid, from_abstract(p, p.cls, task_data)
+        return from_abstract(p, p.cls, task_data)
     end
 end
 
@@ -118,12 +122,28 @@ function from_abstract(p::Abstractor, cls::AbstractorClass, previous_data::Dict)
     return out_data
 end
 
+# try_apply(perceptor, grids, observed_data) =
+#     any(to_abstract(perceptor, perceptor.cls, grid, data) != data for (grid, data) in zip(grids, observed_data))
+
+# function create(cls, solution, source, grids)::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{GridPerceptor,GridPerceptor}}},1}
+#     if !all(haskey(solution.observed_data[1], key) for key in detail_keys(cls, source)) ||
+#             all(haskey(solution.observed_data[1], key) for key in abs_keys(cls, source))
+#         return []
+#     end
+#     to_abs_perceptor = GridPerceptor(cls, true, detail_keys(cls, source), abs_keys(cls, source))
+#     if try_apply(to_abs_perceptor, grids, solution.observed_data)
+#         return [(priority(cls), (to_abstract = to_abs_perceptor,
+#             from_abstract = GridPerceptor(cls, false, abs_keys(cls, source), [])))]
+#     else
+#         return []
+#     end
+# end
 
 function create(cls::AbstractorClass, solution, key)::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{Abstractor,Abstractor}}},1}
-    if any(haskey(solution.observed_data[1], k) for k in abs_keys(cls, key))
+    if any(haskey(solution.taskdata[1], k) for k in abs_keys(cls, key))
         return []
     end
-    if !all(haskey(task_data, aux_key) for task_data in solution.observed_data, aux_key in aux_keys(cls, key))
+    if !all(haskey(task_data, aux_key) for task_data in solution.taskdata, aux_key in aux_keys(cls, key))
         return []
     end
     data = init_create_check_data(cls, key, solution)
@@ -131,7 +151,7 @@ function create(cls::AbstractorClass, solution, key)::Array{Tuple{Float64,NamedT
     if !all(haskey(task_data, key) && wrap_check_task_value(
                 cls, task_data[key], data,
                 get_aux_values_for_task(cls, task_data, key, solution))
-            for task_data in solution.observed_data)
+            for task_data in solution.taskdata)
         return []
     end
     output = []
@@ -161,13 +181,13 @@ create_abstractors(cls::AbstractorClass, data, key) =
     [(priority(cls), (to_abstract = Abstractor(cls, key, true), from_abstract = Abstractor(cls, key, false)))]
 
 
-include("ignore_background.jl")
+include("grid_size.jl")
+include("background_color.jl")
 include("group_obj_by_color.jl")
 include("compact_similar_objects.jl")
-include("select_color.jl")
+# include("select_color.jl")
 include("sort_array.jl")
-include("split_list.jl")
+# include("split_list.jl")
 
 using InteractiveUtils:subtypes
 classes = [cls() for cls in subtypes(AbstractorClass)]
-end

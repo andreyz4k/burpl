@@ -1,12 +1,4 @@
-export Operations
-module Operations
 
-export Operation
-export Project
-
-abstract type Operation end
-
-get_sorting_keys(operation::Operation) = operation.output_keys
 
 struct Project <: Operation
     operations
@@ -20,11 +12,11 @@ Base.show(io::IO, p::Project) = print(io, "Project(", (vcat(([op,", "] for op in
 
 Base.:(==)(a::Project, b::Project) = a.operations == b.operations
 
-function (p::Project)(input_grid, output_grid, observed_data)
+function (p::Project)(observed_data)
     processed_data = observed_data
     for operation in p.operations
         if all(haskey(processed_data, key) for key in operation.input_keys)
-            output_grid, processed_data = operation(input_grid, output_grid, processed_data)
+            processed_data = operation(processed_data)
         end
     end
     out_data = filter(keyval -> !startswith(keyval[1], "projected|"), observed_data)
@@ -35,6 +27,5 @@ function (p::Project)(input_grid, output_grid, observed_data)
         end
     end
 
-    return output_grid, out_data
-end
+    return out_data
 end

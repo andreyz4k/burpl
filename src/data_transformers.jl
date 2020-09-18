@@ -23,10 +23,10 @@ Base.show(io::IO, op::SetConst) = print(io, "SetConst(", op.output_keys[1], ", "
 
 Base.:(==)(a::SetConst, b::SetConst) = a.output_keys == b.output_keys && a.value == b.value
 
-function (op::SetConst)(input_grid, output_grid, task_data)
+function (op::SetConst)(task_data)
     data = copy(task_data)
     update_value!(data, op.output_keys[1], op.value)
-    output_grid, data
+    data
 end
 
 end
