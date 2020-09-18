@@ -288,11 +288,11 @@ Base.show(io::IO, s::Solution) =
           "\n)")
 
 function (solution::Solution)(input_grid::Array{Int,2})::Array{Int,2}
-    observed_data = Dict("input" => input_grid, "output" => Array{Int}(undef, 0, 0))
+    observed_data = Dict{String,Any}("input" => input_grid)
     for block in solution.blocks
         observed_data = block(observed_data)
     end
-    observed_data["output"]
+    get(observed_data, "output", Array{Int}(undef, 0, 0))
 end
 
 Base.:(==)(a::Solution, b::Solution)::Bool = a.blocks == b.blocks

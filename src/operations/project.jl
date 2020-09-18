@@ -15,7 +15,7 @@ Base.:(==)(a::Project, b::Project) = a.operations == b.operations
 function (p::Project)(observed_data)
     processed_data = observed_data
     for operation in p.operations
-        if all(haskey(processed_data, key) for key in operation.input_keys)
+        if all(haskey(processed_data, key) for key in needed_input_keys(operation))
             processed_data = operation(processed_data)
         end
     end

@@ -48,7 +48,7 @@ end
 
 function from_abstract(p::Abstractor, cls::GroupObjectsByColor, previous_data::Dict)::Dict
     out_data = copy(previous_data)
-    source_values = fetch_abs_values(p, cls, out_data)
+    source_values = fetch_input_values(p, out_data)
 
     merge!(out_data, from_abstract_value(p, cls, source_values))
 

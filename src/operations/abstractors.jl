@@ -44,6 +44,9 @@ function (p::Abstractor)(task_data)
     end
 end
 
+needed_input_keys(p::Abstractor) = needed_input_keys(p, p.cls)
+needed_input_keys(p::Abstractor, cls::AbstractorClass) = p.input_keys
+
 Base.show(io::IO, p::Abstractor) = print(io,
         string(nameof(typeof(p.cls))),
         "(\"",
@@ -57,14 +60,14 @@ Base.:(==)(a::Abstractor, b::Abstractor) = a.cls == b.cls && a.to_abstract == b.
 
 function to_abstract(p::Abstractor, cls::AbstractorClass, previous_data::Dict)::Dict
     out_data = copy(previous_data)
-    input_values = fetch_detailed_value(p, out_data)
+    input_values = fetch_input_values(p, out_data)
     merge!(out_data, wrap_to_abstract_value(p, cls, input_values[1], input_values[2:end]))
 
     return out_data
 end
 
-fetch_detailed_value(p::Abstractor, task_data) =
-    [task_data[k] for k in p.input_keys]
+fetch_input_values(p::Abstractor, task_data) =
+    [in(k, needed_input_keys(p)) ? task_data[k] : get(task_data, k, nothing) for k in p.input_keys]
 
 using DataStructures:DefaultDict
 
@@ -87,9 +90,6 @@ function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_valu
 end
 
 
-fetch_abs_values(p::Abstractor, cls::AbstractorClass, task_data) =
-    [task_data[k] for k in p.input_keys]
-
 function iter_source_values(source_values)
     result = []
     for source_value in source_values
@@ -106,7 +106,7 @@ end
 
 function from_abstract(p::Abstractor, cls::AbstractorClass, previous_data::Dict)::Dict
     out_data = copy(previous_data)
-    source_values = fetch_abs_values(p, cls, out_data)
+    source_values = fetch_input_values(p, out_data)
     if any(isa(v, Dict) for v in source_values)
         result = DefaultDict(() -> Dict())
         for (key, values) in iter_source_values(source_values)
