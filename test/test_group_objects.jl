@@ -1,4 +1,4 @@
-import .Abstractors:GroupObjectsByColor,create
+import .Operations:GroupObjectsByColor,create
 import .ObjectPrior:Object
 
 @testset "Group objects by color" begin
@@ -13,7 +13,7 @@ import .ObjectPrior:Object
             ]
         )
         grouper = GroupObjectsByColor("key", true)
-        out_data = grouper([], [], source_data)[2]
+        out_data = grouper(source_data)
         @test out_data == Dict(
             "key" => [
                 Object([1], (1, 1)),
@@ -39,7 +39,7 @@ import .ObjectPrior:Object
         )
         delete!(out_data, "key")
         ungrouper = GroupObjectsByColor("key", false)
-        @test issetequal(ungrouper([], [], out_data)[2]["key"], source_data["key"])
+        @test issetequal(ungrouper(out_data)["key"], source_data["key"])
     end
 
     @testset "get grouper" begin

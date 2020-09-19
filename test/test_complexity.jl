@@ -5,10 +5,10 @@ using .ObjectPrior:Object
 @testset "Complexity" begin
     @testset "ideal solution" begin
         @test get_unmatched_complexity_score(
-                Solution([Dict(
+                make_dummy_solution([Dict(
                     "input" => zeros(Int, 1, 1),
                     "output" => zeros(Int, 1, 1)
-                )])
+                )], [])
             ) == 0
     end
 

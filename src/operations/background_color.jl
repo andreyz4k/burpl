@@ -16,7 +16,7 @@ function to_abstract_value(p::Abstractor, cls::BackgroundColor, source_value::Ab
     options = filter(color -> sum(source_value .== color) >= grid_size / (color == 0 ? 4 : 3), 0:9)
     return make_either(p.output_keys, [
         (map(c -> c == color ? -1 : c, source_value), color)
-        for color in options[1:1]])
+        for color in options])
 end
 
 from_abstract_value(p::Abstractor, cls::BackgroundColor, source_values) =

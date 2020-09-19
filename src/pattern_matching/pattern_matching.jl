@@ -1,3 +1,4 @@
+export PatternMatching
 module PatternMatching
 
 abstract type Matcher end

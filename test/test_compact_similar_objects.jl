@@ -1,5 +1,5 @@
 
-using .Abstractors:CompactSimilarObjects
+using .Operations:CompactSimilarObjects
 
 @testset "Compact similar objects" begin
     @testset "reshape objects" begin
@@ -10,7 +10,7 @@ using .Abstractors:CompactSimilarObjects
             ]
         )
         reshaper = CompactSimilarObjects("key", true)
-        out_data = reshaper([], [], source_data)[2]
+        out_data = reshaper(source_data)
         @test out_data == Dict(
             "key" => [
                 Object([1], (1, 1)),
@@ -24,7 +24,7 @@ using .Abstractors:CompactSimilarObjects
         )
         delete!(out_data, "key")
         reshaper = CompactSimilarObjects("key", false)
-        reversed_data = reshaper([], [], out_data)[2]
+        reversed_data = reshaper(out_data)
         @test reversed_data["key"] == source_data["key"]
     end
 

@@ -1,5 +1,5 @@
 
-using ..ObjectPrior:Object
+using ..ObjectPrior:Object,get_color
 
 struct GroupObjectsByColor <: AbstractorClass end
 

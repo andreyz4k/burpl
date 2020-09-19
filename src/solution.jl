@@ -137,6 +137,7 @@ function move_to_next_block(solution::Solution)::Solution
 
     reverse!(new_block.operations)
     unused_fields = solution.unused_fields
+    taskdata = solution.taskdata
 
     if !isempty(solution.unfilled_fields) && !isempty(new_block.operations)
         project_op = Project(new_block.operations, union(solution.unfilled_fields, solution.transformed_fields))
