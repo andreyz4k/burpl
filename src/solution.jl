@@ -343,56 +343,13 @@ function get_unmatched_complexity_score(solution::Solution)
     ) / length(solution.taskdata)
 end
 
-function compare_values(val1, val2)
-    if isnothing(val1) || val1 == val2
-        return val2
-    end
-    if isa(val1, Dict) && isa(val2, Dict)
-        if !issetequal(keys(val1), keys(val2))
-            return nothing
-        end
-        match = Dict()
-        for key in keys(val1)
-            m = compare_values(val1[key], val2[key])
-            if isnothing(m)
-                return nothing
-            end
-            match[key] = m
-        end
-        return match
-    end
-    # if isinstance(val2, Matcher)
-    #     return val2.match(val1)
-    # end
-    # if isinstance(val1, Matcher)
-    #     return val1.match(val2)
-    # end
-    return nothing
-end
 
-function find_const(solution::Solution, key::String)::Array
-    result = nothing
-    for task_data in solution.taskdata
-        if !haskey(task_data, key)
-            continue
-        end
-        possible_value = compare_values(result, task_data[key])
-        if isnothing(possible_value)
-            return []
-        end
-        result = possible_value
-    end
-    # if isa(result, Matcher)
-    #     return result.get_values()
-    # end
-    return [result]
-end
-
+using ..PatternMatching:find_const
 using ..DataTransformers:SetConst
 
 function check_const_values(key::String, solution::Solution)
     new_solutions = []
-    const_options = find_const(solution, key)
+    const_options = find_const(solution.taskdata, key)
     for value in const_options
         transformer = SetConst(key, value)
         new_solution = Solution(solution, transformer,
@@ -404,8 +361,9 @@ end
 
 function exact_match_fields(solution::Solution)
     for key in solution.unfilled_fields
-        new_solutions = check_const_values(key, solution)
+        new_solutions = Solution[]
         find_matches_funcs = [
+            check_const_values
             # TODO: fill
             # find_exactly_matched_fields,
             # find_proportionate_matched_fields,
@@ -414,10 +372,10 @@ function exact_match_fields(solution::Solution)
             # find_shifted_by_key_matched_fields
         ]
         for func in find_matches_funcs
-            if lenght(new_solutions) == 1
+            if length(new_solutions) == 1
                 break
             end
-            new_solutions += func(key, solution)
+            append!(new_solutions, func(key, solution))
         end
         if !isempty(new_solutions)
             return reduce(

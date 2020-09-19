@@ -48,3 +48,27 @@ function make_either(keys, options)
         return Dict(keys[1] => Either(options))
     end
 end
+
+function match(val1::Either, val2)
+    valid_options = Option[]
+    for option in val1.options
+        m = compare_values(val2, option.value)
+        if !isnothing(m)
+            if isa(m, Either)
+                append!(valid_options, m.options)
+            else
+                push!(valid_options, Option(m))
+            end
+        end
+    end
+    if isempty(valid_options)
+        return nothing
+    else
+        return Either(unique(valid_options))
+    end
+end
+
+match(val1::Either, val2::Matcher) =
+    invoke(match, Tuple{Either,Any}, val1, val2)
+
+unpack_value(value::Either) = [option.value for option in value.options]

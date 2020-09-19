@@ -10,65 +10,65 @@ make_dummy_solution(data, unfilled=[]) =
 
 using .SolutionOps:Solution, find_const, match_fields, Block
 using .DataTransformers:SetConst
-using .PatternMatching:Either,make_either,Option
+using .PatternMatching:Either,make_either,Option,compare_values
 using .ObjectPrior:Object
 
 @testset "Patten Matching" begin
     @testset "find const" begin
-        solution = make_dummy_solution([
-                Dict(
+        taskdata = [
+                Dict{String,Any}(
                     "background" => 1
                 ),
-                Dict(
+                Dict{String,Any}(
                     "background" => 1
                 )
             ]
-        )
-        @test find_const(solution, "background") == [1]
 
-        solution = make_dummy_solution([
-                Dict(
+        @test find_const(taskdata, "background") == [1]
+
+        taskdata = [
+                Dict{String,Any}(
                     "background" => 1
                 ),
-                Dict(
+                Dict{String,Any}(
                     "background" => Either([1, 2])
                 )
             ]
-        )
-        @test find_const(solution, "background") == [1]
 
-        solution = make_dummy_solution([
-                Dict(
+        @test find_const(taskdata, "background") == [1]
+
+        taskdata = [
+                Dict{String,Any}(
                     "background" => Either([1, 2])
                 ),
-                Dict(
+                Dict{String,Any}(
                     "background" => 1
                 ),
             ]
-        )
-        @test find_const(solution, "background") == [1]
 
-        solution = make_dummy_solution([
-                Dict(
+        @test find_const(taskdata, "background") == [1]
+
+        taskdata = [
+                Dict{String,Any}(
                     "background" => Either([1, 2])
                 ),
-                Dict(
+                Dict{String,Any}(
                     "background" => Either([1, 3])
                 ),
             ]
-        )
-        @test find_const(solution, "background") == [1]
 
-        solution = make_dummy_solution([
-                Dict(
+        @test find_const(taskdata, "background") == [1]
+
+        taskdata = [
+                Dict{String,Any}(
                     "background" => Either([1, 2])
                 ),
-                Dict(
+                Dict{String,Any}(
                     "background" => Either([1, 2])
                 ),
             ]
-        )
-        @test issetequal(find_const(solution, "background"), [1, 2])
+
+        @test issetequal(find_const(taskdata, "background"), [1, 2])
 
     end
 
@@ -115,12 +115,14 @@ using .ObjectPrior:Object
 
     function _compare_operations(expected, solutions)
         for solution in solutions
-            print(solution.blocks)
-            @test in(solution.blocks[end].operations, expected)
-            delete!(expected, solution.blocks[end].operations)
+            @test any(solution.blocks[end].operations == bl for bl in expected)
+            filter!(bl -> bl != solution.blocks[end].operations, expected)
         end
-        @test expected == []
+        @test isempty(expected)
     end
+
+    filtered_taskdata(solution) =
+        [filter(keyval -> keyval[1] != "input" && keyval[1] != "output", task) for task in solution.taskdata]
 
     @testset "match either" begin
         solution = make_dummy_solution([
@@ -138,7 +140,7 @@ using .ObjectPrior:Object
             [SetConst("background", 2)]
         ])
         _compare_operations(expected_operations, new_solutions)
-        @test new_solutions[1].taskdata != [
+        @test filtered_taskdata(new_solutions[1]) != [
             Dict(
                 "background" => Either([1, 2])
             ),
@@ -147,7 +149,7 @@ using .ObjectPrior:Object
             ),
         ]
         @test new_solutions[1].taskdata != new_solutions[2].taskdata
-        @test solution.taskdata == [
+        @test filtered_taskdata(solution) == [
             Dict(
                 "background" => Either([1, 2])
             ),
@@ -184,7 +186,7 @@ using .ObjectPrior:Object
             # MapValues("key2", "background", Dict(1=>23, 2=>32))],
         ])
         _compare_operations(expected_operations, new_solutions)
-        @test solution.taskdata == [
+        @test filtered_taskdata(solution) == [
             Dict(
                 "background" => Either([1, 2]),
                 "key2" => 23,
@@ -213,7 +215,7 @@ using .ObjectPrior:Object
         @test length(new_solutions) == 1
         @test issetequal(new_solutions[1].blocks[end].operations,
                          [SetConst("key1", 1), SetConst("key2", 2)])
-        @test new_solutions[1].taskdata == [
+        @test filtered_taskdata(new_solutions[1]) == [
             Dict(
                 "key1" => 1,
                 "key2" => 2
@@ -223,7 +225,7 @@ using .ObjectPrior:Object
                 "key2" => 2
             )
         ]
-        @test solution.taskdata == [
+        @test filtered_taskdata(solution) == [
             Dict(
                 "key1" => Either([Option(1, hash((1, 2))), Option(3, hash((3, 4)))]),
                 "key2" => Either([Option(2, hash((1, 2))), Option(4, hash((3, 4)))])
@@ -257,10 +259,10 @@ using .ObjectPrior:Object
         @test length(new_solutions) == 1
         @test new_solutions[1].blocks[end].operations == [CopyParam("key1", "key3")]
         @test issetequal(new_solutions[1].unfilled_fields, ["key2"])
-        @test new_solutions[1].taskdata == [Dict("key1" => 1, "key2" => 2, "key3" => 1),
+        @test filtered_taskdata(new_solutions[1]) == [Dict("key1" => 1, "key2" => 2, "key3" => 1),
                                             Dict("key1" => 6, "key2" => 7, "key3" => 6),
                                             Dict("key1" => 1, "key2" => 3, "key3" => 1)]
-        @test solution.taskdata == [
+        @test filtered_taskdata(solution) == [
             Dict(
                 "key1" => Either([Option(1, hash((1, 2))), Option(3, hash((3, 4)))]),
                 "key2" => Either([Option(2, hash((1, 2))), Option(4, hash((3, 4)))]),
@@ -280,40 +282,40 @@ using .ObjectPrior:Object
     end
 
     @testset "match dicts" begin
-        solution = make_dummy_solution([
-            Dict(
+        taskdata = [
+            Dict{String,Any}(
                 "key" => Dict(
                     1 => 1,
                     2 => 2
                 )
             ),
-            Dict(
+            Dict{String,Any}(
                 "key" => Dict(
                     1 => 1,
                     2 => 2
                 )
             )
-        ])
-        @test find_const(solution, "key") == [Dict(
+        ]
+        @test find_const(taskdata, "key") == [Dict(
             1 => 1,
             2 => 2
         )]
 
-        solution = make_dummy_solution([
-            Dict(
+        taskdata = [
+            Dict{String,Any}(
                 "key" => Dict(
                     1 => 1,
                     2 => 2
                 )
             ),
-            Dict(
+            Dict{String,Any}(
                 "key" => Dict(
                     1 => Either([1, 3]),
                     2 => 2
                 )
             )
-        ])
-        @test find_const(solution, "key") == [Dict(
+        ]
+        @test find_const(taskdata, "key") == [Dict(
             1 => 1,
             2 => 2
         )]
@@ -331,7 +333,7 @@ using .ObjectPrior:Object
                 Option(Object([1], (7, 6)), -8036724089052714593)
             ]), -1731569779980110441)
         ])
-        @test match(val1, val2) == val1
+        @test compare_values(val1, val2) == val1
     end
 
     @testset "fix value" begin
@@ -625,7 +627,7 @@ using .ObjectPrior:Object
         @test new_solution.blocks[end].operations == [
             CopyParam("spatial_objects|grouped|0|first|splitted|first", "spatial_objects|grouped|0", ).get_operation()
         ]
-        @test new_solution.taskdata == [
+        @test filtered_taskdata(new_solution) == [
             Dict(
                 "spatial_objects|grouped|0" => Dict(
                     8 => Object([8], (9, 7)),
@@ -693,7 +695,7 @@ using .ObjectPrior:Object
                 )
             )
         ]
-        @test solution.taskdata == [
+        @test filtered_taskdata(solution) == [
             Dict(
                 "spatial_objects|grouped|0" => Dict(
                     8 => Object([8], (9, 7)),
