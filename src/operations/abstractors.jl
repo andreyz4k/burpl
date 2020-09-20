@@ -189,6 +189,7 @@ include("compact_similar_objects.jl")
 # include("select_color.jl")
 include("sort_array.jl")
 include("split_list.jl")
+include("transpose.jl")
 
 using InteractiveUtils:subtypes
 classes = [cls() for cls in subtypes(AbstractorClass)]

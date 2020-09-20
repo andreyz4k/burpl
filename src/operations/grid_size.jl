@@ -17,8 +17,18 @@ end
 create_abstractors(cls::GridSize, data, key) =
     data["effective"] ? invoke(create_abstractors, Tuple{AbstractorClass,Any,Any}, cls, data, key) : []
 
-get_aux_values_for_task(cls::AbstractorClass, task_data, key, solution) =
-    values(task_data)
+get_aux_values_for_task(cls::GridSize, task_data, key, solution) =
+    in(key, solution.unfilled_fields) ?
+    values(filter(kv -> isa(kv[2], Tuple{Int,Int}) &&
+                        (in(kv[1], solution.unfilled_fields) ||
+                         in(kv[1], solution.transformed_fields) ||
+                         in(kv[1], solution.filled_fields)),
+                  task_data)) :
+    values(filter(kv -> isa(kv[2], Tuple{Int,Int}) &&
+                        !in(kv[1], solution.unfilled_fields) &&
+                        !in(kv[1], solution.transformed_fields) &&
+                        !in(kv[1], solution.filled_fields),
+                  task_data))
 
 needed_input_keys(p::Abstractor, cls::GridSize) =
     p.to_abstract ? p.input_keys : p.input_keys[2:2]
