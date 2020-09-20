@@ -489,7 +489,7 @@ function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64
         println(new_solutions)
         readline(stdin)
     end
-    return new_solutions
+    return sort(new_solutions)
 end
 
 

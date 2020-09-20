@@ -10,7 +10,7 @@ make_dummy_solution(data, unfilled=[]) =
 
 using .SolutionOps:Solution, find_const, match_fields, Block
 using .DataTransformers:SetConst
-using .PatternMatching:Either,make_either,Option,compare_values
+using .PatternMatching:Either,make_either,Option,compare_values,update_value
 using .ObjectPrior:Object
 
 @testset "Patten Matching" begin
@@ -212,9 +212,10 @@ using .ObjectPrior:Object
             )
         ], ["key1", "key2"])
         new_solutions = match_fields(solution)
-        @test length(new_solutions) == 1
-        @test issetequal(new_solutions[1].blocks[end].operations,
-                         [SetConst("key1", 1), SetConst("key2", 2)])
+        println(new_solutions)
+        @test length(new_solutions) == 2
+        @test Set(new_solutions[1].blocks[end].operations) ==
+                         Set([SetConst("key1", 1), SetConst("key2", 2)])
         @test filtered_taskdata(new_solutions[1]) == [
             Dict(
                 "key1" => 1,
@@ -223,6 +224,17 @@ using .ObjectPrior:Object
             Dict(
                 "key1" => 1,
                 "key2" => 2
+            )
+        ]
+        @test new_solutions[2].blocks[end].operations == [SetConst("key2", 4)]
+        @test filtered_taskdata(new_solutions[2]) == [
+            Dict(
+                "key1" => 3,
+                "key2" => 4
+            ),
+            Dict(
+                "key1" => 1,
+                "key2" => 4
             )
         ]
         @test filtered_taskdata(solution) == [
@@ -380,7 +392,8 @@ using .ObjectPrior:Object
                 ])
             )
         )
-        new_task_data = fix_value(task_data, keys, value)
+        new_task_data = update_value(task_data, keys, value)
+
         @test new_task_data == Dict(
             "spatial_objects|grouped|0|step" => Dict(
                 1 => (0, 6),
@@ -403,14 +416,14 @@ using .ObjectPrior:Object
         )
 
         task_data = Dict(
-            "spatial_objects|grouped|0|step" => Dict(
+            "spatial_objects|grouped|0|step" => Dict{Any,Any}(
                 1 => Either([
                     Option((0, 6), -1731569779980110441),
                     Option((0, -6), -6290834605491577753)
                 ]),
                 3 => (0, 6)
             ),
-            "spatial_objects|grouped|0|first|splitted|first" => Dict(
+            "spatial_objects|grouped|0|first|splitted|first" => Dict{Any,Any}(
                 1 => Either([
                     Option(Either([
                         Option(Object([1],  (6, 17)), 5337975097275602430),
@@ -426,7 +439,7 @@ using .ObjectPrior:Object
                     Option(Object([3],  (6, 8)), -6298199269447202670)
                 ])
             ),
-            "spatial_objects|grouped|0|first|splitted|step" => Dict(
+            "spatial_objects|grouped|0|first|splitted|step" => Dict{Any,Any}(
                 1 => Either([
                     Option(Either([
                         Option((-1, 0)),
@@ -443,14 +456,14 @@ using .ObjectPrior:Object
                 ])
             )
         )
-        new_task_data = fix_value(task_data, keys, value)
+        new_task_data = update_value(task_data, keys, value)
         @test new_task_data == Dict(
             "spatial_objects|grouped|0|step" => Dict(
                 1 => (0, 6),
                 3 => (0, 6)
             ),
             "spatial_objects|grouped|0|first|splitted|first" => Dict(
-                1 => Object(1,  (0, 5)),
+                1 => Object([1],  (0, 5)),
                 3 => Either([
                     Option(Object([3],  (0, 8)), 8357411015276601514),
                     Option(Object([3],  (6, 8)), -6298199269447202670)

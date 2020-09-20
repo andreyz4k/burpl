@@ -31,5 +31,6 @@ unpack_value(value) = [value]
 
 include("either.jl")
 include("find_const.jl")
+include("update_value.jl")
 
 end

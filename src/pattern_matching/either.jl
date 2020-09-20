@@ -7,6 +7,7 @@ end
 Option(value) = Option(value, nothing)
 
 Base.:(==)(a::Option, b::Option) = a.value == b.value && a.option_hash == b.option_hash
+Base.hash(op::Option, h::UInt64) = hash(op.value, h) + hash(op.option_hash, h)
 Base.show(io::IO, op::Option) = print(io, "Option(", op.value,
     (isnothing(op.option_hash) ? [] : [", ", op.option_hash])..., ")")
 
@@ -72,3 +73,34 @@ match(val1::Either, val2::Matcher) =
     invoke(match, Tuple{Either,Any}, val1, val2)
 
 unpack_value(value::Either) = [option.value for option in value.options]
+
+
+function update_value(data::Dict, path_keys::Array, value, current_value::Either)
+    for option in current_value.options
+        if !isnothing(compare_values(value, option.value))
+            if !isnothing(option.option_hash)
+                data = select_hash(data, option.option_hash)
+            else
+                data = invoke(update_value, Tuple{Dict,Array,Any,Any}, data, path_keys, option.value, current_value)
+            end
+            return update_value(data, path_keys, value)
+        end
+    end
+end
+
+
+select_hash(data::Dict, option_hash) =
+    Dict{Any,Any}(key => select_hash(value, option_hash) for (key, value) in data)
+
+function select_hash(data::Either, option_hash)
+    new_options = Option[]
+    for option in data.options
+        if option.option_hash == option_hash
+            return option.value
+        end
+        push!(new_options, Option(select_hash(option.value, option_hash), option.option_hash))
+    end
+    return Either(new_options)
+end
+
+select_hash(data, option_hash) = data

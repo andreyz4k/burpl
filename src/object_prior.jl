@@ -10,6 +10,7 @@ end
 Object(a::Array{Int,1}, pos::Tuple{Int,Int}) = Object(hcat(a), pos)
 
 Base.:(==)(a::Object, b::Object) = a.shape == b.shape && a.position == b.position
+Base.hash(obj::Object, h::UInt64) = hash(obj.shape, h) + hash(obj.position, h)
 
 Base.show(io::IO, obj::Object) = print(io, "Object(", obj.shape, ", ", obj.position, ")")
 
