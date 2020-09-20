@@ -7,7 +7,6 @@ abstract type Matcher end
 compare_values(value1, value2) = value1 == value2 ? value2 : match(value1, value2)
 
 match(val1, val2) = nothing
-match(::Nothing, value) = value
 function match(val1::Dict, val2::Dict)
     if !issetequal(keys(val1), keys(val2))
         return nothing
@@ -24,7 +23,6 @@ function match(val1::Dict, val2::Dict)
 end
 
 match(value1, value2::Matcher) = match(value2, value1)
-match(::Nothing, value2::Matcher) = value2
 
 unpack_value(value) = [value]
 

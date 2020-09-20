@@ -215,6 +215,7 @@ function Solution(solution::Solution, operation::Operation; added_complexity::Fl
                     if in(key, unused_fields)
                         delete!(unused_fields, key)
                         push!(used_fields, key)
+                        # push!(used_fields, key)
                     end
                 end
                 if in(key, transformed_fields)
@@ -436,6 +437,40 @@ function get_next_operations(solution, key)
     return res
 end
 
+function get_new_solutions_for_input_key(solution, key)
+    # unfilled_data_types = set()
+    # for key_info in solution.unfilled_fields.params.values()
+    #     unfilled_data_types.update(key_info.precursor_data_types)
+    #     unfilled_data_types.add(key_info.data_type)
+    # end
+    output = []
+    for (priority, abstractor) in get_next_operations(solution, key)
+        new_solution = Solution(solution, abstractor.to_abstract)
+        # for abs_key in abstractor.abs_keys
+        #     if new_solution.get_key_data_type(abs_key) in unfilled_data_types
+        #         priority /= 2
+        #         break
+        #     end
+        # else
+        #     priority *= 2
+        # end
+
+        if key in solution.used_fields
+            priority *= 8
+        end
+
+        if startswith(key, "projected|")
+            priority *= 4
+        end
+
+        for matched_solution in match_fields(new_solution)
+            push!(output,
+                  (priority * get_unmatched_complexity_score(matched_solution) *
+                   matched_solution.score, matched_solution))
+        end
+    end
+    output
+end
 
 function get_new_solutions_for_unfilled_key(solution::Solution, key::String)
     output = []
@@ -470,12 +505,16 @@ function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64
     for key in solution.unfilled_fields
         append!(new_solutions, get_new_solutions_for_unfilled_key(solution, key))
     end
-    # TODO: add additional methods
+    if !isempty(solution.unfilled_fields)
+        for key in union(solution.unused_fields, solution.used_fields)
+            append!(new_solutions, get_new_solutions_for_input_key(solution, key))
+        end
+    end
     if debug
         println(new_solutions)
         readline(stdin)
     end
-    return sort(new_solutions)
+    return sort(new_solutions, by=(ps -> ps[1]))
 end
 
 
@@ -515,6 +554,7 @@ end
 using DataStructures
 
 function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
+    # debug = true
     println(fname)
     init_solution = Solution(taskdata)
     queue = PriorityQueue()

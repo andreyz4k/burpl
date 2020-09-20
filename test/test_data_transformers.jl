@@ -1,6 +1,6 @@
 
 using .PatternMatching:Either,Option
-using .DataTransformers:find_const,SetConst,CopyParam
+using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key
 using .SolutionOps:match_fields
 
 @testset "Data transformers" begin
@@ -661,5 +661,19 @@ using .SolutionOps:match_fields
                 )
             )
         ]
+    end
+
+    @testset "match nothing" begin
+        taskdata = [
+            Dict{String,Any}(
+                "key_none" => nothing,
+                "key" => 1
+            ),
+            Dict{String,Any}(
+                "key_none" => nothing,
+                "key" => 2
+            )
+        ]
+        @test find_dependent_key(taskdata, Set(["key"]), "key") == []
     end
 end

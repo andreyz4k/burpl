@@ -122,22 +122,6 @@ function from_abstract(p::Abstractor, cls::AbstractorClass, previous_data::Dict)
     return out_data
 end
 
-# try_apply(perceptor, grids, observed_data) =
-#     any(to_abstract(perceptor, perceptor.cls, grid, data) != data for (grid, data) in zip(grids, observed_data))
-
-# function create(cls, solution, source, grids)::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{GridPerceptor,GridPerceptor}}},1}
-#     if !all(haskey(solution.observed_data[1], key) for key in detail_keys(cls, source)) ||
-#             all(haskey(solution.observed_data[1], key) for key in abs_keys(cls, source))
-#         return []
-#     end
-#     to_abs_perceptor = GridPerceptor(cls, true, detail_keys(cls, source), abs_keys(cls, source))
-#     if try_apply(to_abs_perceptor, grids, solution.observed_data)
-#         return [(priority(cls), (to_abstract = to_abs_perceptor,
-#             from_abstract = GridPerceptor(cls, false, abs_keys(cls, source), [])))]
-#     else
-#         return []
-#     end
-# end
 
 function create(cls::AbstractorClass, solution, key)::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{Abstractor,Abstractor}}},1}
     if any(haskey(solution.taskdata[1], k) for k in abs_keys(cls, key))

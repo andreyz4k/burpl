@@ -3,11 +3,19 @@ struct SolidObjects <: AbstractorClass end
 
 SolidObjects(key, to_abs) = Abstractor(SolidObjects(), key, to_abs)
 @memoize abs_keys(p::SolidObjects) = ["spatial_objects"]
-@memoize priority(::SolidObjects) = 5
+# @memoize priority(::SolidObjects) = 5
 
 using ..ObjectPrior:find_objects,draw_object!,get_color
 
-check_task_value(cls::SolidObjects, value::AbstractArray{Int,2}, data, aux_values) = true
+init_create_check_data(cls::SolidObjects, key, solution) = Dict("effective" => false)
+
+function check_task_value(cls::SolidObjects, value::AbstractArray{Int,2}, data, aux_values)
+    data["effective"] |= length(unique(value)) > 1
+    true
+end
+
+create_abstractors(cls::SolidObjects, data, key) =
+    data["effective"] ? invoke(create_abstractors, Tuple{AbstractorClass,Any,Any}, cls, data, key) : []
 
 to_abstract_value(p::Abstractor, cls::SolidObjects, source_value::AbstractArray{Int,2}, aux_values) =
     Dict(p.output_keys[1] => find_objects(source_value))

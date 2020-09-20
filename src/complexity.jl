@@ -10,17 +10,17 @@ get_complexity(::Int)::Float64 = 1
 get_complexity(value::Tuple)::Float64 =
     3 + sum(get_complexity(v) for v in value) * 0.95^(length(value) - 1)
 
-get_complexity(value::Union{Array,Set})::Float64 =
-    5 + sum(get_complexity(v) for v in value) * 0.95^(length(value) - 1)
+get_complexity(value::AbstractVector)::Float64 =
+    5 + sum(Float64[get_complexity(v) for v in value]) * 0.95^(length(value) - 1)
 
-get_complexity(value::Array{Int,2})::Float64 =
+get_complexity(value::AbstractArray{Int,2})::Float64 =
     5 + sum(value .!= -1) * 4 * 0.95^(sum(value .!= -1) - 1)
 
 get_complexity(value::String)::Float64 = length(value)
 
 get_complexity(value::Object)::Float64 = get_complexity(value.shape) + get_complexity(value.position)
 
-function get_complexity(value::Dict)::Float64
+function get_complexity(value::AbstractDict)::Float64
     denominator = 0
     for v in values(value)
         if isa(v, Array) || isa(v, Set) || isa(v, Tuple)

@@ -4,7 +4,7 @@ struct BackgroundColor <: AbstractorClass end
 
 BackgroundColor(key, to_abs) = Abstractor(BackgroundColor(), key, to_abs)
 @memoize abs_keys(cls::BackgroundColor) = ["bgr_grid", "background"]
-@memoize priority(cls::BackgroundColor) = 2
+@memoize priority(cls::BackgroundColor) = 7
 
 check_task_value(cls::BackgroundColor, value::AbstractArray{Int,2}, data, aux_values) =
     minimum(value) > -1

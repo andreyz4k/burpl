@@ -24,6 +24,9 @@ function find_const(taskdata::Vector{Dict{String,Any}}, _, key::String)::Vector{
         if !haskey(task_data, key)
             continue
         end
+        if isnothing(result)
+            result = task_data[key]
+        end
         possible_value = compare_values(result, task_data[key])
         if isnothing(possible_value)
             return []
