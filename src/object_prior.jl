@@ -71,7 +71,7 @@ function find_objects(grid::Array{Int,2})
     s = size(grid)
 
     for i in 1:s[1], j in 1:s[2]
-        if !in((i, j), visited)
+        if grid[i, j] != -1 && !in((i, j), visited)
             points = find_component(grid, i, j, visited)
             position, component = normalize_component(points, grid)
             push!(objects, Object(component, position))

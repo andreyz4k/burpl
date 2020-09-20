@@ -31,7 +31,7 @@ function to_abstract_value(p::Abstractor, cls::GroupObjectsByColor, source_value
         push!(results[key], obj)
     end
     return Dict(
-        p.output_keys[1] => results,
+        p.output_keys[1] => Dict(results),
         p.output_keys[2] => sort(collect(keys(results)))
     )
 end

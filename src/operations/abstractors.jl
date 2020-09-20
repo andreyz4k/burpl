@@ -183,6 +183,7 @@ create_abstractors(cls::AbstractorClass, data, key) =
 
 include("grid_size.jl")
 include("background_color.jl")
+include("solid_objects.jl")
 include("group_obj_by_color.jl")
 include("compact_similar_objects.jl")
 # include("select_color.jl")
