@@ -65,11 +65,11 @@ end
 struct Solution
     taskdata::Array{Dict{String,Any}}
     blocks::Array{Block}
-    unfilled_fields::Set
-    filled_fields::Set
-    transformed_fields::Set
-    unused_fields::Set
-    used_fields::Set
+    unfilled_fields::Set{String}
+    filled_fields::Set{String}
+    transformed_fields::Set{String}
+    unused_fields::Set{String}
+    used_fields::Set{String}
     complexity_score::Float64
     score::Int
     Solution(taskdata, blocks, unfilled_fields,
@@ -344,14 +344,15 @@ function get_unmatched_complexity_score(solution::Solution)
 end
 
 
-using ..PatternMatching:find_const
-using ..DataTransformers:SetConst
+using ..DataTransformers:get_match_transformers
 
-function check_const_values(key::String, solution::Solution)
+function find_matched_fields(key, solution::Solution)
     new_solutions = []
-    const_options = find_const(solution.taskdata, key)
-    for value in const_options
-        transformer = SetConst(key, value)
+    transformers = get_match_transformers(solution.taskdata, union(solution.unfilled_fields, solution.transformed_fields), key)
+    for transformer in transformers
+        if transformer.generability > 5
+            continue
+        end
         new_solution = Solution(solution, transformer,
                                 added_complexity=transformer.complexity)
         push!(new_solutions, new_solution)
@@ -361,22 +362,7 @@ end
 
 function exact_match_fields(solution::Solution)
     for key in solution.unfilled_fields
-        new_solutions = Solution[]
-        find_matches_funcs = [
-            check_const_values
-            # TODO: fill
-            # find_exactly_matched_fields,
-            # find_proportionate_matched_fields,
-            # find_shifted_matched_fields,
-            # find_proportionate_by_key_matched_fields,
-            # find_shifted_by_key_matched_fields
-        ]
-        for func in find_matches_funcs
-            if length(new_solutions) == 1
-                break
-            end
-            append!(new_solutions, func(key, solution))
-        end
+        new_solutions = find_matched_fields(key, solution)
         if !isempty(new_solutions)
             return reduce(
                 vcat,

@@ -23,7 +23,7 @@ end
 
 function main()
     s = ArgParseSettings()
-    @add_arg_table s begin
+    @add_arg_table! s begin
         "--filename"
             help = "task file to solve"
             # arg_type = string

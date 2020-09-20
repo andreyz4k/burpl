@@ -32,4 +32,5 @@ function update_value(data::Dict, path_keys::Array, value, current_value::Dict)
     for key in keys(current_value)
         data = update_value(data, vcat(path_keys, [key]), value[key], current_value[key])
     end
+    data
 end

@@ -1,11 +1,4 @@
 
-
-export DataTransformers
-module DataTransformers
-using ..Complexity:get_complexity
-using ..Operations:Operation
-using ..PatternMatching:update_value
-
 struct SetConst <: Operation
     input_keys::Array{String}
     output_keys::Array{String}
@@ -25,4 +18,17 @@ function (op::SetConst)(task_data)
     data
 end
 
+function find_const(taskdata::Vector{Dict{String,Any}}, _, key::String)::Vector{SetConst}
+    result = nothing
+    for task_data in taskdata
+        if !haskey(task_data, key)
+            continue
+        end
+        possible_value = compare_values(result, task_data[key])
+        if isnothing(possible_value)
+            return []
+        end
+        result = possible_value
+    end
+    return [SetConst(key, value) for value in unpack_value(result)]
 end

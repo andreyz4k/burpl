@@ -30,6 +30,7 @@ end
 Either(options::AbstractVector) = Either([Option(op) for op in options])
 
 Base.:(==)(a::Either, b::Either) = issetequal(a.options, b.options)
+Base.hash(e::Either, h::UInt64) = hash(e.options, h)
 Base.show(io::IO, e::Either) = print(io, "Either([", vcat([[op, ", "] for op in e.options]...)[1:end - 1]..., "])")
 
 function make_either(keys, options)
@@ -72,7 +73,7 @@ end
 match(val1::Either, val2::Matcher) =
     invoke(match, Tuple{Either,Any}, val1, val2)
 
-unpack_value(value::Either) = [option.value for option in value.options]
+unpack_value(value::Either) = vcat([unpack_value(option.value) for option in value.options]...)
 
 
 function update_value(data::Dict, path_keys::Array, value, current_value::Either)
