@@ -1,5 +1,6 @@
 
-using .Operations:CompactSimilarObjects
+using .Operations:CompactSimilarObjects,create
+using .ObjectPrior:Object
 
 @testset "Compact similar objects" begin
     @testset "reshape objects" begin

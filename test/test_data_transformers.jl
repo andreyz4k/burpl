@@ -1,5 +1,7 @@
 
+using .PatternMatching:Either,Option
 using .DataTransformers:find_const,SetConst,CopyParam
+using .SolutionOps:match_fields
 
 @testset "Data transformers" begin
     @testset "find const" begin
