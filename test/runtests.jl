@@ -4,6 +4,6 @@ using .Randy
 include("utils.jl")
 using TestSetExtensions
 
-@testset ExtendedTestSet "all" begin
+@testset "all" begin
     @includetests ARGS
 end

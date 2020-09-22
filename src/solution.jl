@@ -13,7 +13,7 @@ Block() = Block([])
 
 function insert_operation(block::Block, operation::Operation, ::Val{true})::Tuple{Block,Int}
     operations = copy(block.operations)
-    needed_fields = Set(operation.input_keys)
+    needed_fields = union(Set(operation.input_keys), operation.output_keys)
     for index in length(operations):-1:1
         op = operations[index]
         if any(in(key, needed_fields) for key in op.output_keys)
@@ -129,6 +129,7 @@ function move_to_next_block(solution::Solution)::Solution
             blocks[end - 1] = Block(vcat(blocks[end - 1].operations[1:end - 1], blocks[end].operations))
             pop!(blocks)
         else
+            old_project_op = blocks[end - 1].operations[end]
             blocks[end - 1] = Block(blocks[end - 1].operations[1:end - 1])
             push!(blocks[end - 1].operations, Project(old_project_op.operations,
                                                     Set(replace(key, "projected|" => "") for key in used_projected_fields)))
@@ -165,6 +166,12 @@ function move_to_next_block(solution::Solution)::Solution
         end
     end
 
+    if isempty(solution.unfilled_fields)
+        for (task, block_output) in zip(taskdata, last_block_output)
+            task["projected|output"] = block_output["output"]
+        end
+    end
+
     if !isempty(new_block.operations)
         push!(blocks, new_block)
     end
@@ -180,6 +187,8 @@ function move_to_next_block(solution::Solution)::Solution
         solution.complexity_score
     )
 end
+
+using ..PatternMatching:Matcher
 
 function Solution(solution::Solution, operation::Operation; added_complexity::Float64=0.0)
     blocks = copy(solution.blocks)
@@ -225,6 +234,12 @@ function Solution(solution::Solution, operation::Operation; added_complexity::Fl
             end
         end
     end
+    for key in operation.output_keys
+        if any(isa(get(task, key, nothing), Matcher) for task in taskdata)
+            push!(unfilled_fields, key)
+        end
+    end
+
     new_solution = Solution(
         taskdata,
         blocks,
@@ -456,7 +471,7 @@ function get_new_solutions_for_input_key(solution, key)
         # end
 
         if key in solution.used_fields
-            priority *= 8
+            priority *= 2
         end
 
         if startswith(key, "projected|")
@@ -577,7 +592,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
         real_visited += 1
         update_border!(border, solution)
         println((real_visited, length(border), length(queue)))
-        # println((pr, i, solution))
+        println((pr, i, solution))
         new_solutions = get_new_solutions(solution, debug)
         for (priority, new_solution) in new_solutions
             if in(new_solution, visited) || !check_border(new_solution, border)

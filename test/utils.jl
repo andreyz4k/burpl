@@ -20,4 +20,4 @@ function _compare_operations(expected, solutions)
 end
 
 filtered_taskdata(solution) =
-    [filter(keyval -> keyval[1] != "input" && keyval[1] != "output", task) for task in solution.taskdata]
+    [filter(keyval -> keyval[1] != "input" && keyval[1] != "output" && keyval[1] != "projected|output", task) for task in solution.taskdata]
