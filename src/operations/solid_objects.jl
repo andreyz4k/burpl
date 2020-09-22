@@ -3,7 +3,7 @@ struct SolidObjects <: AbstractorClass end
 
 SolidObjects(key, to_abs) = Abstractor(SolidObjects(), key, to_abs)
 @memoize abs_keys(p::SolidObjects) = ["spatial_objects"]
-# @memoize priority(::SolidObjects) = 5
+@memoize priority(::SolidObjects) = 5
 
 using ..ObjectPrior:find_objects,draw_object!,get_color
 

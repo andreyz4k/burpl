@@ -81,14 +81,21 @@ function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_valu
     return result
 end
 
-# function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value::Matcher, aux_values)
-#     return source_value.apply_function(partial(self._wrap_to_abstract_value, aux_values=aux_values))
-# end
-
 function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value, aux_values)
     return to_abstract_value(p, cls, source_value, aux_values)
 end
 
+using ..PatternMatching:Either,Option
+
+function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value::Either, aux_values)
+    outputs = DefaultDict(() -> Option[])
+    for option in source_value.options
+        for (key, value) in wrap_to_abstract_value(p, cls, option.value, aux_keys)
+            push!(outputs[key], Option(value, option.option_hash))
+        end
+    end
+    return Dict(key => Either(options) for (key, options) in outputs)
+end
 
 function iter_source_values(source_values)
     result = []
@@ -155,8 +162,10 @@ wrap_check_task_value(cls::AbstractorClass, value::AbstractDict, data, aux_value
 
 check_task_value(cls::AbstractorClass, value, data, aux_values) = false
 
-# wrap_check_task_value(cls::AbstractorClass, value::Matcher, data, aux_values) =
-#     all(wrap_check_task_value(cls, v, data, aux_values) for v in value.get_values())
+using ..PatternMatching:Matcher,unpack_value
+
+wrap_check_task_value(cls::AbstractorClass, value::Matcher, data, aux_values) =
+    all(wrap_check_task_value(cls, v, data, aux_values) for v in unpack_value(value))
 
 get_aux_values_for_task(cls::AbstractorClass, task_data, key, solution) =
     [task_data[k] for k in aux_keys(cls, key)]

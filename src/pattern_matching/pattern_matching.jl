@@ -26,8 +26,15 @@ match(value1, value2::Matcher) = match(value2, value1)
 
 unpack_value(value) = [value]
 
+import ..Complexity:get_complexity
+using Statistics:mean
+
+get_complexity(value::Matcher)::Float64 =
+    mean(get_complexity, unpack_value(value))
+
 
 include("either.jl")
 include("update_value.jl")
+
 
 end

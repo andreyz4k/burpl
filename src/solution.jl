@@ -56,7 +56,7 @@ end
 
 Base.:(==)(a::Block, b::Block) = a.operations == b.operations
 
-hash(b::Block, h) = hash(b.operations, h)
+Base.hash(b::Block, h) = hash(b.operations, h)
 
 struct UnfilledFields
     # TODO: fill
@@ -299,7 +299,7 @@ end
 
 Base.:(==)(a::Solution, b::Solution)::Bool = a.blocks == b.blocks
 
-hash(s::Solution, h::Int) = hash(s.blocks, h)
+Base.hash(s::Solution, h::Int) = hash(s.blocks, h)
 
 function check_task(solution::Solution, input_grid::Array{Int,2}, target::Array{Int,2})
     out = solution(input_grid)
@@ -501,7 +501,7 @@ end
 
 
 function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64,Solution}}
-    new_solutions = []
+    new_solutions = Tuple{Float64,Solution}[]
     for key in solution.unfilled_fields
         append!(new_solutions, get_new_solutions_for_unfilled_key(solution, key))
     end
@@ -510,11 +510,12 @@ function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64
             append!(new_solutions, get_new_solutions_for_input_key(solution, key))
         end
     end
+    sort!(new_solutions, by=(ps -> ps[1]))
     if debug
         println(new_solutions)
         readline(stdin)
     end
-    return sort(new_solutions, by=(ps -> ps[1]))
+    return new_solutions
 end
 
 
@@ -576,7 +577,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
         real_visited += 1
         update_border!(border, solution)
         println((real_visited, length(border), length(queue)))
-        println((pr, i, solution))
+        # println((pr, i, solution))
         new_solutions = get_new_solutions(solution, debug)
         for (priority, new_solution) in new_solutions
             if in(new_solution, visited) || !check_border(new_solution, border)
@@ -599,7 +600,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
             new_priority = min(new_priority, get(queue, (new_solution, i - 1), new_priority))
             queue[(new_solution, i - 1)] = new_priority
         end
-        if real_visited > 1000
+        if real_visited > 10000
             break
         end
     end
