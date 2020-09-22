@@ -56,7 +56,7 @@ end
 
 Base.:(==)(a::Block, b::Block) = a.operations == b.operations
 
-Base.hash(b::Block, h) = hash(b.operations, h)
+Base.hash(b::Block, h::UInt64) = hash(b.operations, h)
 
 struct UnfilledFields
     # TODO: fill
@@ -299,7 +299,7 @@ end
 
 Base.:(==)(a::Solution, b::Solution)::Bool = a.blocks == b.blocks
 
-Base.hash(s::Solution, h::Int) = hash(s.blocks, h)
+Base.hash(s::Solution, h::UInt64) = hash(s.blocks, h)
 
 function check_task(solution::Solution, input_grid::Array{Int,2}, target::Array{Int,2})
     out = solution(input_grid)

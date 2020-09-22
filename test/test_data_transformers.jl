@@ -2,6 +2,7 @@
 using .PatternMatching:Either,Option
 using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key
 using .SolutionOps:match_fields
+using .ObjectPrior:Object
 
 @testset "Data transformers" begin
     @testset "find const" begin
