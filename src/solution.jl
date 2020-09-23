@@ -540,12 +540,16 @@ function get_new_solutions_for_input_key(solution, key)
         #     priority *= 2
         # end
 
-        if key in solution.used_fields
-            priority *= 2
+        if in(key, solution.input_transformed_fields)
+            priority *= 4
+        end
+
+        if in(key, solution.used_fields)
+            priority *= 8
         end
 
         if startswith(key, "projected|")
-            priority *= 4
+            priority *= 8
         end
 
         for matched_solution in match_fields(new_solution)
@@ -672,7 +676,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
             if new_error > solution.score
                 continue
             end
-            println((priority, new_error))
+            # println((priority, new_error))
             if new_error == 0
                 println((real_visited, length(queue)))
                 return new_solution

@@ -14,7 +14,7 @@ get_complexity(value::AbstractVector)::Float64 =
     5 + sum(Float64[get_complexity(v) for v in value]) * 0.95^(length(value) - 1)
 
 get_complexity(value::AbstractArray{Int,2})::Float64 =
-    5 + sum(value .!= -1) * 3 * 0.95^(sum(value .!= -1) - 1) + *(size(value)...)
+    5 + sum(value .!= -1) * 4 * 0.95^(sum(value .!= -1) - 1)
 
 get_complexity(value::String)::Float64 = length(value)
 

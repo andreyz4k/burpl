@@ -147,7 +147,7 @@ function create(cls::AbstractorClass, solution, key)::Array{Tuple{Float64,NamedT
     end
     output = []
     for (priority, abstractor) in create_abstractors(cls, data, key)
-        push!(output, (priority * (1.15^(length(split(key, '|')) - 1)), abstractor))
+        push!(output, (priority * (1.2^(length(split(key, '|')) - 1)), abstractor))
     end
     output
 end
