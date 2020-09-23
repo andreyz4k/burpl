@@ -30,12 +30,12 @@ using .ObjectPrior:Object
 
     @testset "shape" begin
         @test get_complexity(fill(0, 1, 1)) == 9
-        @test get_complexity(fill(0, 1, 2)) == 12.6
+        @test get_complexity(fill(0, 1, 2)) == 12.7
     end
 
     @testset "object" begin
         @test get_complexity(Object([0], (1, 1))) == 13.9
-        @test get_complexity(Object([0 1], (1, 1))) == 17.5
+        @test get_complexity(Object([0 1], (1, 1))) == 17.6
     end
 
     @testset "reshape" begin
@@ -133,7 +133,7 @@ using .ObjectPrior:Object
             Object([1], (1, 1)),
         ]
         @test get_complexity(a) == get_complexity(b)
-        @test get_complexity(a) == 57.600022076093744
+        @test get_complexity(a) == 61.0785790570703
     end
 
 end

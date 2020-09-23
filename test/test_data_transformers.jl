@@ -113,7 +113,7 @@ using .ObjectPrior:Object
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 1
         new_solution = new_solutions[1]
-        @test new_solution.blocks[end].operations == [SetConst("background", 1)]
+        @test filtered_ops(new_solution) == [SetConst("background", 1)]
     end
 
     @testset "match either" begin
@@ -205,7 +205,7 @@ using .ObjectPrior:Object
         ], ["key1", "key2"])
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 2
-        @test Set(new_solutions[1].blocks[end].operations) ==
+        @test Set(filtered_ops(new_solutions[1])) ==
                          Set([SetConst("key1", 1), SetConst("key2", 2)])
         @test filtered_taskdata(new_solutions[1]) == [
             Dict(
@@ -217,7 +217,7 @@ using .ObjectPrior:Object
                 "key2" => 2
             )
         ]
-        @test new_solutions[2].blocks[end].operations == [SetConst("key2", 4)]
+        @test filtered_ops(new_solutions[2]) == [SetConst("key2", 4)]
         @test filtered_taskdata(new_solutions[2]) == [
             Dict(
                 "key1" => 3,
@@ -260,7 +260,7 @@ using .ObjectPrior:Object
         ],["key1", "key2"])
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 1
-        @test new_solutions[1].blocks[end].operations == [CopyParam("key1", "key3")]
+        @test filtered_ops(new_solutions[1]) == [CopyParam("key1", "key3")]
         @test issetequal(new_solutions[1].unfilled_fields, ["key2"])
         @test filtered_taskdata(new_solutions[1]) == [Dict("key1" => 1, "key2" => 2, "key3" => 1),
                                             Dict("key1" => 6, "key2" => 7, "key3" => 6),
@@ -439,7 +439,7 @@ using .ObjectPrior:Object
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 1
         new_solution = new_solutions[1]
-        @test new_solution.blocks[end].operations == [
+        @test filtered_ops(new_solution) == [
             CopyParam("spatial_objects|grouped|0|first|splitted|first", "spatial_objects|grouped|0")
         ]
         @test filtered_taskdata(new_solution) == [

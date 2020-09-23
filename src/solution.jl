@@ -70,14 +70,16 @@ struct Solution
     transformed_fields::Set{String}
     unused_fields::Set{String}
     used_fields::Set{String}
+    input_transformed_fields::Set{String}
     complexity_score::Float64
     score::Int
     Solution(taskdata, blocks, unfilled_fields,
              filled_fields, transformed_fields, unused_fields, used_fields,
-             complexity_score::Float64) = new(taskdata, blocks,
-             unfilled_fields, filled_fields, transformed_fields,
-             unused_fields, used_fields, complexity_score,
-             get_score(taskdata, complexity_score))
+             input_transformed_fields, complexity_score::Float64) =
+        new(taskdata, blocks,
+            unfilled_fields, filled_fields, transformed_fields,
+            unused_fields, used_fields, input_transformed_fields,
+            complexity_score, get_score(taskdata, complexity_score))
 end
 
 Solution(taskdata) = Solution(
@@ -87,6 +89,7 @@ Solution(taskdata) = Solution(
     Set(),
     Set(),
     Set(["input"]),
+    Set(),
     Set(),
     0.0
 )
@@ -184,11 +187,80 @@ function move_to_next_block(solution::Solution)::Solution
         solution.transformed_fields,
         unused_fields,
         solution.used_fields,
+        solution.input_transformed_fields,
         solution.complexity_score
     )
 end
 
 using ..PatternMatching:Matcher
+
+function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transformed_fields, unused_fields, used_fields, input_transformed_fields, taskdata)
+    output_chain = ["output"]
+    for block in blocks[end:-1:1]
+        for op in block.operations[end:-1:1]
+            if any(in(k, output_chain) for k in op.output_keys)
+                append!(output_chain, op.input_keys)
+            end
+        end
+    end
+    if in(key, output_chain)
+        for op in blocks[end].operations[i:end]
+            if all(!in(k, unfilled_fields) && !in(k, transformed_fields) for k in op.input_keys)
+                for k in op.output_keys
+                    if in(k, unfilled_fields)
+                        delete!(unfilled_fields, k)
+                        push!(filled_fields, k)
+                    end
+                    if in(k, transformed_fields)
+                        delete!(transformed_fields, k)
+                        push!(filled_fields, k)
+                    end
+                    push!(used_fields, k)
+                end
+            end
+        end
+
+        delete!(unused_fields, key)
+
+        inp_keys = [key]
+        in_ops = vcat(blocks[end].operations[i:-1:1], (block.operations[end:-1:1] for block in blocks[end - 1:-1:1])...)
+        for op in in_ops
+            if any(in(k, inp_keys) for k in op.output_keys)
+                for k in op.input_keys
+                    push!(used_fields, k)
+                    if in(k, input_transformed_fields)
+                        delete!(input_transformed_fields, k)
+                    end
+                end
+                append!(inp_keys, op.input_keys)
+            end
+        end
+    else
+        for field in unfilled_fields
+            if !in(field, output_chain)
+                if all(!isa(get(task, field, nothing), Matcher) for task in taskdata)
+                    delete!(unfilled_fields, field)
+                end
+            end
+        end
+        for block in blocks
+            for op in block.operations
+                if all(!in(k, unfilled_fields) && !in(k, transformed_fields) for k in op.input_keys)
+                    for k in op.output_keys
+                        if in(k, unfilled_fields)
+                            delete!(unfilled_fields, k)
+                            push!(filled_fields, k)
+                        end
+                        if in(k, transformed_fields)
+                            delete!(transformed_fields, k)
+                            push!(filled_fields, k)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
 
 function Solution(solution::Solution, operation::Operation; added_complexity::Float64=0.0)
     blocks = copy(solution.blocks)
@@ -201,39 +273,27 @@ function Solution(solution::Solution, operation::Operation; added_complexity::Fl
     ]
     unfilled_fields = copy(solution.unfilled_fields)
     transformed_fields = copy(solution.transformed_fields)
+    filled_fields = copy(solution.filled_fields)
     unused_fields = copy(solution.unused_fields)
     used_fields = copy(solution.used_fields)
-    filled_fields = copy(solution.filled_fields)
+    input_transformed_fields = copy(solution.input_transformed_fields)
 
     need_next_block = false
     union!(unused_fields, operation.output_keys)
     for key in operation.input_keys
         if in(key, unused_fields)
             delete!(unused_fields, key)
-            push!(used_fields, key)
+            push!(input_transformed_fields, key)
         end
     end
-    for op in blocks[end].operations[index:end]
-        if all(!in(key, unfilled_fields) && !in(key, transformed_fields)
-                for key in op.input_keys)
-            for key in op.output_keys
-                if in(key, unfilled_fields)
-                    need_next_block = true
-                    delete!(unfilled_fields, key)
-                    push!(filled_fields, key)
-                    if in(key, unused_fields)
-                        delete!(unused_fields, key)
-                        push!(used_fields, key)
-                        # push!(used_fields, key)
-                    end
-                end
-                if in(key, transformed_fields)
-                    delete!(transformed_fields, key)
-                    push!(filled_fields, key)
-                end
-            end
+
+    for key in operation.output_keys
+        if in(key, unfilled_fields)
+            need_next_block = true
+            mark_used_fields(key, index, blocks, unfilled_fields, filled_fields, transformed_fields, unused_fields, used_fields, input_transformed_fields, taskdata)
         end
     end
+
     for key in operation.output_keys
         if any(isa(get(task, key, nothing), Matcher) for task in taskdata)
             push!(unfilled_fields, key)
@@ -248,6 +308,7 @@ function Solution(solution::Solution, operation::Operation; added_complexity::Fl
         transformed_fields,
         unused_fields,
         used_fields,
+        input_transformed_fields,
         solution.complexity_score + added_complexity,
     )
     if need_next_block
@@ -284,6 +345,7 @@ function Solution(solution::Solution, operation::Operation, reversed_op::Operati
         transformed_fields,
         solution.unused_fields,
         solution.used_fields,
+        solution.input_transformed_fields,
         solution.complexity_score,
     )
 end
@@ -291,11 +353,12 @@ end
 Base.show(io::IO, s::Solution) =
     print(io, "Solution(", s.score, ", ",
           get_unmatched_complexity_score(s), ", ",
-          s.unfilled_fields, "\n\t",
-          s.transformed_fields, "\n\t",
-          s.filled_fields, "\n\t",
-          s.unused_fields, "\n\t",
-          s.used_fields, "\n\t[\n\t",
+          "unfilled: ", s.unfilled_fields, "\n\t",
+          "transformed: ", s.transformed_fields, "\n\t",
+          "filled: ", s.filled_fields, "\n\t",
+          "unused: ", s.unused_fields, "\n\t",
+          "used: ", s.used_fields, "\n\t",
+          "input transformed: ", s.input_transformed_fields, "\n\t[\n\t",
           s.blocks..., "\n\t]\n\t",
           [
               filter(keyval -> in(keyval[1], s.unfilled_fields) || in(keyval[1], s.unused_fields),
@@ -352,9 +415,16 @@ function get_unmatched_complexity_score(solution::Solution)
             for (key, value) in task_data if in(key, solution.unused_fields)],
         ) for task_data in solution.taskdata
     ]
+    inp_transformed_data_score = [
+        sum(
+            Float64[get_complexity(value) / 3
+            for (key, value) in task_data if in(key, solution.input_transformed_fields)],
+        ) for task_data in solution.taskdata
+    ]
     return (
             sum(unmatched_data_score) +
             sum(unused_data_score) +
+            sum(inp_transformed_data_score) +
             solution.complexity_score
     ) / length(solution.taskdata)
 end
@@ -521,7 +591,7 @@ function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64
         append!(new_solutions, get_new_solutions_for_unfilled_key(solution, key))
     end
     if !isempty(solution.unfilled_fields)
-        for key in union(solution.unused_fields, solution.used_fields)
+        for key in union(solution.unused_fields, solution.used_fields, solution.input_transformed_fields)
             append!(new_solutions, get_new_solutions_for_input_key(solution, key))
         end
     end
@@ -592,7 +662,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
         real_visited += 1
         update_border!(border, solution)
         println((real_visited, length(border), length(queue)))
-        println((pr, i, solution))
+        # println((pr, i, solution))
         new_solutions = get_new_solutions(solution, debug)
         for (priority, new_solution) in new_solutions
             if in(new_solution, visited) || !check_border(new_solution, border)
