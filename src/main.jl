@@ -21,6 +21,8 @@ function convert_grids(taskdata)
     )
 end
 
+get_taskdata(fname) = convert_grids(JSON.parsefile(fname))
+
 function main()
     s = ArgParseSettings()
     @add_arg_table! s begin
@@ -32,14 +34,22 @@ function main()
             action = :store_true
     end
     parsed_args = parse_args(ARGS, s)
-    taskdata = JSON.parsefile(parsed_args["filename"])
-    # println(taskdata["train"][1])
-    taskdata = convert_grids(taskdata)
 
-    solution = generate_solution(taskdata["train"], split(split(parsed_args["filename"], '/')[end], '.')[1], parsed_args["debug"])
+    solution = get_solution(parsed_args["filename"], parsed_args["debug"])
+    test_solution(solution, parsed_args["filename"])
+end
+
+function test_solution(solution, fname)
     println(solution)
-    println(validate_solution(solution, taskdata["train"]))
-    println(validate_solution(solution, taskdata["test"]))
+    taskdata = get_taskdata(fname)
+    res = (validate_solution(solution, taskdata["train"]), validate_solution(solution, taskdata["test"]))
+    println(res)
+    res
+end
+
+function get_solution(fname, debug=false)
+    taskdata = get_taskdata(fname)
+    generate_solution(taskdata["train"], split(split(fname, '/')[end], '.')[1], debug)
 end
 
 # main()
