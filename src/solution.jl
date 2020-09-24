@@ -396,7 +396,7 @@ function get_score(taskdata, complexity_score)::Int
                 for task
                 in taskdata)
     if complexity_score > 100
-        score += complexity_score
+        score += floor(complexity_score)
     end
     score
 end
@@ -407,6 +407,11 @@ function get_unmatched_complexity_score(solution::Solution)
     unmatched_data_score = [
         sum(
             Float64[get_complexity(value) for (key, value) in task_data if in(key, solution.unfilled_fields)],
+        ) for task_data in solution.taskdata
+    ]
+    transformed_data_score = [
+        sum(
+            Float64[get_complexity(value) / 10 for (key, value) in task_data if in(key, solution.transformed_fields)],
         ) for task_data in solution.taskdata
     ]
     unused_data_score = [
@@ -423,6 +428,7 @@ function get_unmatched_complexity_score(solution::Solution)
     ]
     return (
             sum(unmatched_data_score) +
+            # sum(transformed_data_score) +
             sum(unused_data_score) +
             sum(inp_transformed_data_score) +
             solution.complexity_score
@@ -608,19 +614,33 @@ function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64
 end
 
 
-function is_subsolution(parent_sol::Solution, child_sol::Solution)::Bool
+function is_subsolution(old_sol::Solution, new_sol::Solution)::Bool
     equals = true
-    for (child_task_data, parent_task_data) in zip(child_sol.taskdata, parent_sol.taskdata)
-        for (key, value) in child_task_data
-            if !haskey(parent_task_data, key) || value != parent_task_data[key]
+    for (new_task_data, old_task_data) in zip(new_sol.taskdata, old_sol.taskdata)
+        inp_vals = Set()
+        out_vals = Set()
+        for (key, value) in old_task_data
+            if in(key, old_sol.transformed_fields) || in(key, old_sol.filled_fields) ||  in(key, old_sol.unfilled_fields)
+                push!(out_vals, value)
+            end
+            if in(key, old_sol.unused_fields) || in(key, old_sol.used_fields) || in(key, old_sol.input_transformed_fields)
+                push!(inp_vals, value)
+            end
+        end
+
+        for (key, value) in new_task_data
+            if (in(key, new_sol.transformed_fields) || in(key, new_sol.filled_fields) ||  in(key, new_sol.unfilled_fields)) && !in(value, out_vals)
+                return false
+            end
+            if (in(key, new_sol.unused_fields) || in(key, new_sol.used_fields) || in(key, new_sol.input_transformed_fields)) && !in(value, inp_vals)
                 return false
             end
         end
-        if !issetequal(keys(child_task_data), keys(parent_task_data))
+        if !issetequal(keys(new_task_data), keys(old_task_data))
             equals = false
         end
     end
-    if equals && parent_sol != child_sol
+    if equals && old_sol != new_sol
         return false
     end
     return true
@@ -689,7 +709,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
             new_priority = min(new_priority, get(queue, (new_solution, i - 1), new_priority))
             queue[(new_solution, i - 1)] = new_priority
         end
-        if real_visited > 10000
+        if real_visited > 1000
             break
         end
     end
