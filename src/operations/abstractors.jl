@@ -199,6 +199,7 @@ include("sort_array.jl")
 include("split_list.jl")
 include("transpose.jl")
 include("repeat_object_infinite.jl")
+include("unwrap_tuple.jl")
 
 using InteractiveUtils:subtypes
 classes = [cls() for cls in subtypes(AbstractorClass)]
