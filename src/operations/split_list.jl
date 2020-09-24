@@ -11,7 +11,7 @@ SplitList(key, max_count, to_abs) = Abstractor(SplitList(), key, max_count, to_a
 
 function Abstractor(cls::SplitList, key::String, max_count::Int, to_abs::Bool)
     if to_abs
-        return Abstractor(cls, true, vcat(detail_keys(cls, key), aux_keys(cls, key)), abs_keys(cls, key, max_count))
+        return Abstractor(cls, true, detail_keys(cls, key), abs_keys(cls, key, max_count))
     else
         return Abstractor(cls, false, abs_keys(cls, key, max_count), detail_keys(cls, key))
     end
@@ -24,7 +24,7 @@ function check_task_value(cls::SplitList, value::Vector, data, aux_values)
     true
 end
 
-create_abstractors(cls::SplitList, data, key) =
+create_abstractors(cls::SplitList, data, key, found_aux_keys) =
     [(priority(cls), (to_abstract = Abstractor(cls, key, data["max_count"], true),
                       from_abstract = Abstractor(cls, key, data["max_count"], false)))]
 

@@ -14,8 +14,8 @@ function check_task_value(cls::GridSize, value::AbstractArray{Int,2}, data, aux_
     true
 end
 
-create_abstractors(cls::GridSize, data, key) =
-    data["effective"] ? invoke(create_abstractors, Tuple{AbstractorClass,Any,Any}, cls, data, key) : []
+create_abstractors(cls::GridSize, data, key, found_aux_keys) =
+    data["effective"] ? invoke(create_abstractors, Tuple{AbstractorClass,Any,Any,Any}, cls, data, key, found_aux_keys) : []
 
 get_aux_values_for_task(cls::GridSize, task_data, key, solution) =
     in(key, solution.unfilled_fields) ?

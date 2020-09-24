@@ -17,9 +17,9 @@ function check_task_value(cls::GroupObjectsByColor, value::AbstractVector{Object
     return true
 end
 
-function create_abstractors(cls::GroupObjectsByColor, data, key)
+function create_abstractors(cls::GroupObjectsByColor, data, key, found_aux_keys)
     if any(length(colors) > 1 for colors in data)
-        return invoke(create_abstractors, Tuple{AbstractorClass,Any,Any}, cls, data, key)
+        return invoke(create_abstractors, Tuple{AbstractorClass,Any,Any,Any}, cls, data, key, found_aux_keys)
     end
     return []
 end
