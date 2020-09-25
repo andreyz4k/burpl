@@ -1,6 +1,6 @@
 
 using .PatternMatching:Either,Option
-using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key,MultParam
+using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key,MultParam,MultByParam
 using .SolutionOps:match_fields
 using .ObjectPrior:Object
 
@@ -695,6 +695,28 @@ using .ObjectPrior:Object
         @test length(new_solutions) == 1
         expected_operations = Set([
             [MultParam("key", "key1", 2)],
+        ])
+        _compare_operations(expected_operations, new_solutions)
+    end
+
+    @testset "find multiply by key" begin
+        solution = make_dummy_solution([
+            Dict(
+                "key" => 10,
+                "key1" => 5,
+                "key2" => 2
+            ),
+            Dict(
+                "key" => 12,
+                "key1" => 4,
+                "key2" => 3
+            )
+        ], ["key"])
+        new_solutions = match_fields(solution)
+        @test length(new_solutions) == 2
+        expected_operations = Set([
+            [MultByParam("key", "key1", "key2")],
+            [MultByParam("key", "key2", "key1")],
         ])
         _compare_operations(expected_operations, new_solutions)
     end
