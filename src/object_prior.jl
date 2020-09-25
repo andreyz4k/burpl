@@ -87,7 +87,7 @@ point_in_rect(point::Tuple{Int,Int}, c1::Tuple{Int,Int}, c2::Tuple{Int,Int}) =
 function draw_object!(grid::Array{Int,2}, object)
     for i in 1:size(object.shape)[1], j in 1:size(object.shape)[2]
         p = (i, j) .+ object.position .- (1, 1)
-        if point_in_rect(p, (1, 1), size(grid))
+        if point_in_rect(p, (1, 1), size(grid)) && object.shape[i, j] != -1
             grid[p...] = object.shape[i, j]
         end
     end
