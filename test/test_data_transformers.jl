@@ -1,6 +1,6 @@
 
 using .PatternMatching:Either,Option
-using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key
+using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key,MultParam
 using .SolutionOps:match_fields
 using .ObjectPrior:Object
 
@@ -676,5 +676,26 @@ using .ObjectPrior:Object
             )
         ]
         @test find_dependent_key(taskdata, Set(["key"]), "key") == []
+    end
+
+    @testset "fund multiply" begin
+        solution = make_dummy_solution([
+            Dict(
+                "key" => 10,
+                "key1" => 5,
+                "key2" => 2
+            ),
+            Dict(
+                "key" => 12,
+                "key1" => 6,
+                "key2" => 2
+            )
+        ],["key"])
+        new_solutions = match_fields(solution)
+        @test length(new_solutions) == 1
+        expected_operations = Set([
+            [MultParam("key", "key1", 2)],
+        ])
+        _compare_operations(expected_operations, new_solutions)
     end
 end
