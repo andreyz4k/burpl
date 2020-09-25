@@ -189,6 +189,7 @@ create_abstractors(cls::AbstractorClass, data, key, found_aux_keys) =
                       from_abstract = Abstractor(cls, key, false, found_aux_keys)))]
 
 
+include("noop.jl")
 include("grid_size.jl")
 include("background_color.jl")
 include("solid_objects.jl")
@@ -203,6 +204,10 @@ include("unwrap_tuple.jl")
 include("split_object.jl")
 include("unwrap_single_list.jl")
 include("remove_redundant_dict.jl")
+include("compute_functions.jl")
+
+all_subtypes(cls) =
+    reduce(vcat, ((isabstracttype(c) ? all_subtypes(c) : [c]) for c in subtypes(cls)), init=[])
 
 using InteractiveUtils:subtypes
-classes = [cls() for cls in subtypes(AbstractorClass)]
+classes = [cls() for cls in all_subtypes(AbstractorClass)]

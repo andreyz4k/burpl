@@ -522,11 +522,9 @@ end
 
 import ..Operations
 
-function get_next_operations(solution, key)
-    res = reduce(vcat, (Operations.create(op_class, solution, key)
-                        for op_class in Operations.classes), init=[])
-    return res
-end
+get_next_operations(solution, key) =
+    reduce(vcat, (Operations.create(op_class, solution, key)
+                  for op_class in Operations.classes), init=[])
 
 function get_new_solutions_for_input_key(solution, key)
     # unfilled_data_types = set()
