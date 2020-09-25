@@ -37,5 +37,6 @@ function find_dependent_key(taskdata::Vector{Dict{String,Any}}, invalid_sources:
             end
         end
     end
-    return [CopyParam(key, inp_key) for inp_key in setdiff(candidates, unmatched)]
+    return [CopyParam(key, inp_key) for inp_key in setdiff(candidates, unmatched)
+            if all(haskey(task_data, inp_key) for task_data in taskdata)]
 end
