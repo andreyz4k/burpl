@@ -201,6 +201,8 @@ include("transpose.jl")
 include("repeat_object_infinite.jl")
 include("unwrap_tuple.jl")
 include("split_object.jl")
+include("unwrap_single_list.jl")
+include("remove_redundant_dict.jl")
 
 using InteractiveUtils:subtypes
 classes = [cls() for cls in subtypes(AbstractorClass)]
