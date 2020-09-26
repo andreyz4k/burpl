@@ -8,7 +8,7 @@ function get_match_transformers(taskdata::Array{Dict{String,Any}}, invalid_sourc
         find_proportionate_key,
         find_shifted_key,
         find_proportionate_by_key,
-        # find_shifted_by_key_matched_fields
+        find_shifted_by_key
     ]
     for func in find_matches_funcs
         if length(result) == 1

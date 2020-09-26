@@ -1,7 +1,7 @@
 
 using .PatternMatching:Either,Option
 using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key,
-MultParam,MultByParam,IncParam
+MultParam,MultByParam,IncParam,IncByParam
 using .SolutionOps:match_fields
 using .ObjectPrior:Object
 
@@ -739,6 +739,28 @@ using .ObjectPrior:Object
         @test length(new_solutions) == 1
         expected_operations = Set([
             [IncParam("key", "key1", 5)],
+        ])
+        _compare_operations(expected_operations, new_solutions)
+    end
+
+    @testset "find shift by key" begin
+        solution = make_dummy_solution([
+            Dict(
+                "key" => 10,
+                "key1" => 7,
+                "key2" => 3
+            ),
+            Dict(
+                "key" => 12,
+                "key1" => 8,
+                "key2" => 4
+            )
+        ],["key"])
+        new_solutions = match_fields(solution)
+        @test length(new_solutions) == 2
+        expected_operations = Set([
+            [IncByParam("key", "key1", "key2")],
+            [IncByParam("key", "key2", "key1")],
         ])
         _compare_operations(expected_operations, new_solutions)
     end
