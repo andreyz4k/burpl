@@ -13,5 +13,6 @@ include("find_proportionate_by_key.jl")
 include("find_shifted_key.jl")
 include("find_shifted_by_key.jl")
 include("match_transformers.jl")
+include("find_mapped_key.jl")
 
 end

@@ -1,6 +1,6 @@
 
 using .SolutionOps:match_fields
-using .PatternMatching:Either,make_either,Option,compare_values,update_value
+using .PatternMatching:Either,make_either,Option,compare_values,update_value,unpack_value
 using .ObjectPrior:Object
 
 @testset "Patten Matching" begin
@@ -175,6 +175,23 @@ using .ObjectPrior:Object
                 ])
             )
         )
+    end
+
+    @testset "uneven either" begin
+        options = [
+            Option(Object([1], (6, 7)), 1466893429768792071),
+            Option(Either([
+                Option(Object([1], (18, 1)), 5711579767974711938),
+                Option(Object([1], (18, 7)), 10665857197194304990)
+            ]), 2852018346029524200)
+        ]
+        println(options)
+        matcher = Either(options)
+        @test unpack_value(matcher) == [
+            Object([1], (6, 7)),
+            Object([1], (18, 1)),
+            Object([1], (18, 7))
+        ]
     end
 
 end

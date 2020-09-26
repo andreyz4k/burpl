@@ -38,7 +38,7 @@ function _check_shifted_key(input_value::Union{Int64,Tuple{Int64,Int64}}, output
         end
     else
         for shift_key in candidates[input_key]
-            if isa(input_data[shift_key], Union{Int64,Tuple{Int64,Int64}}) && !isnothing(compare_values(input_value .+ input_data[shift_key], output_value))
+            if haskey(input_data, shift_key) && isa(input_data[shift_key], Union{Int64,Tuple{Int64,Int64}}) && !isnothing(compare_values(input_value .+ input_data[shift_key], output_value))
                 push!(possible_shift_keys, shift_key)
             end
         end
@@ -66,7 +66,8 @@ function find_shifted_by_key(taskdata::Vector{Dict{String,Any}}, invalid_sources
     end
     return reduce(
         vcat,
-        [[IncByParam(key, inp_key, shift_key) for shift_key in shift_keys]
+        [[IncByParam(key, inp_key, shift_key) for shift_key in shift_keys
+          if all(haskey(task_data, shift_key) for task_data in taskdata)]
             for (inp_key, shift_keys) in candidates
             if !in(inp_key, unmatched) &&
                 all(haskey(task_data, inp_key) for task_data in taskdata)],

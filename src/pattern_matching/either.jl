@@ -1,7 +1,7 @@
 
 
 struct Option{T}
-    value::T
+    value::Union{T,Matcher{T}}
     option_hash
 end
 Option(value) = Option(value, nothing)

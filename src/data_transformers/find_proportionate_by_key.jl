@@ -38,7 +38,7 @@ function _check_proportions_key(input_value::Union{Int64,Tuple{Int64,Int64}}, ou
         end
     else
         for factor_key in candidates[input_key]
-            if isa(task_data[factor_key], Union{Int64,Tuple{Int64,Int64}}) &&
+            if haskey(task_data, factor_key) && isa(task_data[factor_key], Union{Int64,Tuple{Int64,Int64}}) &&
                     !isnothing(compare_values(input_value .* task_data[factor_key], output_value))
                 push!(possible_factor_keys, factor_key)
             end
@@ -68,7 +68,8 @@ function find_proportionate_by_key(taskdata::Vector{Dict{String,Any}}, invalid_s
     end
     return reduce(
         vcat,
-        [[MultByParam(key, inp_key, factor_key) for factor_key in factor_keys]
+        [[MultByParam(key, inp_key, factor_key) for factor_key in factor_keys
+          if all(haskey(task_data, factor_key) for task_data in taskdata)]
             for (inp_key, factor_keys) in candidates
             if !in(inp_key, unmatched) &&
                 all(haskey(task_data, inp_key) for task_data in taskdata)],

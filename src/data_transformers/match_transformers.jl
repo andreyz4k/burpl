@@ -4,7 +4,6 @@ function get_match_transformers(taskdata::Array{Dict{String,Any}}, invalid_sourc
     find_matches_funcs = [
         find_const,
         find_dependent_key,
-        # TODO: fill
         find_proportionate_key,
         find_shifted_key,
         find_proportionate_by_key,

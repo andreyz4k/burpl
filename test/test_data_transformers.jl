@@ -1,7 +1,7 @@
 
 using .PatternMatching:Either,Option
 using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key,
-MultParam,MultByParam,IncParam,IncByParam
+MultParam,MultByParam,IncParam,IncByParam,MapValues
 using .SolutionOps:match_fields
 using .ObjectPrior:Object
 
@@ -166,17 +166,17 @@ using .ObjectPrior:Object
             ),
         ], ["background", "key2"])
         new_solutions = match_fields(solution)
-        @test length(new_solutions) == 3
+        @test length(new_solutions) == 7
         expected_operations = Set([
             [SetConst("background", 1)],
             [SetConst("background", 2)],
             [CopyParam("background", "background_in")],
-            # [MapValues("key2", "background_in", Dict(1=>23, 2=>32)), SetConst("background", 1)],
-            # [MapValues("key2", "background_in", Dict(1=>23, 2=>32)), SetConst("background", 2)],
-            # [MapValues("key2", "background_in", Dict(1=>23, 2=>32)),
-            # CopyParam("background", "background_in")],
-            # [CopyParam("background", "background_in"),
-            # MapValues("key2", "background", Dict(1=>23, 2=>32))],
+            [SetConst("background", 1), MapValues("key2", "background_in", Dict(1 => 23, 2 => 32))],
+            [SetConst("background", 2), MapValues("key2", "background_in", Dict(1 => 23, 2 => 32))],
+            [CopyParam("background", "background_in"),
+            MapValues("key2", "background_in", Dict(1 => 23, 2 => 32))],
+            [CopyParam("background", "background_in"),
+            MapValues("key2", "background", Dict(1 => 23, 2 => 32))],
         ])
         _compare_operations(expected_operations, new_solutions)
         @test filtered_taskdata(solution) == [
@@ -763,5 +763,79 @@ using .ObjectPrior:Object
             [IncByParam("key", "key2", "key1")],
         ])
         _compare_operations(expected_operations, new_solutions)
+    end
+
+    @testset "find simple mapping" begin
+        solution = make_dummy_solution([
+            Dict(
+                "key3" => 1,
+                "key2" => 1,
+                "key" => 6
+            ),
+            Dict(
+                "key3" => 2,
+                "key2" => 1,
+                "key" => 1
+            ),
+            Dict(
+                "key3" => 4,
+                "key2" => 1,
+                "key" => 3
+            )
+        ], ["key"])
+        new_solutions = match_fields(solution)
+        @test length(new_solutions) == 2
+        expected_operations = Set([
+            [],
+            [MapValues("key", "key3", Dict(1 => 6, 2 => 1, 4 => 3))]
+        ])
+        _compare_operations(expected_operations, new_solutions)
+    end
+
+    @testset "find either mapping" begin
+        solution = make_dummy_solution([
+            Dict(
+                "key3" => 1,
+                "key2" => 1,
+                "key" => 6
+            ),
+            Dict(
+                "key3" => 2,
+                "key2" => 1,
+                "key" => Either([1, 10])
+            ),
+            Dict(
+                "key3" => 4,
+                "key2" => 1,
+                "key" => Either([3, 5])
+            )
+        ], ["key"])
+        new_solutions = match_fields(solution)
+        @test length(new_solutions) == 5
+        expected_operations = [
+            [],
+            [MapValues("key", "key3", Dict(1 => 6, 2 => 10, 4 => 3))],
+            [MapValues("key", "key3", Dict(1 => 6, 2 => 1, 4 => 3))],
+            [MapValues("key", "key3", Dict(1 => 6, 2 => 10, 4 => 5))],
+            [MapValues("key", "key3", Dict(1 => 6, 2 => 1, 4 => 5))],
+        ]
+        _compare_operations(expected_operations, new_solutions)
+        @test filtered_taskdata(solution) == [
+            Dict(
+                "key3" => 1,
+                "key2" => 1,
+                "key" => 6
+            ),
+            Dict(
+                "key3" => 2,
+                "key2" => 1,
+                "key" => Either([1, 10])
+            ),
+            Dict(
+                "key3" => 4,
+                "key2" => 1,
+                "key" => Either([3, 5])
+            )
+        ]
     end
 end

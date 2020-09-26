@@ -436,11 +436,11 @@ function get_unmatched_complexity_score(solution::Solution)
 end
 
 
-using ..DataTransformers:get_match_transformers
+using ..DataTransformers:get_match_transformers,find_mapped_key
 
-function find_matched_fields(key, solution::Solution)
+function find_matched_fields(key, solution::Solution, get_transformers_func)
     new_solutions = []
-    transformers = get_match_transformers(solution.taskdata, union(solution.unfilled_fields, solution.transformed_fields), key)
+    transformers = get_transformers_func(solution.taskdata, union(solution.unfilled_fields, solution.transformed_fields), key)
     for transformer in transformers
         if transformer.generability > 5
             continue
@@ -454,7 +454,7 @@ end
 
 function exact_match_fields(solution::Solution)
     for key in solution.unfilled_fields
-        new_solutions = find_matched_fields(key, solution)
+        new_solutions = find_matched_fields(key, solution, get_match_transformers)
         if !isempty(new_solutions)
             return reduce(
                 vcat,
@@ -466,25 +466,17 @@ function exact_match_fields(solution::Solution)
     return [solution]
 end
 
-function find_mapped_fields(key, solution)
-    # TODO: fill
-    return []
-end
 
 function match_fields(solution::Solution)
     out = []
     for new_solution in exact_match_fields(solution)
         mapped_solutions = Set([new_solution])
         for key in new_solution.unfilled_fields
-            next_solutions = Set()
-            for cur_solution in mapped_solutions
-                union!(next_solutions, find_mapped_fields(key, cur_solution))
-            end
+            next_solutions = union((find_matched_fields(key, cur_solution, find_mapped_key)
+                                   for cur_solution in mapped_solutions)...)
             union!(mapped_solutions, next_solutions)
         end
-        for mapped_solution in mapped_solutions
-            push!(out, mapped_solution)
-        end
+        append!(out, mapped_solutions)
     end
     return out
 end
