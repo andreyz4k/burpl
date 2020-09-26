@@ -30,7 +30,7 @@ FACTORS = [-9, -8, -7, -6, -5, -4, -3, -2, -1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 _check_proportions(input_value, output_value, candidates, input_key) = false
 
-function _check_proportions(input_value::Union{Number,Tuple{Number,Number}}, output_value, candidates, input_key)
+function _check_proportions(input_value::Union{Int64,Tuple{Int64,Int64}}, output_value, candidates, input_key)
     possible_factors = get(candidates, input_key, FACTORS)
     candidates[input_key]  = filter(factor -> !isnothing(compare_values(input_value .* factor, output_value)), possible_factors)
     return !isempty(candidates[input_key])

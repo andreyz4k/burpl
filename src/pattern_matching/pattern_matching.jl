@@ -1,7 +1,7 @@
 export PatternMatching
 module PatternMatching
 
-abstract type Matcher end
+abstract type Matcher{T} end
 
 
 compare_values(value1, value2) = value1 == value2 ? value2 : match(value1, value2)

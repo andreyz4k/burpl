@@ -1,19 +1,19 @@
 
 
-struct Option
-    value
+struct Option{T}
+    value::T
     option_hash
 end
 Option(value) = Option(value, nothing)
 
 Base.:(==)(a::Option, b::Option) = a.value == b.value && a.option_hash == b.option_hash
 Base.hash(op::Option, h::UInt64) = hash(op.value, h) + hash(op.option_hash, h)
-Base.show(io::IO, op::Option) = print(io, "Option(", op.value,
+Base.show(io::IO, op::Option{T}) where {T} = print(io, "Option{", T, "}(", op.value,
     (isnothing(op.option_hash) ? [] : [", ", op.option_hash])..., ")")
 
-struct Either <: Matcher
-    options::Array{Option}
-    function Either(options::AbstractVector{Option})
+struct Either{T} <: Matcher{T}
+    options::Array{Option{T}}
+    function Either(options::AbstractVector{Option{T}}) where {T}
         all_values = Set()
         for item in options
             push!(all_values, item.value)
@@ -23,15 +23,15 @@ struct Either <: Matcher
                 return value
             end
         end
-        return new(unique(options))
+        return new{T}(unique(options))
     end
 end
 
-Either(options::AbstractVector) = Either([Option(op) for op in options])
+Either(options::AbstractVector) = Either([isa(op, Option) ? op : Option(op) for op in options])
 
 Base.:(==)(a::Either, b::Either) = issetequal(a.options, b.options)
 Base.hash(e::Either, h::UInt64) = hash(e.options, h)
-Base.show(io::IO, e::Either) = print(io, "Either([", vcat([[op, ", "] for op in e.options]...)[1:end - 1]..., "])")
+Base.show(io::IO, e::Either{T}) where {T} = print(io, "Either{", T, "}([", vcat([[op, ", "] for op in e.options]...)[1:end - 1]..., "])")
 
 function make_either(keys, options)
     if length(options) == 1

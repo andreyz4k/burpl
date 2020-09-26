@@ -45,7 +45,7 @@ using .ObjectPrior:Object
         reversed_data = splitter(out_data)
         @test reversed_data["key"] == value["key"]
 
-        value = Dict(
+        value = Dict{String,Any}(
             "key" => Either([
                 Option(
                     Object([1; 1; 1; 1; 1; 1; 1], (1, 6)),

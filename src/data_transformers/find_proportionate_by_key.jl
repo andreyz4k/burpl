@@ -26,19 +26,19 @@ function _check_proportions_key(input_value::AbstractDict, output_value::Abstrac
 end
 
 _check_proportions_key(input_value, output_value, candidates, input_key, task_data, invalid_sources) = false
-function _check_proportions_key(input_value::Union{Number,Tuple{Number,Number}}, output_value, candidates, input_key, task_data, invalid_sources)
+function _check_proportions_key(input_value::Union{Int64,Tuple{Int64,Int64}}, output_value, candidates, input_key, task_data, invalid_sources)
     possible_factor_keys = []
     if !haskey(candidates, input_key)
         for (key, value) in task_data
             if !in(key, invalid_sources) &&
-                    isa(value, Union{Number,Tuple{Number,Number}}) &&
+                    isa(value, Union{Int64,Tuple{Int64,Int64}}) &&
                     !isnothing(compare_values(input_value .* value, output_value))
                 push!(possible_factor_keys, key)
             end
         end
     else
         for factor_key in candidates[input_key]
-            if isa(task_data[factor_key], Union{Number,Tuple{Number,Number}}) &&
+            if isa(task_data[factor_key], Union{Int64,Tuple{Int64,Int64}}) &&
                     !isnothing(compare_values(input_value .* task_data[factor_key], output_value))
                 push!(possible_factor_keys, factor_key)
             end

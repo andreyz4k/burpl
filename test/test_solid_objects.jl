@@ -42,7 +42,7 @@ using .ObjectPrior:Object
 
     @testset "process either" begin
         abs = SolidObjects("input|bgr_grid", true)
-        data = Dict(
+        data = Dict{String,Any}(
             "input|bgr_grid" => Either([
                 Option([-1 -1 -1; -1 2 2; -1 2 2], 6951943934144298334),
                 Option([0 0 0; 0 -1 -1; 0 -1 -1], 73827427852322294)
