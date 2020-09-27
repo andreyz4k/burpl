@@ -6,22 +6,15 @@ struct GroupObjectsByColor <: AbstractorClass end
 GroupObjectsByColor(key, to_abs) = Abstractor(GroupObjectsByColor(), key, to_abs)
 @memoize abs_keys(p::GroupObjectsByColor) = ["grouped", "group_keys"]
 
-init_create_check_data(cls::GroupObjectsByColor, key, solution) = []
+init_create_check_data(cls::GroupObjectsByColor, key, solution) = Dict("effective" => false)
 
 function check_task_value(cls::GroupObjectsByColor, value::AbstractVector{Object}, data, aux_values)
     colors = Set()
     for obj in value
         push!(colors, get_color(obj))
     end
-    push!(data, colors)
+    data["effective"] |= length(colors) > 1
     return true
-end
-
-function create_abstractors(cls::GroupObjectsByColor, data, key, found_aux_keys)
-    if any(length(colors) > 1 for colors in data)
-        return invoke(create_abstractors, Tuple{AbstractorClass,Any,Any,Any}, cls, data, key, found_aux_keys)
-    end
-    return []
 end
 
 function to_abstract_value(p::Abstractor, cls::GroupObjectsByColor, source_value, aux_values)

@@ -33,9 +33,6 @@ function check_task_value(cls::RepeatObjectInfinite, value::AbstractVector{Objec
     true
 end
 
-create_abstractors(cls::RepeatObjectInfinite, data, key, found_aux_keys) =
-    data["effective"] ? invoke(create_abstractors, Tuple{AbstractorClass,Any,Any,Any}, cls, data, key, found_aux_keys) : []
-
 
 needed_input_keys(p::Abstractor, cls::RepeatObjectInfinite) =
     p.to_abstract ? p.input_keys : p.input_keys[1:2:3]

@@ -24,9 +24,14 @@ function check_task_value(cls::SplitList, value::Vector, data, aux_values)
     true
 end
 
-create_abstractors(cls::SplitList, data, key, found_aux_keys) =
-    [(priority(cls), (to_abstract = Abstractor(cls, key, data["max_count"], true),
-                      from_abstract = Abstractor(cls, key, data["max_count"], false)))]
+function create_abstractors(cls::SplitList, data, key, found_aux_keys)
+    if data["max_count"] > 1
+        [(priority(cls), (to_abstract = Abstractor(cls, key, data["max_count"], true),
+                             from_abstract = Abstractor(cls, key, data["max_count"], false)))]
+    else
+        []
+    end
+end
 
 function to_abstract_value(p::Abstractor, cls::SplitList, source_value, aux_values)
     result = Dict{String,Any}(p.output_keys[1] => length(source_value))

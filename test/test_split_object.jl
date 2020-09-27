@@ -9,7 +9,7 @@ using .ObjectPrior:Object
             2 => Object([2 2 2 2 2 2 2 2 2 2], (1, 6)),
             8 => Object([8 8 8 8 8 8 8 8 8 8], (1, 8)),
         )
-        data = Dict()
+        data = Dict("effective" => false)
         @test wrap_check_task_value(SplitObject(), value, data, []) == true
 
         value = Dict(

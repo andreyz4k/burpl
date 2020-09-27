@@ -14,9 +14,6 @@ function check_task_value(cls::SolidObjects, value::AbstractArray{Int,2}, data, 
     true
 end
 
-create_abstractors(cls::SolidObjects, data, key, found_aux_keys) =
-    data["effective"] ? invoke(create_abstractors, Tuple{AbstractorClass,Any,Any,Any}, cls, data, key, found_aux_keys) : []
-
 to_abstract_value(p::Abstractor, cls::SolidObjects, source_value::AbstractArray{Int,2}, aux_values) =
     Dict(p.output_keys[1] => find_objects(source_value))
 

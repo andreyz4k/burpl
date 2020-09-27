@@ -7,14 +7,9 @@ SplitObject(key, to_abs) = Abstractor(SplitObject(), key, to_abs)
 init_create_check_data(cls::SplitObject, key, solution) = Dict("effective" => false)
 
 function check_task_value(cls::SplitObject, value::Object, data, aux_values)
-    if sum(value.shape .!= -1) > 1
-        data["effective"] = true
-    end
+    data["effective"] |= sum(value.shape .!= -1) > 1
     true
 end
-
-create_abstractors(cls::SplitObject, data, key, found_aux_keys) =
-    data["effective"] ? invoke(create_abstractors, Tuple{AbstractorClass,Any,Any,Any}, cls, data, key, found_aux_keys) : []
 
 function to_abstract_value(p::Abstractor, cls::SplitObject, object::Object, aux_values)
     res = Object[]

@@ -8,15 +8,9 @@ Transpose(key, to_abs) = Abstractor(Transpose(), key, to_abs)
 init_create_check_data(cls::Transpose, key, solution) = Dict("effective" => false)
 
 function check_task_value(cls::Transpose, value::AbstractArray{Int,2}, data, aux_values)
-    if !data["effective"]
-        transpose
-        data["effective"] = !any(val == transpose(value) for val in aux_values)
-    end
+    data["effective"] |= !any(val == transpose(value) for val in aux_values)
     true
 end
-
-create_abstractors(cls::Transpose, data, key, found_aux_keys) =
-    data["effective"] ? invoke(create_abstractors, Tuple{AbstractorClass,Any,Any,Any}, cls, data, key, found_aux_keys) : []
 
 
 get_aux_values_for_task(cls::Transpose, task_data, key, solution) =

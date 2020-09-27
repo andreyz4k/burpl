@@ -166,7 +166,7 @@ function create(cls::AbstractorClass, solution, key)::Array{Tuple{Float64,NamedT
     output
 end
 
-init_create_check_data(cls::AbstractorClass, key, solution) = nothing
+init_create_check_data(cls::AbstractorClass, key, solution) = Dict()
 
 wrap_check_task_value(cls::AbstractorClass, value, data, aux_values) =
     check_task_value(cls, value, data, aux_values)
@@ -184,9 +184,13 @@ wrap_check_task_value(cls::AbstractorClass, value::Matcher, data, aux_values) =
 get_aux_values_for_task(cls::AbstractorClass, task_data, key, solution) =
     [task_data[k] for k in aux_keys(cls, key, task_data)]
 
-create_abstractors(cls::AbstractorClass, data, key, found_aux_keys) =
+function create_abstractors(cls::AbstractorClass, data, key, found_aux_keys)
+    if haskey(data, "effective") && data["effective"] == false
+        return []
+    end
     [(priority(cls), (to_abstract = Abstractor(cls, key, true, found_aux_keys),
                       from_abstract = Abstractor(cls, key, false, found_aux_keys)))]
+end
 
 
 include("noop.jl")

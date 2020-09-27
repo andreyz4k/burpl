@@ -8,14 +8,9 @@ GridSize(key, to_abs) = Abstractor(GridSize(), key, to_abs)
 init_create_check_data(cls::GridSize, key, solution) = Dict("effective" => false)
 
 function check_task_value(cls::GridSize, value::AbstractArray{Int,2}, data, aux_values)
-    if !data["effective"]
-        data["effective"] = !any(val == size(value) for val in aux_values)
-    end
+    data["effective"] |= !any(val == size(value) for val in aux_values)
     true
 end
-
-create_abstractors(cls::GridSize, data, key, found_aux_keys) =
-    data["effective"] ? invoke(create_abstractors, Tuple{AbstractorClass,Any,Any,Any}, cls, data, key, found_aux_keys) : []
 
 get_aux_values_for_task(cls::GridSize, task_data, key, solution) =
     in(key, solution.unfilled_fields) ?

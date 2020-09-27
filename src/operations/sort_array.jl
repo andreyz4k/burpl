@@ -17,9 +17,6 @@ function check_task_value(cls::SortArray, value::AbstractVector{T}, data, aux_va
     return true
 end
 
-create_abstractors(cls::SortArray, data, key, found_aux_keys) =
-    data["effective"] ? invoke(create_abstractors, Tuple{AbstractorClass,Any,Any,Any}, cls, data, key, found_aux_keys) : []
-
 to_abstract_value(p::Abstractor, cls::SortArray, source_value, aux_values) =
     Dict(p.output_keys[1] => sort(source_value))
 
