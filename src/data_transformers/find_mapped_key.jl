@@ -72,6 +72,10 @@ end
 
 using DataStructures:DefaultDict
 
+_check_existance(matching_items, value::Dict) =
+    all(_check_existance(matching_items, val) for val in values(value))
+_check_existance(matching_items, value) = haskey(matching_items, value)
+
 function find_mapped_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
     candidates = DefaultDict(() -> Dict())
     unmatched = Set(invalid_sources)
@@ -94,7 +98,7 @@ function find_mapped_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::Ab
         [[MapValues(key, inp_key, unrolled_matches) for unrolled_matches in unroll_matchers(collect(matching_items))]
             for (inp_key, matching_items) in candidates
             if !in(inp_key, unmatched) &&
-                all(haskey(task_data, inp_key) && haskey(matching_items, task_data[inp_key]) for task_data in taskdata)],
+                all(haskey(task_data, inp_key) && _check_existance(matching_items, task_data[inp_key]) for task_data in taskdata)],
         init=[]
     )
 end

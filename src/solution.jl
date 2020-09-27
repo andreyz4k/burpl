@@ -597,6 +597,7 @@ function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64
     end
     sort!(new_solutions, by=(ps -> ps[1]))
     if debug
+        println(solution)
         println(new_solutions)
         readline(stdin)
     end
@@ -675,7 +676,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
         end
         real_visited += 1
         update_border!(border, solution)
-        println((real_visited, length(border), length(queue)))
+        println((real_visited, length(border), length(queue), solution.score))
         # println((pr, i, solution))
         new_solutions = get_new_solutions(solution, debug)
         for (priority, new_solution) in new_solutions

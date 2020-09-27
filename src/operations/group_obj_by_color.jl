@@ -41,7 +41,7 @@ function from_abstract_value(p::Abstractor, cls::GroupObjectsByColor, source_val
     results = reduce(
         vcat,
         [isa(data, AbstractDict) ? data[key] : data for key in keys],
-        init=Array{Object,1}[]
+        init=Object[]
     )
     return Dict(p.output_keys[1] => results)
 end

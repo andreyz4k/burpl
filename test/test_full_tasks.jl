@@ -1,7 +1,7 @@
 
 TASKS = [
     "../data/training/ff28f65a.json",
-    # "../data/training/0a938d79.json",
+    "../data/training/0a938d79.json",
 ]
 
 using Randy:get_solution,test_solution

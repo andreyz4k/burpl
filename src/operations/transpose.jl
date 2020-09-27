@@ -3,6 +3,7 @@ struct Transpose <: AbstractorClass end
 
 Transpose(key, to_abs) = Abstractor(Transpose(), key, to_abs)
 @memoize abs_keys(cls::Transpose) = ["transposed"]
+@memoize priority(::Transpose) = 10
 
 init_create_check_data(cls::Transpose, key, solution) = Dict("effective" => false)
 

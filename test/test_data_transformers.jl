@@ -698,6 +698,31 @@ using .ObjectPrior:Object
             [MultParam("key", "key1", 2)],
         ])
         _compare_operations(expected_operations, new_solutions)
+
+        solution = make_dummy_solution([
+            Dict(
+                "output|bgr_grid|grid|spatial_objects|grouped|step|to_value" => (4, 0),
+                "projected|output|bgr_grid|grid|spatial_objects|distance" => (-2, 0),
+            ),
+            Dict(
+                "output|bgr_grid|grid|spatial_objects|grouped|step|to_value" => (6, 0),
+                "projected|output|bgr_grid|grid|spatial_objects|distance" => (-3, 0)
+            ),
+            Dict(
+                "output|bgr_grid|grid|spatial_objects|grouped|step|to_value" => (0, 4),
+                "projected|output|bgr_grid|grid|spatial_objects|distance" => (0, -2)
+            ),
+            Dict(
+                "output|bgr_grid|grid|spatial_objects|grouped|step|to_value" => (0, 8),
+                "projected|output|bgr_grid|grid|spatial_objects|distance" => (0, -4)
+            )
+        ], ["output|bgr_grid|grid|spatial_objects|grouped|step|to_value"])
+        new_solutions = match_fields(solution)
+        @test length(new_solutions) == 1
+        expected_operations = Set([
+            [MultParam("output|bgr_grid|grid|spatial_objects|grouped|step|to_value", "projected|output|bgr_grid|grid|spatial_objects|distance", -2)],
+        ])
+        _compare_operations(expected_operations, new_solutions)
     end
 
     @testset "find multiply by key" begin
@@ -837,5 +862,78 @@ using .ObjectPrior:Object
                 "key" => Either([3, 5])
             )
         ]
+    end
+
+    @testset "find complex mapping" begin
+        solution = make_dummy_solution([
+            Dict(
+                "output|bgr_grid|grid|spatial_objects|grouped|step" => Dict{Any,Any}(2 => (4, 0), 8 => (4, 0)),
+                "projected|output|bgr_grid|grid|spatial_objects|grouped|first|splitted" => Dict{Any,Any}(2 => Main.Randy.ObjectPrior.Object[Object([2], (6, 1))], 8 => Main.Randy.ObjectPrior.Object[Object([8], (8, 10))]),
+                "projected|output" => [0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 2 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 8; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0],
+                "projected|output|bgr_grid" => [-1 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 -1; 2 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 8; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0],
+                "projected|output|bgr_grid|grid|spatial_objects|grouped" => Dict{Any,Any}(2 => Main.Randy.ObjectPrior.Object[Object([2], (6, 1))], 8 => Main.Randy.ObjectPrior.Object[Object([8], (8, 10))]),
+                "projected|output|bgr_grid|grid" => [-1 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 -1; 2 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1 -1 8],
+                "output|bgr_grid|grid|spatial_objects|grouped|first|splitted|step" => Dict{Any,Any}(2 => (0, 1), 8 => (0, -1)),
+                "projected|output|bgr_grid|grid|spatial_objects|grouped|first" => Dict{Any,Any}(2 => Object([2], (6, 1)), 8 => Object([8], (8, 10))),
+                "input|background" => 0,
+                "projected|output|bgr_grid|grid|spatial_objects" => Any[Object([2], (6, 1)), Object([8], (8, 10))],
+                "input|bgr_grid|grid|spatial_objects|grouped|single_value|border_alignment" => Dict{Any,Any}(2 => (false, true, false, false), 8 => (false, false, false, true))
+            ),
+            Dict(
+                "output|bgr_grid|grid|spatial_objects|grouped|step" => Dict{Any,Any}(3 => (6, 0), 1 => (6, 0)),
+                "projected|output|bgr_grid|grid|spatial_objects|grouped|first|splitted" => Dict{Any,Any}(3 => Main.Randy.ObjectPrior.Object[Object([3], (9, 7))], 1 => Main.Randy.ObjectPrior.Object[Object([1], (6, 1))]),
+                "projected|output" => [0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 1 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 3; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0],
+                "projected|output|bgr_grid" => [-1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; 1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 3; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0],
+                "projected|output|bgr_grid|grid|spatial_objects|grouped" => Dict{Any,Any}(3 => Main.Randy.ObjectPrior.Object[Object([3], (9, 7))], 1 => Main.Randy.ObjectPrior.Object[Object([1], (6, 1))]),
+                "projected|output|bgr_grid|grid" => [-1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; 1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 3],
+                "output|bgr_grid|grid|spatial_objects|grouped|first|splitted|step" => Dict{Any,Any}(3 => (0, -1), 1 => (0, 1)),
+                "projected|output|bgr_grid|grid|spatial_objects|grouped|first" => Dict{Any,Any}(3 => Object([3], (9, 7)), 1 => Object([1], (6, 1))),
+                "input|background" => 0,
+                "projected|output|bgr_grid|grid|spatial_objects" => Any[Object([1], (6, 1)), Object([3], (9, 7))],
+                "input|bgr_grid|grid|spatial_objects|grouped|single_value|border_alignment" => Dict{Any,Any}(3 => (false, false, false, true), 1 => (false, true, false, false))
+            ),
+            Dict(
+                "output|bgr_grid|grid|spatial_objects|grouped|step" => Dict{Any,Any}(2 => (0, 4), 3 => (0, 4)),
+                "projected|output|bgr_grid|grid|spatial_objects|grouped|first|splitted" => Dict{Any,Any}(2 => Main.Randy.ObjectPrior.Object[Object([2], (1, 6))], 3 => Main.Randy.ObjectPrior.Object[Object([3], (9, 8))]),
+                "projected|output" => [0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0],
+                "projected|output|bgr_grid" => [-1 -1 -1 -1 -1 2 -1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; -1 -1 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; -1 -1 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; -1 -1 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; -1 -1 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; -1 -1 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; -1 -1 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; -1 -1 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; -1 -1 -1 -1 -1 -1 -1 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0],
+                "projected|output|bgr_grid|grid|spatial_objects|grouped" => Dict{Any,Any}(2 => Main.Randy.ObjectPrior.Object[Object([2], (1, 6))], 3 => Main.Randy.ObjectPrior.Object[Object([3], (9, 8))]),
+                "projected|output|bgr_grid|grid" => [-1 -1 -1 -1 -1 2 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 -1; -1 -1 -1 -1 -1 -1 -1 3],
+                "output|bgr_grid|grid|spatial_objects|grouped|first|splitted|step" => Dict{Any,Any}(2 => (1, 0), 3 => (-1, 0)),
+                "projected|output|bgr_grid|grid|spatial_objects|grouped|first" => Dict{Any,Any}(2 => Object([2], (1, 6)), 3 => Object([3], (9, 8))),
+                "input|background" => 0,
+                "projected|output|bgr_grid|grid|spatial_objects" => Any[Object([2], (1, 6)), Object([3], (9, 8))],
+                "input|bgr_grid|grid|spatial_objects|grouped|single_value|border_alignment" => Dict{Any,Any}(2 => (true, false, false, false), 3 => (false, false, true, false))
+            ),
+            Dict(
+                "output|bgr_grid|grid|spatial_objects|grouped|step" => Dict{Any,Any}(4 => (0, 8), 1 => (0, 8)),
+                "projected|output|bgr_grid|grid|spatial_objects|grouped|first|splitted" => Dict{Any,Any}(4 => Main.Randy.ObjectPrior.Object[Object([4], (1, 8))], 1 => Main.Randy.ObjectPrior.Object[Object([1], (1, 12))]),
+                "projected|output" => [0 0 0 0 0 0 0 4 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0],
+                "projected|output|bgr_grid" => [-1 -1 -1 -1 -1 -1 -1 4 -1 -1 -1 1 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0],
+                "projected|output|bgr_grid|grid|spatial_objects|grouped" => Dict{Any,Any}(4 => Main.Randy.ObjectPrior.Object[Object([4], (1, 8))], 1 => Main.Randy.ObjectPrior.Object[Object([1], (1, 12))]),
+                "projected|output|bgr_grid|grid" => [-1 -1 -1 -1 -1 -1 -1 4 -1 -1 -1 1],
+                "output|bgr_grid|grid|spatial_objects|grouped|first|splitted|step" => Dict{Any,Any}(4 => (1, 0), 1 => (1, 0)),
+                "projected|output|bgr_grid|grid|spatial_objects|grouped|first" => Dict{Any,Any}(4 => Object([4], (1, 8)), 1 => Object([1], (1, 12))),
+                "input|background" => 0,
+                "projected|output|bgr_grid|grid|spatial_objects" => Any[Object([1], (1, 12)), Object([4], (1, 8))],
+                "input|bgr_grid|grid|spatial_objects|grouped|single_value|border_alignment" => Dict{Any,Any}(4 => (true, false, false, false), 1 => (true, false, false, false))
+            )
+        ], ["output|bgr_grid|grid|spatial_objects|grouped|step", "output|bgr_grid|grid|spatial_objects|grouped|first|splitted|step"])
+        new_solutions = match_fields(solution)
+        @test length(new_solutions) == 2
+        expected_operations = [
+            [],
+            [MapValues(
+                "output|bgr_grid|grid|spatial_objects|grouped|first|splitted|step",
+                "input|bgr_grid|grid|spatial_objects|grouped|single_value|border_alignment",
+                Dict(
+                    (true, false, false, false) => (1, 0),
+                    (false, false, true, false) => (-1, 0),
+                    (false, false, false, true) => (0, -1),
+                    (false, true, false, false) => (0, 1)
+                ))
+            ],
+        ]
+        _compare_operations(expected_operations, new_solutions)
     end
 end

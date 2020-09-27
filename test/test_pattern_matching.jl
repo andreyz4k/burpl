@@ -185,7 +185,6 @@ using .ObjectPrior:Object
                 Option(Object([1], (18, 7)), 10665857197194304990)
             ]), 2852018346029524200)
         ]
-        println(options)
         matcher = Either(options)
         @test unpack_value(matcher) == [
             Object([1], (6, 7)),

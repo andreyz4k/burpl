@@ -136,7 +136,7 @@ using .PatternMatching:Either,Option
         abstractors = create(RepeatObjectInfinite(), solution, "input|key")
         @test length(abstractors) == 1
         for (priority, reshaper) in abstractors
-            @test priority == 9.6
+            @test priority == 8.8
             @test reshaper.to_abstract.input_keys == ["input|key", "input|grid_size"]
             @test reshaper.to_abstract.output_keys == ["input|key|first", "input|key|step"]
             @test reshaper.from_abstract.input_keys == ["input|key|first", "input|key|step", "input|grid_size"]

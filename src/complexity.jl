@@ -8,13 +8,13 @@ get_complexity(v::Any)::Float64 = length(repr(v))
 get_complexity(::Int)::Float64 = 1
 
 get_complexity(value::Tuple)::Float64 =
-    3 + sum(get_complexity(v) for v in value) * 0.95^(length(value) - 1)
+    3 + sum(get_complexity(v) for v in value) * (0.5 + 0.5 * 0.95^(sum(value .!= -1) - 1))
 
 get_complexity(value::AbstractVector)::Float64 =
-    5 + sum(Float64[get_complexity(v) for v in value]) * 0.95^(length(value) - 1)
+    5 + sum(Float64[get_complexity(v) for v in value]) * (0.5 + 0.5 * 0.95^(sum(value .!= -1) - 1))
 
 get_complexity(value::AbstractArray{Int,2})::Float64 =
-    5 + sum(value .!= -1) * 4 * 0.95^(sum(value .!= -1) - 1)
+    5 + sum(value .!= -1) * 4 * (0.5 + 0.5 * 0.95^(sum(value .!= -1) - 1))
 
 get_complexity(value::String)::Float64 = length(value)
 
@@ -65,7 +65,7 @@ function _get_variability(items)
 end
 
 _is_one_hot(items::AbstractSet) = all(_is_one_hot(v) for v in items)
-_is_one_hot(value::Tuple) = all(v == 1 || v == 0 for v in value) && sum(value) == 1
+_is_one_hot(value::Tuple) = all(v == 1 || v == 0 || v == true || v == false for v in value) && sum(value) == 1
 
 
 function get_generability(items)::Float64

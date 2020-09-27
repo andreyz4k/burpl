@@ -20,23 +20,50 @@ using .DataTransformers:MapValues
 
     @testset "tuple" begin
         @test get_complexity((1,)) == 4
-        @test get_complexity((1, 2)) == 4.9
-        @test get_complexity((1, 2, 234)) == 5.7075
+        @test get_complexity((1, 2)) == 4.95
+        @test get_complexity((1, 2, 234)) == 5.85375
     end
 
     @testset "list" begin
-        @test get_complexity([1, 2]) == 6.9
-        @test get_complexity([34, 234, 32]) == 7.7075
+        @test get_complexity([1, 2]) == 6.95
+        @test get_complexity([34, 234, 32]) == 7.85375
     end
 
     @testset "shape" begin
         @test get_complexity(fill(0, 1, 1)) == 9
-        @test get_complexity(fill(0, 1, 2)) == 12.6
+        @test get_complexity(fill(0, 1, 2)) == 12.8
+        @test get_complexity([
+            0 0 0 0 0 0 0 0 0 0;
+            0 0 0 0 0 0 0 0 0 0;
+            0 0 0 0 0 0 0 0 0 0;
+            0 0 0 0 0 0 0 0 0 0;
+            0 0 0 0 0 0 0 0 0 0;
+            2 2 2 2 2 2 2 2 2 2;
+            0 0 0 0 0 0 0 0 0 0;
+            8 8 8 8 8 8 8 8 8 8;
+            0 0 0 0 0 0 0 0 0 0;
+            2 2 2 2 2 2 2 2 2 2;
+            0 0 0 0 0 0 0 0 0 0;
+            8 8 8 8 8 8 8 8 8 8;
+            0 0 0 0 0 0 0 0 0 0;
+            2 2 2 2 2 2 2 2 2 2;
+            0 0 0 0 0 0 0 0 0 0;
+            8 8 8 8 8 8 8 8 8 8;
+            0 0 0 0 0 0 0 0 0 0;
+            2 2 2 2 2 2 2 2 2 2;
+            0 0 0 0 0 0 0 0 0 0;
+            8 8 8 8 8 8 8 8 8 8;
+            0 0 0 0 0 0 0 0 0 0;
+            2 2 2 2 2 2 2 2 2 2;
+            0 0 0 0 0 0 0 0 0 0;
+            8 8 8 8 8 8 8 8 8 8;
+            0 0 0 0 0 0 0 0 0 0
+        ]) == 505.0014195402831
     end
 
     @testset "object" begin
-        @test get_complexity(Object([0], (1, 1))) == 13.9
-        @test get_complexity(Object([0 1], (1, 1))) == 17.5
+        @test get_complexity(Object([0], (1, 1))) == 13.95
+        @test get_complexity(Object([0 1], (1, 1))) == 17.75
     end
 
     @testset "reshape" begin
@@ -49,9 +76,9 @@ using .DataTransformers:MapValues
             (1, 1),
             (2, 1)
         ]
-        @test get_complexity(val1) == 31.41
+        @test get_complexity(val1) == 32.2025
         @test get_complexity(val2) == 9
-        @test get_complexity(val3) == 14.31
+        @test get_complexity(val3) == 14.6525
         @test get_complexity(val1) > get_complexity(val2) + get_complexity(val3)
 
         val1 = [
@@ -59,9 +86,9 @@ using .DataTransformers:MapValues
         ]
         val2 = fill(0, 1, 1)
         val3 = [(1, 1)]
-        @test get_complexity(val1) == 18.9
+        @test get_complexity(val1) == 18.95
         @test get_complexity(val2) == 9
-        @test get_complexity(val3) == 9.9
+        @test get_complexity(val3) == 9.95
         @test get_complexity(val1) == get_complexity(val2) + get_complexity(val3)
     end
 
@@ -75,7 +102,7 @@ using .DataTransformers:MapValues
             "a" => Object([0], (1, 1)),
             "b" => Object([0], (2, 1)),
         )
-        @test get_complexity(data) == 30.8
+        @test get_complexity(data) == 30.9
     end
 
     @testset "group" begin
@@ -134,7 +161,7 @@ using .DataTransformers:MapValues
             Object([1], (1, 1)),
         ]
         @test get_complexity(a) == get_complexity(b)
-        @test get_complexity(a) == 57.600022076093744
+        @test get_complexity(a) == 64.11189875339844
     end
 
     @testset "generability" begin
@@ -221,7 +248,7 @@ using .DataTransformers:MapValues
                 (false, false, false, true) => (0, -1)
             )
         )
-        @test m.complexity == 31.090124999999997
+        @test m.complexity == 32.5950625
 
         m = MapValues(
             "spatial_objects|distance",
@@ -233,7 +260,7 @@ using .DataTransformers:MapValues
                 (4, 0) => (8, 0)
             )
         )
-        @test m.complexity == 283.90000000000003
+        @test m.complexity == 286.45000000000005
         @test get_generability(keys(m.match_pairs)) == 17
 
         m = MapValues(
