@@ -73,13 +73,33 @@ struct Solution
     input_transformed_fields::Set{String}
     complexity_score::Float64
     score::Int
-    Solution(taskdata, blocks, unfilled_fields,
+    inp_val_hashes::Array{Set{UInt64}}
+    out_val_hashes::Array{Set{UInt64}}
+    function Solution(taskdata, blocks, unfilled_fields,
              filled_fields, transformed_fields, unused_fields, used_fields,
-             input_transformed_fields, complexity_score::Float64) =
+             input_transformed_fields, complexity_score::Float64)
+        inp_val_hashes = Set{UInt64}[]
+        out_val_hashes = Set{UInt64}[]
+        for task_data in taskdata
+            inp_vals = Set{UInt64}()
+            out_vals = Set{UInt64}()
+            for (key, value) in task_data
+                if in(key, transformed_fields) || in(key, filled_fields) ||  in(key, unfilled_fields)
+                    push!(out_vals, hash(value))
+                end
+                if in(key, unused_fields) || in(key, used_fields) || in(key, input_transformed_fields)
+                    push!(inp_vals, hash(value))
+                end
+            end
+            push!(inp_val_hashes, inp_vals)
+            push!(out_val_hashes, out_vals)
+        end
         new(taskdata, blocks,
             unfilled_fields, filled_fields, transformed_fields,
             unused_fields, used_fields, input_transformed_fields,
-            complexity_score, get_score(taskdata, complexity_score))
+            complexity_score, get_score(taskdata, complexity_score),
+            inp_val_hashes, out_val_hashes)
+    end
 end
 
 Solution(taskdata) = Solution(
@@ -607,25 +627,14 @@ end
 
 function is_subsolution(old_sol::Solution, new_sol::Solution)::Bool
     equals = true
-    for (new_task_data, old_task_data) in zip(new_sol.taskdata, old_sol.taskdata)
-        inp_vals = Set()
-        out_vals = Set()
-        for (key, value) in old_task_data
-            if in(key, old_sol.transformed_fields) || in(key, old_sol.filled_fields) ||  in(key, old_sol.unfilled_fields)
-                push!(out_vals, value)
-            end
-            if in(key, old_sol.unused_fields) || in(key, old_sol.used_fields) || in(key, old_sol.input_transformed_fields)
-                push!(inp_vals, value)
-            end
-        end
-
-        for (key, value) in new_task_data
-            if (in(key, new_sol.transformed_fields) || in(key, new_sol.filled_fields) ||  in(key, new_sol.unfilled_fields)) && !in(value, out_vals)
-                return false
-            end
-            if (in(key, new_sol.unused_fields) || in(key, new_sol.used_fields) || in(key, new_sol.input_transformed_fields)) && !in(value, inp_vals)
-                return false
-            end
+    for (new_inp_vals, new_out_vals, old_inp_vals, old_out_vals,
+         new_task_data, old_task_data) in
+            zip(new_sol.inp_val_hashes, new_sol.out_val_hashes,
+                old_sol.inp_val_hashes, old_sol.out_val_hashes,
+                new_sol.taskdata, old_sol.taskdata)
+        if !issubset(new_out_vals, old_out_vals) ||
+                !issubset(new_inp_vals, old_inp_vals)
+            return false
         end
         if !issetequal(keys(new_task_data), keys(old_task_data))
             equals = false
