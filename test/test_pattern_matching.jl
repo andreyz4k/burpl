@@ -1,5 +1,5 @@
 
-using .SolutionOps:match_fields
+using .FindSolution:match_fields
 using .PatternMatching:Either,make_either,Option,compare_values,update_value,unpack_value
 using .ObjectPrior:Object
 

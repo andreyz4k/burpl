@@ -1,6 +1,6 @@
 
 using .ObjectPrior:Object
-using .Operations:check_task_value,RepeatObjectInfinite,create
+using .Abstractors:check_task_value,RepeatObjectInfinite,create
 using .PatternMatching:Either,Option
 
 @testset "Repeat object infinite" begin

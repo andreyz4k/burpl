@@ -1,8 +1,13 @@
+export Abstractors
+module Abstractors
 
 using Memoization
 
+using ..Operations:Operation,OperationClass
+
 abstract type AbstractorClass <: OperationClass end
 
+@memoize allow_concrete(p::AbstractorClass) = true
 @memoize abs_keys(p::AbstractorClass) = []
 @memoize aux_keys(p::AbstractorClass) = []
 @memoize priority(p::AbstractorClass) = 8
@@ -40,13 +45,6 @@ function Abstractor(cls::AbstractorClass, key::String, to_abs::Bool, found_aux_k
     end
 end
 
-# function GridPerceptor(cls::GridPerceptorClass, source::String)
-#     if source == "output"
-#         return GridPerceptor(cls, false, abs_keys(cls, source), [])
-#     else
-#         return GridPerceptor(cls, true, detail_keys(cls, source), abs_keys(cls, source))
-#     end
-# end
 
 
 function (p::Abstractor)(task_data)
@@ -57,6 +55,7 @@ function (p::Abstractor)(task_data)
     end
 end
 
+import ..Operations:needed_input_keys
 needed_input_keys(p::Abstractor) = needed_input_keys(p, p.cls)
 needed_input_keys(p::Abstractor, cls::AbstractorClass) = p.input_keys
 
@@ -210,8 +209,12 @@ include("unwrap_single_list.jl")
 include("remove_redundant_dict.jl")
 include("compute_functions.jl")
 
+include("dot_product.jl")
+
 all_subtypes(cls) =
     reduce(vcat, ((isabstracttype(c) ? all_subtypes(c) : [c]) for c in subtypes(cls)), init=[])
 
 using InteractiveUtils:subtypes
-classes = [cls() for cls in all_subtypes(AbstractorClass)]
+classes = [cls() for cls in all_subtypes(AbstractorClass) if allow_concrete(cls())]
+
+end

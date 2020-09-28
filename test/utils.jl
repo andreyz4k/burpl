@@ -1,5 +1,5 @@
 
-using .SolutionOps:Solution, Block
+using .Solutions:Solution, Block
 using .Operations:Operation,Project
 
 make_sample_taskdata(len) =

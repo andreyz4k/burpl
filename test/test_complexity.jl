@@ -1,4 +1,4 @@
-using .SolutionOps:Solution, get_unmatched_complexity_score
+using .Solutions:get_unmatched_complexity_score
 using .Complexity:get_complexity,get_generability
 using .ObjectPrior:Object
 using .DataTransformers:MapValues

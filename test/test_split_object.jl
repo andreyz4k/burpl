@@ -1,5 +1,5 @@
 
-using .Operations:wrap_check_task_value,SplitObject
+using .Abstractors:wrap_check_task_value,SplitObject
 using .PatternMatching:Either,Option
 using .ObjectPrior:Object
 

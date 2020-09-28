@@ -41,7 +41,7 @@ function to_abstract_value(p::Abstractor, cls::RepeatObjectInfinite, source_valu
     objects = sort(source_value, by=obj -> obj.position)
     grid_size = aux_values[1]
     if length(objects) == 1
-        return Dict(p.output_keys[1] => objects[0])
+        return Dict(p.output_keys[1] => objects[1])
     end
     if length(objects) > 1
         step = objects[2].position .- objects[1].position

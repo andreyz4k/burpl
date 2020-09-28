@@ -3,7 +3,8 @@
 
 using ArgParse
 import JSON
-using .SolutionOps
+using .FindSolution
+using .Solutions
 function convert_grids(taskdata)
     Dict(
         "train" => [

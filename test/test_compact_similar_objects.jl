@@ -1,5 +1,5 @@
 
-using .Operations:CompactSimilarObjects,create
+using .Abstractors:CompactSimilarObjects,create
 using .ObjectPrior:Object
 
 @testset "Compact similar objects" begin

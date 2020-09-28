@@ -1,4 +1,4 @@
-import .Operations:GroupObjectsByColor,create
+import .Abstractors:GroupObjectsByColor,create
 import .ObjectPrior:Object
 
 @testset "Group objects by color" begin
