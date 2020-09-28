@@ -49,7 +49,10 @@ Base.show(io::IO, b::Block) =
 
 function (block::Block)(observed_data::Dict)::Dict
     for op in block.operations
-        observed_data = op(observed_data)
+        try
+            observed_data = op(observed_data)
+        catch KeyError
+        end
     end
     observed_data
 end

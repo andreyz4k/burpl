@@ -31,8 +31,8 @@ function main()
             help = "task file to solve"
             # arg_type = string
             # default = "data/training/ff28f65a.json"
-            default = "data/training/0a938d79.json"
-            # default = "data/training/0b148d64.json"
+            # default = "data/training/0a938d79.json"
+            default = "data/training/0b148d64.json"
         "--debug"
             action = :store_true
     end
