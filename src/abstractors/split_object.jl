@@ -1,7 +1,7 @@
 
 
 struct SplitObject <: AbstractorClass end
-# @memoize allow_concrete(p::SplitObject) = false
+@memoize allow_concrete(p::SplitObject) = false
 SplitObject(key, to_abs) = Abstractor(SplitObject(), key, to_abs)
 @memoize abs_keys(cls::SplitObject) = ["splitted"]
 
