@@ -29,24 +29,24 @@ function (op::MapValues)(task_data)
     update_value(task_data, op.output_keys[1], output_value)
 end
 
-function compare_mapped_fields(input_value::AbstractDict, output_value::AbstractDict, candidates, input_key)
+function compare_mapped_fields(input_value::AbstractDict, output_value::AbstractDict, matching_items)
     if !issetequal(keys(input_value), keys(output_value))
         return false
     end
-    all(compare_mapped_fields(value, output_value[key], candidates, input_key)
+    all(compare_mapped_fields(value, output_value[key], matching_items)
         for (key, value) in input_value)
 end
 
-compare_mapped_fields(input_value, output_value, candidates, input_key) = false
+compare_mapped_fields(input_value, output_value, matching_items) = false
 
-function compare_mapped_fields(input_value::Union{Int64,Tuple}, output_value::Union{Int64,Tuple,Matcher{T}}, candidates, input_key) where {T <: Union{Int64,Tuple}}
-    if !haskey(candidates[input_key], input_value)
-        candidates[input_key][input_value] = output_value
+function compare_mapped_fields(input_value::Union{Int64,Tuple}, output_value::Union{Int64,Tuple,Matcher{T}}, matching_items) where {T <: Union{Int64,Tuple}}
+    if !haskey(matching_items, input_value)
+        matching_items[input_value] = output_value
         return true
     else
-        possible_value = compare_values(candidates[input_key][input_value], output_value)
+        possible_value = compare_values(matching_items[input_value], output_value)
         if !isnothing(possible_value)
-            candidates[input_key][input_value] = possible_value
+            matching_items[input_value] = possible_value
             return true
         end
     end
@@ -76,29 +76,33 @@ _check_existance(matching_items, value::Dict) =
     all(_check_existance(matching_items, val) for val in values(value))
 _check_existance(matching_items, value) = haskey(matching_items, value)
 
+
 function find_mapped_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
-    candidates = DefaultDict(() -> Dict())
-    unmatched = Set(invalid_sources)
-    for task_data in taskdata
-        if !haskey(task_data, key)
+    result = []
+    for input_key in keys(taskdata[1])
+        if in(input_key, invalid_sources)
             continue
         end
-        for (input_key, value) in task_data
-            if in(input_key, unmatched)
+        good = true
+        matching_items = Dict()
+        for task_data in taskdata
+            if !haskey(task_data, input_key)
+                good = false
+                break
+            end
+            if !haskey(task_data, key)
                 continue
             end
-
-            if !compare_mapped_fields(value, task_data[key], candidates, input_key)
-                push!(unmatched, input_key)
+            input_value = task_data[input_key]
+            out_value = task_data[key]
+            if !compare_mapped_fields(input_value, out_value, matching_items)
+                good = false
+                break
             end
         end
+        if good && all(_check_existance(matching_items, task_data[input_key]) for task_data in taskdata)
+            append!(result, [MapValues(key, input_key, unrolled_matches) for unrolled_matches in unroll_matchers(collect(matching_items))])
+        end
     end
-    return reduce(
-        vcat,
-        [[MapValues(key, inp_key, unrolled_matches) for unrolled_matches in unroll_matchers(collect(matching_items))]
-            for (inp_key, matching_items) in candidates
-            if !in(inp_key, unmatched) &&
-                all(haskey(task_data, inp_key) && _check_existance(matching_items, task_data[inp_key]) for task_data in taskdata)],
-        init=[]
-    )
+    return result
 end

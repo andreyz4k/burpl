@@ -18,25 +18,39 @@ function (op::CopyParam)(task_data)
     data
 end
 
+_check_value(input_value, output_value) = false
+_check_value(input_value::Matcher, output_value) = false
+_check_value(input_value::AbstractDict, output_value::AbstractDict) = _check_value_inner(input_value, output_value)
+_check_value(input_value::T, output_value::T) where T = _check_value_inner(input_value, output_value)
+_check_value(input_value::T, output_value::Matcher{T}) where T = _check_value_inner(input_value, output_value)
+
+_check_value_inner(input_value, output_value) = !isnothing(compare_values(input_value, output_value))
+
 function find_dependent_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
-    candidates = Set()
-    unmatched = Set(invalid_sources)
-    for task_data in taskdata
-        if !haskey(task_data, key)
+    result = []
+    for input_key in keys(taskdata[1])
+        if in(input_key, invalid_sources)
             continue
         end
-        for (input_key, value) in task_data
-            if in(input_key, unmatched)
+        good = true
+        for task_data in taskdata
+            if !haskey(task_data, input_key)
+                good = false
+                break
+            end
+            if !haskey(task_data, key)
                 continue
             end
-            if !isa(value, Matcher) &&
-                    !isnothing(compare_values(value, task_data[key]))
-                push!(candidates, input_key)
-            else
-                push!(unmatched, input_key)
+            input_value = task_data[input_key]
+            out_value = task_data[key]
+            if !_check_value(input_value, out_value)
+                good = false
+                break
             end
         end
+        if good
+            push!(result, CopyParam(key, input_key))
+        end
     end
-    return [CopyParam(key, inp_key) for inp_key in setdiff(candidates, unmatched)
-            if all(haskey(task_data, inp_key) for task_data in taskdata)]
+    return result
 end

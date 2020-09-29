@@ -22,20 +22,25 @@ function (op::IncByParam)(task_data)
     update_value(task_data, op.output_keys[1], output_value)
 end
 
-function _check_shifted_key(input_value::AbstractDict, output_value::AbstractDict, candidates, input_key, input_data, invalid_sources)
+function _check_shifted_key(input_value::AbstractDict, output_value::AbstractDict, possible_shift_keys, task_data, invalid_sources)
     if !issetequal(keys(input_value), keys(output_value))
         return false
     end
-    all(_check_shifted_key(value, output_value[key], candidates, input_key, input_data, invalid_sources)
+    all(_check_shifted_key(value, output_value[key], possible_shift_keys, task_data, invalid_sources)
         for (key, value) in input_value)
 end
 
-_check_shifted_key(input_value, output_value, candidates, input_key, input_data, invalid_sources) = false
+_check_shifted_key(input_value, output_value, possible_shift_keys, task_data, invalid_sources) = false
+_check_shifted_key(input_value::T, output_value::T, possible_shift_keys, task_data, invalid_sources) where
+    T <: Union{Int64,Tuple{Int64,Int64}} =
+    _check_shifted_key_inner(input_value, output_value, possible_shift_keys, task_data, invalid_sources)
+_check_shifted_key(input_value::T, output_value::Matcher{T}, possible_shift_keys, task_data, invalid_sources) where
+    T <: Union{Int64,Tuple{Int64,Int64}} =
+    _check_shifted_key_inner(input_value, output_value, possible_shift_keys, task_data, invalid_sources)
 
-function _check_shifted_key(input_value::Union{Int64,Tuple{Int64,Int64}}, output_value, candidates, input_key, input_data, invalid_sources)
-    possible_shift_keys = []
-    if !haskey(candidates, input_key)
-        for (key, value) in input_data
+function _check_shifted_key_inner(input_value, output_value, possible_shift_keys, task_data, invalid_sources)
+    if isempty(possible_shift_keys)
+        for (key, value) in task_data
             if !in(key, invalid_sources) &&
                 isa(value, Union{Int64,Tuple{Int64,Int64}}) &&
                     !isnothing(compare_values(input_value .+ value, output_value))
@@ -43,40 +48,41 @@ function _check_shifted_key(input_value::Union{Int64,Tuple{Int64,Int64}}, output
             end
         end
     else
-        for shift_key in candidates[input_key]
-            if haskey(input_data, shift_key) && isa(input_data[shift_key], Union{Int64,Tuple{Int64,Int64}}) && !isnothing(compare_values(input_value .+ input_data[shift_key], output_value))
-                push!(possible_shift_keys, shift_key)
-            end
-        end
+        filter!(shift_key -> haskey(task_data, shift_key) &&
+                             isa(task_data[shift_key], Union{Int64,Tuple{Int64,Int64}}) &&
+                             !isnothing(compare_values(input_value .+ task_data[shift_key], output_value)),
+                possible_shift_keys)
+
     end
-    candidates[input_key] = possible_shift_keys
     return !isempty(possible_shift_keys)
 end
 
 function find_shifted_by_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
-    candidates = Dict()
-    unmatched = Set(invalid_sources)
-    for task_data in taskdata
-        if !haskey(task_data, key)
+    result = []
+    for input_key in keys(taskdata[1])
+        if in(input_key, invalid_sources)
             continue
         end
-        for (input_key, value) in task_data
-            if in(input_key, unmatched)
+        good = true
+        possible_shift_keys = []
+        for task_data in taskdata
+            if !haskey(task_data, input_key)
+                good = false
+                break
+            end
+            if !haskey(task_data, key)
                 continue
             end
-
-            if !_check_shifted_key(value, task_data[key], candidates, input_key, task_data, invalid_sources)
-                push!(unmatched, input_key)
+            input_value = task_data[input_key]
+            out_value = task_data[key]
+            if !_check_shifted_key(input_value, out_value, possible_shift_keys, task_data, invalid_sources)
+                good = false
+                break
             end
         end
+        if good
+            append!(result, [IncByParam(key, input_key, shift_key) for shift_key in possible_shift_keys])
+        end
     end
-    return reduce(
-        vcat,
-        [[IncByParam(key, inp_key, shift_key) for shift_key in shift_keys
-          if all(haskey(task_data, shift_key) for task_data in taskdata)]
-            for (inp_key, shift_keys) in candidates
-            if !in(inp_key, unmatched) &&
-                all(haskey(task_data, inp_key) for task_data in taskdata)],
-        init=[]
-    )
+    return result
 end
