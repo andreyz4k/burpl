@@ -62,6 +62,13 @@ function find_shifted_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::A
         good = true
         possible_shifts = []
         for task_data in taskdata
+            if !haskey(task_data, input_key)
+                good = false
+                break
+            end
+            if !haskey(task_data, key)
+                continue
+            end
             input_value = task_data[input_key]
             out_value = task_data[key]
             if !_check_shifted(input_value, out_value, possible_shifts)

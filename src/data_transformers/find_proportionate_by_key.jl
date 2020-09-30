@@ -66,6 +66,13 @@ function find_proportionate_by_key(taskdata::Vector{Dict{String,Any}}, invalid_s
         good = true
         possible_factor_keys = []
         for task_data in taskdata
+            if !haskey(task_data, input_key)
+                good = false
+                break
+            end
+            if !haskey(task_data, key)
+                continue
+            end
             input_value = task_data[input_key]
             out_value = task_data[key]
             if !_check_proportions_key(input_value, out_value, possible_factor_keys, task_data, invalid_sources)
