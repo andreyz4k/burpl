@@ -207,6 +207,9 @@ include("unwrap_tuple.jl")
 include("split_object.jl")
 include("unwrap_single_list.jl")
 include("remove_redundant_dict.jl")
+include("unite_in_rect.jl")
+include("unite_touching.jl")
+
 include("compute_functions.jl")
 
 include("dot_product.jl")
