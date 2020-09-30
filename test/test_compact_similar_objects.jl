@@ -1,8 +1,9 @@
 
-using .Abstractors:CompactSimilarObjects,create
+# using .Abstractors:CompactSimilarObjects,create
 using .ObjectPrior:Object
 
 @testset "Compact similar objects" begin
+    return
     @testset "reshape objects" begin
         source_data = Dict{String,Any}(
             "key" => [

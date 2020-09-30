@@ -4,6 +4,7 @@ struct UniteTouching <: AbstractorClass end
 
 UniteTouching(key, to_abs) = Abstractor(UniteTouching(), key, to_abs)
 @memoize abs_keys(p::UniteTouching) = ["united_touch"]
+@memoize priority(cls::UniteTouching) = 10
 
 init_create_check_data(cls::UniteTouching, key, solution) = Dict("effective" => false)
 

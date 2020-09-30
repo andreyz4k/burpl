@@ -4,6 +4,7 @@ struct UniteInRect <: AbstractorClass end
 
 UniteInRect(key, to_abs) = Abstractor(UniteInRect(), key, to_abs)
 @memoize abs_keys(p::UniteInRect) = ["united_rect"]
+@memoize priority(cls::UniteInRect) = 10
 
 init_create_check_data(cls::UniteInRect, key, solution) = Dict("effective" => false)
 
