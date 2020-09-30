@@ -70,12 +70,6 @@ function unroll_matchers(matching_items)
     results
 end
 
-using DataStructures:DefaultDict
-
-_check_existance(matching_items, value::Dict) =
-    all(_check_existance(matching_items, val) for val in values(value))
-_check_existance(matching_items, value) = haskey(matching_items, value)
-
 
 function find_mapped_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
     result = []
@@ -86,13 +80,6 @@ function find_mapped_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::Ab
         good = true
         matching_items = Dict()
         for task_data in taskdata
-            if !haskey(task_data, input_key)
-                good = false
-                break
-            end
-            if !haskey(task_data, key)
-                continue
-            end
             input_value = task_data[input_key]
             out_value = task_data[key]
             if !compare_mapped_fields(input_value, out_value, matching_items)
@@ -100,7 +87,7 @@ function find_mapped_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::Ab
                 break
             end
         end
-        if good && all(_check_existance(matching_items, task_data[input_key]) for task_data in taskdata)
+        if good
             append!(result, [MapValues(key, input_key, unrolled_matches) for unrolled_matches in unroll_matchers(collect(matching_items))])
         end
     end

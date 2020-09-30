@@ -17,9 +17,6 @@ using ..Abstractors:CountObjects
 function find_const_array(taskdata::Vector{Dict{String,Any}}, _, key::String)
     result = []
     for task_data in taskdata
-        if !haskey(task_data, key)
-            return []
-        end
         if !isa(task_data[key], AbstractVector)
             return []
         end
