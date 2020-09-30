@@ -1,8 +1,7 @@
 
 using .PatternMatching:Either,Option
 using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key,
-MultParam,MultByParam,IncParam,IncByParam,MapValues
-using .FindSolution:match_fields
+MultParam,MultByParam,IncParam,IncByParam,MapValues,match_fields
 using .ObjectPrior:Object
 
 @testset "Data transformers" begin

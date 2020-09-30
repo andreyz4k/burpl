@@ -19,6 +19,5 @@ create_abstractors(cls::ComputeFunctionClass, data, key, found_aux_keys) =
     [(priority(cls), (to_abstract = ComputeFunction(cls, key, found_aux_keys),
                       from_abstract = Abstractor(Noop(), key, false, String[])))]
 
-include("count_objects.jl")
 include("aligned_with_border.jl")
 include("distance_between_objects.jl")
