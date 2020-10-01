@@ -228,7 +228,7 @@ function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transf
     end
     if in(key, output_chain)
         for op in blocks[end].operations[i:end]
-            if all(!in(k, unfilled_fields) && !in(k, transformed_fields) for k in op.input_keys)
+            if any(in(k, output_chain) for k in op.output_keys) && all(!in(k, unfilled_fields) && !in(k, transformed_fields) for k in op.input_keys)
                 for k in op.output_keys
                     if in(k, unfilled_fields)
                         delete!(unfilled_fields, k)

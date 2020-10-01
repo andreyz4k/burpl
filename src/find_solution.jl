@@ -189,7 +189,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
         end
         real_visited += 1
         update_border!(border, solution)
-        println((real_visited, length(border), length(queue), solution.score))
+        println((real_visited, length(border), length(queue), solution.score, pr, i))
         # println((pr, i, solution))
         new_solutions = get_new_solutions(solution, debug)
         for (priority, new_solution) in new_solutions

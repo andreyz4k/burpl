@@ -21,3 +21,5 @@ create_abstractors(cls::ComputeFunctionClass, data, key, found_aux_keys) =
 
 include("aligned_with_border.jl")
 include("distance_between_objects.jl")
+include("group_max.jl")
+include("group_min.jl")

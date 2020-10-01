@@ -93,9 +93,8 @@ function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_valu
     return result
 end
 
-function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value, aux_values)
-    return to_abstract_value(p, cls, source_value, aux_values)
-end
+wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value, aux_values) =
+    to_abstract_value(p, cls, source_value, aux_values)
 
 using ..PatternMatching:Either,Option
 
@@ -200,7 +199,7 @@ include("group_obj_by_color.jl")
 # include("compact_similar_objects.jl")
 # include("select_color.jl")
 include("sort_array.jl")
-include("split_list.jl")
+# include("split_list.jl")
 include("transpose.jl")
 include("repeat_object_infinite.jl")
 include("unwrap_tuple.jl")
@@ -210,6 +209,7 @@ include("remove_redundant_dict.jl")
 include("unite_in_rect.jl")
 include("unite_touching.jl")
 include("count_objects.jl")
+include("select_group.jl")
 
 include("compute_functions.jl")
 

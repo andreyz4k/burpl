@@ -41,13 +41,19 @@ function to_abstract_value(p::Abstractor, cls::UniteTouching, source_value::Abst
         if in(obj, merged)
             continue
         end
-        for obj2 in view(source_value, i + 1:length(source_value))
-            if in(obj2, merged)
-                continue
-            end
-            if get_color(obj) == get_color(obj2) && _is_touching(obj, obj2)
-                obj = _merge_objects(obj, obj2)
-                push!(merged, obj2)
+        complete = false
+        while !complete
+            complete = true
+            for obj2 in view(source_value, i + 1:length(source_value))
+                if in(obj2, merged)
+                    continue
+                end
+                if get_color(obj) == get_color(obj2) && _is_touching(obj, obj2)
+                    obj = _merge_objects(obj, obj2)
+                    push!(merged, obj2)
+                    complete = false
+                    break
+                end
             end
         end
         push!(out, obj)
