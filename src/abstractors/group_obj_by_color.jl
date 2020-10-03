@@ -4,11 +4,11 @@ using ..ObjectPrior:Object,get_color
 struct GroupObjectsByColor <: AbstractorClass end
 
 GroupObjectsByColor(key, to_abs) = Abstractor(GroupObjectsByColor(), key, to_abs)
-@memoize abs_keys(p::GroupObjectsByColor) = ["grouped", "group_keys"]
+@memoize abs_keys(::GroupObjectsByColor) = ["grouped", "group_keys"]
 
-init_create_check_data(cls::GroupObjectsByColor, key, solution) = Dict("effective" => false)
+init_create_check_data(::GroupObjectsByColor, key, solution) = Dict("effective" => false)
 
-function check_task_value(cls::GroupObjectsByColor, value::AbstractVector{Object}, data, aux_values)
+function check_task_value(::GroupObjectsByColor, value::AbstractVector{Object}, data, aux_values)
     colors = Set()
     for obj in value
         push!(colors, get_color(obj))
@@ -17,7 +17,7 @@ function check_task_value(cls::GroupObjectsByColor, value::AbstractVector{Object
     return true
 end
 
-function to_abstract_value(p::Abstractor, cls::GroupObjectsByColor, source_value, aux_values)
+function to_abstract_value(p::Abstractor, ::GroupObjectsByColor, source_value)
     results = DefaultDict(() -> Object[])
     for obj in source_value
         key = get_color(obj)
@@ -29,7 +29,7 @@ function to_abstract_value(p::Abstractor, cls::GroupObjectsByColor, source_value
     )
 end
 
-function from_abstract_value(p::Abstractor, cls::GroupObjectsByColor, source_values)
+function from_abstract_value(p::Abstractor, ::GroupObjectsByColor, source_values)
     data, keys = source_values
     results = reduce(
         vcat,

@@ -78,7 +78,7 @@ function _get_keys_for_items(items)
 end
 
 using Statistics:mean
-function create(cls::DotProductClass, solution, key)::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{DotProduct,DotProduct}}},1}
+function create(::DotProductClass, solution, key)::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{DotProduct,DotProduct}}},1}
     res = []
     for abstractor_classes in ALLOWED_DOT_PRODUCTS
         abstractor_paths = get_abstractor_options(abstractor_classes, solution, key, !in(key, solution.unfilled_fields))

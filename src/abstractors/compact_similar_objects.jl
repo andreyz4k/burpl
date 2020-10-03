@@ -2,23 +2,23 @@
 struct CompactSimilarObjects <: AbstractorClass end
 
 CompactSimilarObjects(key, to_abs) = Abstractor(CompactSimilarObjects(), key, to_abs)
-@memoize abs_keys(p::CompactSimilarObjects) = ["common_shape", "positions"]
+@memoize abs_keys(::CompactSimilarObjects) = ["common_shape", "positions"]
 
-init_create_check_data(cls::CompactSimilarObjects, key, solution) = Dict("effective" => false)
+init_create_check_data(::CompactSimilarObjects, key, solution) = Dict("effective" => false)
 
-function check_task_value(cls::CompactSimilarObjects, value::AbstractVector{Object}, data, aux_values)
+function check_task_value(::CompactSimilarObjects, value::AbstractVector{Object}, data, aux_values)
     data["effective"] |= length(value) > 1
     (length(value) > 0) ? all(obj.shape == value[1].shape for obj in view(value, 2:length(value))) : true
 end
 
 
-to_abstract_value(p::Abstractor, cls::CompactSimilarObjects, source_value, aux_values) =
+to_abstract_value(p::Abstractor, ::CompactSimilarObjects, objects::AbstractVector{Object}) =
      Dict(
-        p.output_keys[1] => length(source_value) > 0 ? source_value[1].shape : nothing,
-        p.output_keys[2] => [obj.position for obj in source_value]
+        p.output_keys[1] => length(objects) > 0 ? objects[1].shape : nothing,
+        p.output_keys[2] => [obj.position for obj in objects]
     )
 
-from_abstract_value(p::Abstractor, cls::CompactSimilarObjects, source_values) =
+from_abstract_value(p::Abstractor, ::CompactSimilarObjects, source_values) =
     Dict(
         p.output_keys[1] => [Object(source_values[1], position) for position in source_values[2]]
     )

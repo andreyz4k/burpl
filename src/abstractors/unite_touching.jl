@@ -3,10 +3,10 @@
 struct UniteTouching <: AbstractorClass end
 
 UniteTouching(key, to_abs) = Abstractor(UniteTouching(), key, to_abs)
-@memoize abs_keys(p::UniteTouching) = ["united_touch"]
-@memoize priority(cls::UniteTouching) = 10
+@memoize abs_keys(::UniteTouching) = ["united_touch"]
+@memoize priority(::UniteTouching) = 10
 
-init_create_check_data(cls::UniteTouching, key, solution) = Dict("effective" => false)
+init_create_check_data(::UniteTouching, key, solution) = Dict("effective" => false)
 
 points_around(p) = [(i, j) for i in p[1] - 1:p[1] + 1, j in p[2] - 1:p[2] + 1]
 
@@ -24,7 +24,7 @@ function _is_touching(a::Object, b::Object)
     false
 end
 
-function check_task_value(cls::UniteTouching, value::AbstractVector{Object}, data, aux_values)
+function check_task_value(::UniteTouching, value::AbstractVector{Object}, data, aux_values)
     for (i, a) in enumerate(value), b in view(value, i + 1:length(value))
         if get_color(a) == get_color(b) && _is_touching(a, b)
             data["effective"] = true
@@ -34,7 +34,7 @@ function check_task_value(cls::UniteTouching, value::AbstractVector{Object}, dat
     true
 end
 
-function to_abstract_value(p::Abstractor, cls::UniteTouching, source_value::AbstractVector{Object}, aux_values)
+function to_abstract_value(p::Abstractor, ::UniteTouching, source_value::AbstractVector{Object})
     out = Object[]
     merged = Set()
     for (i, obj) in enumerate(source_value)
@@ -61,6 +61,6 @@ function to_abstract_value(p::Abstractor, cls::UniteTouching, source_value::Abst
     return Dict(p.output_keys[1] => out)
 end
 
-function from_abstract_value(p::Abstractor, cls::UniteTouching, source_values)
+function from_abstract_value(p::Abstractor, ::UniteTouching, source_values)
     return Dict(p.output_keys[1] => source_values[1])
 end

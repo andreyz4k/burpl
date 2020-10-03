@@ -3,14 +3,14 @@
 struct UniteInRect <: AbstractorClass end
 
 UniteInRect(key, to_abs) = Abstractor(UniteInRect(), key, to_abs)
-@memoize abs_keys(p::UniteInRect) = ["united_rect"]
-@memoize priority(cls::UniteInRect) = 10
+@memoize abs_keys(::UniteInRect) = ["united_rect"]
+@memoize priority(::UniteInRect) = 10
 
-init_create_check_data(cls::UniteInRect, key, solution) = Dict("effective" => false)
+init_create_check_data(::UniteInRect, key, solution) = Dict("effective" => false)
 
 _is_in(a::Object, b::Object) = all(a.position .<= b.position) && all(a.position .+ size(a.shape) .>= b.position .+ size(b.shape))
 
-function check_task_value(cls::UniteInRect, value::AbstractVector{Object}, data, aux_values)
+function check_task_value(::UniteInRect, value::AbstractVector{Object}, data, aux_values)
     for (i, a) in enumerate(value), b in view(value, i + 1:length(value))
         if get_color(a) == get_color(b) && (_is_in(a, b) || _is_in(b, a))
             data["effective"] = true
@@ -20,7 +20,7 @@ function check_task_value(cls::UniteInRect, value::AbstractVector{Object}, data,
     true
 end
 
-function to_abstract_value(p::Abstractor, cls::UniteInRect, source_value::AbstractVector{Object}, aux_values)
+function to_abstract_value(p::Abstractor, ::UniteInRect, source_value::AbstractVector{Object})
     out = Object[]
     merged = Set()
     for (i, obj) in enumerate(source_value)
@@ -47,5 +47,5 @@ function to_abstract_value(p::Abstractor, cls::UniteInRect, source_value::Abstra
     return Dict(p.output_keys[1] => out)
 end
 
-from_abstract_value(p::Abstractor, cls::UniteInRect, source_values) =
+from_abstract_value(p::Abstractor, ::UniteInRect, source_values) =
     Dict(p.output_keys[1] => source_values[1])

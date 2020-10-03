@@ -1,12 +1,12 @@
 
 struct SelectColor <: AbstractorClass end
 
-@memoize priority(p::SelectColor) = 2
+@memoize priority(::SelectColor) = 2
 
-@memoize abs_keys(p::SelectColor) = ["selected_by_color", "rejected_by_color"]
+@memoize abs_keys(::SelectColor) = ["selected_by_color", "rejected_by_color"]
 
 @memoize abs_keys(cls::SelectColor, key::String, param_key::String) = [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
-@memoize aux_keys(cls::SelectColor, key::String, param_key::String) = [param_key]
+@memoize aux_keys(::SelectColor, key::String, param_key::String) = [param_key]
 
 
 SelectColor(key, selector_key, to_abs) = Abstractor(SelectColor(), key, selector_key, to_abs)
@@ -20,7 +20,7 @@ function Abstractor(cls::SelectColor, key::String, selector_key::String, to_abs:
 end
 
 
-function init_create_check_data(p::SelectColor, key, solution)
+function init_create_check_data(::SelectColor, key, solution)
     data = Dict(
         "existing_choices" => Set{String}(),
         "interesting_choices" => Set{String}(),
@@ -44,7 +44,7 @@ PREFIX_VALUES = Dict(
 )
 
 
-function check_task_value(cls::SelectColor, value::AbstractVector{Object}, data, task_data)
+function check_task_value(::SelectColor, value::AbstractVector{Object}, data, task_data)
     index_values = DefaultDict(() -> Set())
     for obj in value
         if !haskey(data, "allowed_choices")
@@ -104,13 +104,13 @@ function create(cls::SelectColor, solution, key)::Array{Tuple{Float64,NamedTuple
 end
 
 
-to_abstract_value(p::Abstractor, cls::SelectColor, source_value::AbstractVector{Object}, aux_values) =
+to_abstract_value(p::Abstractor, ::SelectColor, source_value::AbstractVector{Object}, color) =
     Dict(
-        p.output_keys[1] => filter(obj -> get_color(obj) == aux_values[1], source_value),
-        p.output_keys[2] => filter(obj -> get_color(obj) != aux_values[1], source_value),
+        p.output_keys[1] => filter(obj -> get_color(obj) == color, source_value),
+        p.output_keys[2] => filter(obj -> get_color(obj) != color, source_value),
     )
 
-from_abstract_value(p::Abstractor, cls::SelectColor, source_values) =
+from_abstract_value(p::Abstractor, ::SelectColor, source_values) =
     Dict(
         p.output_keys[1] => vcat(source_values...)
     )

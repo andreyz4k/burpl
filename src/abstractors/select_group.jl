@@ -2,11 +2,11 @@
 
 struct SelectGroup <: AbstractorClass end
 
-@memoize abs_keys(cls::SelectGroup) = ["selected_by", "rejected_by"]
-@memoize priority(cls::SelectGroup) = 2
+@memoize abs_keys(::SelectGroup) = ["selected_by", "rejected_by"]
+@memoize priority(::SelectGroup) = 2
 
 @memoize abs_keys(cls::SelectGroup, key::String, param_key::String) = [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
-@memoize aux_keys(cls::SelectGroup, key::String, param_key::String) = [param_key]
+@memoize aux_keys(::SelectGroup, key::String, param_key::String) = [param_key]
 
 
 SelectGroup(key, selector_key, to_abs) = Abstractor(SelectGroup(), key, selector_key, to_abs)
@@ -36,7 +36,7 @@ function create(cls::SelectGroup, solution, key)::Array{Tuple{Float64,NamedTuple
 end
 
 
-function init_create_check_data(p::SelectGroup, key, solution)
+function init_create_check_data(::SelectGroup, key, solution)
     data = Dict(
         "existing_choices" => Set{String}(),
         "key" => key
@@ -52,7 +52,7 @@ function init_create_check_data(p::SelectGroup, key, solution)
     data
 end
 
-function check_task_value(cls::SelectGroup, value::AbstractDict, data, task_data)
+function check_task_value(::SelectGroup, value::AbstractDict, data, task_data)
     if !haskey(data, "allowed_choices")
         data["allowed_choices"] = Set{String}()
         for (key, data_value) in task_data
@@ -74,14 +74,14 @@ create_abstractors(cls::SelectGroup, data, key) =
             for selector_key in data["allowed_choices"]]
 
 
-wrap_to_abstract_value(p::Abstractor, cls::SelectGroup, source_value::AbstractDict, aux_values) =
-    to_abstract_value(p, cls, source_value, aux_values)
+wrap_to_abstract_value(p::Abstractor, cls::SelectGroup, source_value::AbstractDict, selected_key) =
+    to_abstract_value(p, cls, source_value, selected_key)
 
-function to_abstract_value(p::Abstractor, cls::SelectGroup, source_value::AbstractDict, aux_values)
+function to_abstract_value(p::Abstractor, ::SelectGroup, source_value::AbstractDict, selected_key)
     rejected = copy(source_value)
-    delete!(rejected, aux_values[1])
+    delete!(rejected, selected_key)
     Dict(
-        p.output_keys[1] => source_value[aux_values[1]],
+        p.output_keys[1] => source_value[selected_key],
         p.output_keys[2] => rejected
     )
 end
@@ -93,7 +93,7 @@ function from_abstract(p::Abstractor, cls::SelectGroup, previous_data::Dict)::Di
     return out_data
 end
 
-function from_abstract_value(p::Abstractor, cls::SelectGroup, source_values)
+function from_abstract_value(p::Abstractor, ::SelectGroup, source_values)
     out = copy(source_values[2])
     out[source_values[3]] = source_values[1]
     Dict(p.output_keys[1] => out)

@@ -2,14 +2,14 @@
 struct RepeatObjectInfinite <: AbstractorClass end
 
 RepeatObjectInfinite(key, to_abs, taskdata) = Abstractor(RepeatObjectInfinite(), key, to_abs, aux_keys(RepeatObjectInfinite(), key, taskdata))
-@memoize abs_keys(p::RepeatObjectInfinite) = ["first", "step"]
-@memoize aux_keys(p::RepeatObjectInfinite) = ["grid_size"]
+@memoize abs_keys(::RepeatObjectInfinite) = ["first", "step"]
+@memoize aux_keys(::RepeatObjectInfinite) = ["grid_size"]
 
-init_create_check_data(cls::RepeatObjectInfinite, key, solution) = Dict("effective" => false)
+init_create_check_data(::RepeatObjectInfinite, key, solution) = Dict("effective" => false)
 
 using ..ObjectPrior:point_in_rect
 
-function check_task_value(cls::RepeatObjectInfinite, value::AbstractVector{Object}, data, aux_values)
+function check_task_value(::RepeatObjectInfinite, value::AbstractVector{Object}, data, aux_values)
     if isempty(value)
         return false
     end
@@ -34,12 +34,11 @@ function check_task_value(cls::RepeatObjectInfinite, value::AbstractVector{Objec
 end
 
 
-needed_input_keys(p::Abstractor, cls::RepeatObjectInfinite) =
+needed_input_keys(p::Abstractor, ::RepeatObjectInfinite) =
     p.to_abstract ? p.input_keys : p.input_keys[1:2:3]
 
-function to_abstract_value(p::Abstractor, cls::RepeatObjectInfinite, source_value, aux_values)
+function to_abstract_value(p::Abstractor, ::RepeatObjectInfinite, source_value, grid_size)
     objects = sort(source_value, by=obj -> obj.position)
-    grid_size = aux_values[1]
     if length(objects) == 1
         return Dict(p.output_keys[1] => objects[1])
     end
@@ -61,7 +60,7 @@ function to_abstract_value(p::Abstractor, cls::RepeatObjectInfinite, source_valu
     end
 end
 
-function from_abstract_value(p::Abstractor, cls::RepeatObjectInfinite, source_values)
+function from_abstract_value(p::Abstractor, ::RepeatObjectInfinite, source_values)
     first, step, grid_size = source_values
     out_value = [first]
     i = 1

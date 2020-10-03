@@ -8,12 +8,12 @@ using ..Operations:Operation,OperationClass
 abstract type AbstractorClass <: OperationClass end
 
 @memoize allow_concrete(p::AbstractorClass) = true
-@memoize abs_keys(p::AbstractorClass) = []
-@memoize aux_keys(p::AbstractorClass) = []
-@memoize priority(p::AbstractorClass) = 8
+@memoize abs_keys(::AbstractorClass) = []
+@memoize aux_keys(::AbstractorClass) = []
+@memoize priority(::AbstractorClass) = 8
 
 @memoize abs_keys(cls::AbstractorClass, key::String) = [key * "|" * a_key for a_key in abs_keys(cls)]
-@memoize detail_keys(cls::AbstractorClass, key::String) = [key]
+@memoize detail_keys(::AbstractorClass, key::String) = [key]
 function aux_keys(cls::AbstractorClass, key::String, taskdata)::Array{String}
     result = []
     for a_key in aux_keys(cls)
@@ -57,7 +57,7 @@ end
 
 import ..Operations:needed_input_keys
 needed_input_keys(p::Abstractor) = needed_input_keys(p, p.cls)
-needed_input_keys(p::Abstractor, cls::AbstractorClass) = p.input_keys
+needed_input_keys(p::Abstractor, ::AbstractorClass) = p.input_keys
 
 Base.show(io::IO, p::Abstractor) = print(io,
         string(nameof(typeof(p.cls))),
@@ -73,7 +73,7 @@ Base.:(==)(a::Abstractor, b::Abstractor) = a.cls == b.cls && a.to_abstract == b.
 function to_abstract(p::Abstractor, cls::AbstractorClass, previous_data::Dict)::Dict
     out_data = copy(previous_data)
     input_values = fetch_input_values(p, out_data)
-    merge!(out_data, wrap_to_abstract_value(p, cls, input_values[1], input_values[2:end]))
+    merge!(out_data, wrap_to_abstract_value(p, cls, input_values...))
 
     return out_data
 end
@@ -83,25 +83,25 @@ fetch_input_values(p::Abstractor, task_data) =
 
 using DataStructures:DefaultDict
 
-function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value::AbstractDict, aux_values)
+function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value::AbstractDict, aux_values...)
     result = DefaultDict(() -> Dict())
     for (key, value) in source_value
-        for (out_key, out_value) in wrap_to_abstract_value(p, cls, value, aux_values)
+        for (out_key, out_value) in wrap_to_abstract_value(p, cls, value, aux_values...)
             result[out_key][key] = out_value
         end
     end
     return result
 end
 
-wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value, aux_values) =
-    to_abstract_value(p, cls, source_value, aux_values)
+wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_values...) =
+    to_abstract_value(p, cls, source_values...)
 
 using ..PatternMatching:Either,Option
 
-function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value::Either, aux_values)
+function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value::Either, aux_values...)
     outputs = DefaultDict(() -> Option[])
     for option in source_value.options
-        for (key, value) in wrap_to_abstract_value(p, cls, option.value, aux_values)
+        for (key, value) in wrap_to_abstract_value(p, cls, option.value, aux_values...)
             push!(outputs[key], Option(value, option.option_hash))
         end
     end
@@ -164,7 +164,7 @@ function create(cls::AbstractorClass, solution, key)::Array{Tuple{Float64,NamedT
     output
 end
 
-init_create_check_data(cls::AbstractorClass, key, solution) = Dict()
+init_create_check_data(::AbstractorClass, key, solution) = Dict()
 
 wrap_check_task_value(cls::AbstractorClass, value, data, aux_values) =
     check_task_value(cls, value, data, aux_values)
@@ -172,7 +172,7 @@ wrap_check_task_value(cls::AbstractorClass, value, data, aux_values) =
 wrap_check_task_value(cls::AbstractorClass, value::AbstractDict, data, aux_values) =
     all(wrap_check_task_value(cls, v, data, aux_values) for v in values(value))
 
-check_task_value(cls::AbstractorClass, value, data, aux_values) = false
+check_task_value(::AbstractorClass, value, data, aux_values) = false
 
 using ..PatternMatching:Matcher,unpack_value
 

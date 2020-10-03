@@ -1,18 +1,18 @@
 
 
 struct SplitObject <: AbstractorClass end
-@memoize allow_concrete(p::SplitObject) = false
+@memoize allow_concrete(::SplitObject) = false
 SplitObject(key, to_abs) = Abstractor(SplitObject(), key, to_abs)
-@memoize abs_keys(cls::SplitObject) = ["splitted"]
+@memoize abs_keys(::SplitObject) = ["splitted"]
 
-init_create_check_data(cls::SplitObject, key, solution) = Dict("effective" => false)
+init_create_check_data(::SplitObject, key, solution) = Dict("effective" => false)
 
-function check_task_value(cls::SplitObject, value::Object, data, aux_values)
+function check_task_value(::SplitObject, value::Object, data, aux_values)
     data["effective"] |= sum(value.shape .!= -1) > 1
     true
 end
 
-function to_abstract_value(p::Abstractor, cls::SplitObject, object::Object, aux_values)
+function to_abstract_value(p::Abstractor, ::SplitObject, object::Object)
     res = Object[]
     for i in 1:size(object.shape)[1], j in 1:size(object.shape)[2]
         if object.shape[i, j] != -1
@@ -32,7 +32,7 @@ function _merge_objects(obj1::Object, obj2::Object)
     return Object(new_shape, new_pos)
 end
 
-function from_abstract_value(p::Abstractor, cls::SplitObject, source_values)
+function from_abstract_value(p::Abstractor, ::SplitObject, source_values)
     result = source_values[1][1]
     for obj in source_values[1][2:end]
         result = _merge_objects(result, obj)
