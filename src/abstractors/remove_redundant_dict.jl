@@ -14,11 +14,15 @@ check_task_value(::RemoveRedundantDict, value::AbstractDict, data, aux_values) =
 
 function call_wrappers(::RemoveRedundantDict, func::Function)
     if func != from_abstract_value
-        Function[wrap_func_call_either_value]
+        [
+            wrap_func_call_either_value,
+            wrap_func_call_prefix_value,
+        ]
     else
         [
             wrap_func_call_dict_value,
-            wrap_func_call_either_value
+            wrap_func_call_either_value,
+            wrap_func_call_prefix_value,
         ]
     end
 end

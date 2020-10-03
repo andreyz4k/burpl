@@ -75,7 +75,10 @@ create_abstractors(cls::SelectGroup, data, key) =
 
 
 call_wrappers(::SelectGroup, ::Function) =
-    Function[wrap_func_call_either_value]
+    [
+        wrap_func_call_either_value,
+        wrap_func_call_prefix_value
+    ]
 
 function to_abstract_value(p::Abstractor, ::SelectGroup, source_value::AbstractDict, selected_key)
     rejected = copy(source_value)

@@ -32,11 +32,15 @@ end
 
 function call_wrappers(::GroupObjectsByColor, func::Function)
     if func == from_abstract_value
-        Function[wrap_func_call_either_value]
+        [
+            wrap_func_call_either_value,
+            wrap_func_call_prefix_value,
+        ]
     else
         [
             wrap_func_call_dict_value,
-            wrap_func_call_either_value
+            wrap_func_call_either_value,
+            wrap_func_call_prefix_value,
         ]
     end
 end

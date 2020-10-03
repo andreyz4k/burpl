@@ -38,9 +38,6 @@ end
 function exact_match_fields(solution::Solution)
     for key in solution.unfilled_fields
         new_solutions = find_matched_fields(key, solution, get_match_transformers)
-        if length(new_solutions) != 1
-            append!(new_solutions, find_matched_const_array(key, solution))
-        end
         if !isempty(new_solutions)
             return reduce(
                 vcat,

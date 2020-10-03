@@ -34,6 +34,7 @@ get_complexity(value::Matcher)::Float64 =
 
 
 include("either.jl")
+include("array_prefix.jl")
 include("update_value.jl")
 
 

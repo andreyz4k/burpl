@@ -81,7 +81,8 @@ using DataStructures:DefaultDict
 
 call_wrappers(::AbstractorClass, ::Function) = [
     wrap_func_call_dict_value,
-    wrap_func_call_either_value
+    wrap_func_call_either_value,
+    wrap_func_call_prefix_value,
 ]
 
 function wrap_func_call_value_root(p::Abstractor, cls::AbstractorClass, func::Function, source_values...)
@@ -179,6 +180,22 @@ function wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::
             end
         end
         return Dict(key => unfold_options(options) for (key, options) in outputs)
+    end
+    wrap_func_call_value(p, cls, func, wrappers, source_values...)
+end
+
+using ..PatternMatching:ArrayPrefix
+function wrap_func_call_prefix_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
+    if any(isa(v, ArrayPrefix) for v in source_values)
+        outputs = Dict()
+        for (key, value) in wrap_func_call_value(p, cls, func, wrappers, [isa(v, ArrayPrefix) ? v.value : v for v in source_values]...)
+            if isa(value, AbstractVector)
+                outputs[key] = ArrayPrefix(value)
+            else
+                outputs[key] = value
+            end
+        end
+        return outputs
     end
     wrap_func_call_value(p, cls, func, wrappers, source_values...)
 end
