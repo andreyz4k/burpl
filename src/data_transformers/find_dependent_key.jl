@@ -20,6 +20,7 @@ end
 
 _check_value(input_value, output_value) = false
 _check_value(input_value::Matcher, output_value) = false
+_check_value(input_value::Matcher, output_value::Matcher) = false
 _check_value(input_value::AbstractDict, output_value::AbstractDict) = _check_value_inner(input_value, output_value)
 _check_value(input_value::T, output_value::T) where T = _check_value_inner(input_value, output_value)
 _check_value(input_value::T, output_value::Matcher{T}) where T = _check_value_inner(input_value, output_value)

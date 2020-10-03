@@ -196,19 +196,55 @@ using .Abstractors:iter_source_either_values
 
     @testset "iterate either cases" begin
         vals = [1, 2, 3]
-        @test iter_source_either_values(vals) == [([1, 2, 3], [])]
+        @test iter_source_either_values(vals) == [([1, 2, 3], [], Set())]
         vals = [1, Either([Option(1), Option(2)])]
-        @test iter_source_either_values(vals) == [([1,1], []), ([1, 2], [])]
+        @test iter_source_either_values(vals) == [
+            ([1, 1], [], Set()),
+            ([1, 2], [], Set())
+        ]
         vals = [1, Either([Option(1), Option(2)]), Either([Option(3), Option(4)])]
-        @test iter_source_either_values(vals) == [([1, 1, 3], []), ([1, 2, 3], []), ([1, 1, 4], []), ([1, 2, 4], [])]
+        @test iter_source_either_values(vals) == [
+            ([1, 1, 3], [], Set()),
+            ([1, 2, 3], [], Set()),
+            ([1, 1, 4], [], Set()),
+            ([1, 2, 4], [], Set())
+        ]
         vals = [1, Either([Option(1, 123), Option(2, 456)])]
-        @test iter_source_either_values(vals) == [([1,1], [123]), ([1, 2], [456])]
+        @test iter_source_either_values(vals) == [
+            ([1, 1], [123], Set([123, 456])),
+            ([1, 2], [456], Set([123, 456]))
+        ]
         vals = [1, Either([Option(1, 123), Option(2, 456)]), Either([Option(3, 123), Option(4, 456)])]
-        @test iter_source_either_values(vals) == [([1, 1, 3], [123]), ([1, 2, 4], [456])]
+        @test iter_source_either_values(vals) == [
+            ([1, 1, 3], [123], Set([123, 456])),
+            ([1, 2, 4], [456], Set([123, 456]))
+        ]
         vals = [1, Either([Option(1, 123), Option(2, 456)]), Either([Option(3, 23), Option(4, 56)])]
-        @test iter_source_either_values(vals) == [([1, 1, 3], [123, 23]), ([1, 2, 3], [456, 23]), ([1, 1, 4], [123, 56]), ([1, 2, 4], [456, 56])]
+        @test iter_source_either_values(vals) == [
+            ([1, 1, 3], [123, 23], Set([123, 456, 23, 56])),
+            ([1, 2, 3], [456, 23], Set([123, 456, 23, 56])),
+            ([1, 1, 4], [123, 56], Set([123, 456, 23, 56])),
+            ([1, 2, 4], [456, 56], Set([123, 456, 23, 56]))
+        ]
         vals = [1, Either([Option(1, 123), Option(2, 456)]), Either([Option(3), Option(4)])]
-        @test iter_source_either_values(vals) == [([1, 1, 3], [123]), ([1, 2, 3], [456]), ([1, 1, 4], [123]), ([1, 2, 4], [456])]
+        @test iter_source_either_values(vals) == [
+            ([1, 1, 3], [123], Set([123, 456])),
+            ([1, 2, 3], [456], Set([123, 456])),
+            ([1, 1, 4], [123], Set([123, 456])),
+            ([1, 2, 4], [456], Set([123, 456]))
+        ]
+        vals = [1, Either([Option(Either([Option(1), Option(3)])), Option(2)])]
+        @test iter_source_either_values(vals) == [
+            ([1, 1], [], Set()),
+            ([1, 3], [], Set()),
+            ([1, 2], [], Set()),
+        ]
+        vals = [1, Either([Option(Either([Option(1, 123), Option(2, 456)]), 54), Option(4, 209)])]
+        @test iter_source_either_values(vals) == [
+            ([1, 1], [54, 123], Set([123, 456, 54, 209])),
+            ([1, 2], [54, 456], Set([123, 456, 54, 209])),
+            ([1, 4], [209], Set([123, 456, 54, 209]))
+        ]
     end
 
 end

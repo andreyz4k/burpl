@@ -128,23 +128,41 @@ using ..PatternMatching:Either,Option
 
 _all_hashes(source_values) = reduce(vcat, [isa(v, Either) ? [o.option_hash for o in v.options if !isnothing(o.option_hash)] : [] for v in source_values], init=[])
 
+_all_options(item) = [(item, [])]
+function _all_options(item::Either)
+    result = []
+    for option in item.options
+        for (value, hashes) in _all_options(option.value)
+            if isnothing(option.option_hash)
+                push!(result, (value, hashes))
+            else
+                push!(result, (value, [option.option_hash, hashes...]))
+            end
+        end
+    end
+    result
+end
+
+
 function iter_source_either_values(source_values)
     if isempty(source_values)
-        return [([], [])]
+        return [([], [], Set([]))]
     end
     if !isa(source_values[1], Either)
-        return [([source_values[1], tail[1]...], tail[2]) for tail in iter_source_either_values(source_values[2:end])]
+        return [([source_values[1], tail[1]...], tail[2], tail[3]) for tail in iter_source_either_values(source_values[2:end])]
     end
     result = []
     for tail_res in iter_source_either_values(source_values[2:end])
-        for option in source_values[1].options
-            if isnothing(option.option_hash)
-                push!(result, ([option.value, tail_res[1]...], tail_res[2]))
-            elseif !in(option.option_hash, _all_hashes(source_values[2:end]))
-                push!(result, ([option.value, tail_res[1]...], [option.option_hash, tail_res[2]...]))
-            elseif in(option.option_hash, tail_res[2])
-                push!(result, ([option.value, tail_res[1]...], tail_res[2]))
+        all_options = _all_options(source_values[1])
+        all_hashes = reduce(union, [t[2] for t in all_options], init=Set())
+        for (value, hashes) in all_options
+            if isempty(hashes)
+                push!(result, ([value, tail_res[1]...], tail_res[2], tail_res[3]))
+                continue
+            elseif any(in(h, tail_res[3]) && !in(h, tail_res[2]) for h in hashes)
+                continue
             end
+            push!(result, ([value, tail_res[1]...], [filter(h -> !in(h, tail_res[2]), hashes)..., tail_res[2]...], union(all_hashes, tail_res[3])))
         end
     end
     result
@@ -174,7 +192,7 @@ unfold_options(options::Dict) =
 function wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, Either) for v in source_values)
         outputs = Dict()
-        for (vals, hashes) in iter_source_either_values(source_values)
+        for (vals, hashes, _) in iter_source_either_values(source_values)
             for (key, value) in wrap_func_call_value(p, cls, func, wrappers, vals...)
                 push_to_tree!(outputs, [key, hashes...], value)
             end
@@ -270,6 +288,7 @@ include("unite_in_rect.jl")
 include("unite_touching.jl")
 include("count_objects.jl")
 include("select_group.jl")
+include("get_position.jl")
 
 include("compute_functions.jl")
 
