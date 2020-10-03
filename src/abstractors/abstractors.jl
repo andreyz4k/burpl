@@ -54,7 +54,7 @@ function (p::Abstractor)(task_data)
     else
         func = from_abstract_value
     end
-    merge!(out_data, wrap_func_call_value(p, p.cls, func, input_values...))
+    merge!(out_data, wrap_func_call_value_root(p, p.cls, func, input_values...))
     return out_data
 end
 
@@ -79,22 +79,38 @@ fetch_input_values(p::Abstractor, task_data) =
 
 using DataStructures:DefaultDict
 
-wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_values...) =
-    func(p, cls, source_values...)
+call_wrappers(::AbstractorClass, ::Function) = [
+    wrap_func_call_dict_value,
+    wrap_func_call_either_value
+]
+
+function wrap_func_call_value_root(p::Abstractor, cls::AbstractorClass, func::Function, source_values...)
+    wrap_func_call_value(p, cls, func, call_wrappers(cls, func), source_values...)
+end
+
+function wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
+    if isempty(wrappers)
+        return func(p, cls, source_values...)
+    end
+    wrappers[1](p, cls, func, wrappers[2:end], source_values...)
+end
 
 
-wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value::AbstractDict, aux_values...) =
-    wrap_func_call_dict_value(p, cls, func, source_value, aux_values...)
-wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value1::AbstractDict, source_value2::AbstractDict, aux_values...) =
-    wrap_func_call_dict_value(p, cls, func, source_value1, source_value2, aux_values...)
-wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value1::AbstractDict, source_value2::AbstractDict, source_value3::AbstractDict) =
-    wrap_func_call_dict_value(p, cls, func, source_value1, source_value2, source_value3)
-wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value1, source_value2::AbstractDict, aux_values...) =
-    wrap_func_call_dict_value(p, cls, func, source_value1, source_value2, aux_values...)
-wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value1, source_value2::AbstractDict, source_value3::AbstractDict) =
-    wrap_func_call_dict_value(p, cls, func, source_value1, source_value2, source_value3)
-wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value1, source_value2, source_value3::AbstractDict) =
-    wrap_func_call_dict_value(p, cls, func, source_value1, source_value2, source_value3)
+wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, cls, func, wrappers, source_values...)
+
+wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value::AbstractDict, aux_values...) =
+    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value, aux_values...)
+wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1::AbstractDict, source_value2::AbstractDict, aux_values...) =
+    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value1, source_value2, aux_values...)
+wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1::AbstractDict, source_value2::AbstractDict, source_value3::AbstractDict) =
+    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
+wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2::AbstractDict, aux_values...) =
+    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value1, source_value2, aux_values...)
+wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2::AbstractDict, source_value3::AbstractDict) =
+    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
+wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2, source_value3::AbstractDict) =
+    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
 
 function iter_source_values(source_values)
     result = []
@@ -110,10 +126,10 @@ function iter_source_values(source_values)
     result
 end
 
-function wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func, source_values...)
+function wrap_func_call_dict_value_inner(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
     result = DefaultDict(() -> Dict())
     for (key, values) in iter_source_values(source_values)
-        for (out_key, out_value) in wrap_func_call_value(p, cls, func, values...)
+        for (out_key, out_value) in wrap_func_call_value(p, cls, func, wrappers, values...)
             result[out_key][key] = out_value
         end
     end
@@ -123,10 +139,26 @@ end
 
 using ..PatternMatching:Either,Option
 
-function wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value::Either, aux_values...)
+wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, cls, func, wrappers, source_values...)
+
+wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value::Either, aux_values...) =
+    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value, aux_values...)
+wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1::Either, source_value2::Either, aux_values...) =
+    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value1, source_value2, aux_values...)
+wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1::Either, source_value2::Either, source_value3::Either) =
+    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
+wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2::Either, aux_values...) =
+    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value1, source_value2, aux_values...)
+wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2::Either, source_value3::Either) =
+    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
+wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2, source_value3::Either) =
+    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
+
+function wrap_func_call_either_value_inner(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
     outputs = DefaultDict(() -> Option[])
-    for option in source_value.options
-        for (key, value) in wrap_func_call_value(p, cls, func, option.value, aux_values...)
+    for option in source_values[1].options
+        for (key, value) in wrap_func_call_value(p, cls, func, wrappers, option.value, source_values[2:end]...)
             push!(outputs[key], Option(value, option.option_hash))
         end
     end

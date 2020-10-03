@@ -11,11 +11,15 @@ wrap_check_task_value(cls::RemoveRedundantDict, value::AbstractDict, data, aux_v
 check_task_value(::RemoveRedundantDict, value::AbstractDict, data, aux_values) =
     length(Set(values(value))) == 1
 
-function wrap_func_call_dict_value(p::Abstractor, cls::RemoveRedundantDict, func, source_values...)
-    if func == to_abstract_value
-        func(p, cls, source_values...)
+
+function call_wrappers(::RemoveRedundantDict, func::Function)
+    if func != from_abstract_value
+        Function[wrap_func_call_either_value]
     else
-        invoke(wrap_func_call_dict_value, Tuple{Abstractor,AbstractorClass,Any,Vararg{Any}}, p, cls, func, source_values...)
+        [
+            wrap_func_call_dict_value,
+            wrap_func_call_either_value
+        ]
     end
 end
 

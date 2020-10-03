@@ -30,11 +30,14 @@ function to_abstract_value(p::Abstractor, ::GroupObjectsByColor, source_value)
 end
 
 
-function wrap_func_call_dict_value(p::Abstractor, cls::GroupObjectsByColor, func, source_values...)
+function call_wrappers(::GroupObjectsByColor, func::Function)
     if func == from_abstract_value
-        func(p, cls, source_values...)
+        Function[wrap_func_call_either_value]
     else
-        invoke(wrap_func_call_dict_value, Tuple{Abstractor,AbstractorClass,Any,Vararg{Any}}, p, cls, func, source_values...)
+        [
+            wrap_func_call_dict_value,
+            wrap_func_call_either_value
+        ]
     end
 end
 

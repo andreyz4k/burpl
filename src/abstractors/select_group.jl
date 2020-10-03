@@ -74,9 +74,8 @@ create_abstractors(cls::SelectGroup, data, key) =
             for selector_key in data["allowed_choices"]]
 
 
-function wrap_func_call_dict_value(p::Abstractor, cls::SelectGroup, func, source_value::AbstractDict, selected_key)
-    func(p, cls, source_value, selected_key)
-end
+call_wrappers(::SelectGroup, ::Function) =
+    Function[wrap_func_call_either_value]
 
 function to_abstract_value(p::Abstractor, ::SelectGroup, source_value::AbstractDict, selected_key)
     rejected = copy(source_value)
