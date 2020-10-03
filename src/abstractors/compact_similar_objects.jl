@@ -18,7 +18,7 @@ to_abstract_value(p::Abstractor, ::CompactSimilarObjects, objects::AbstractVecto
         p.output_keys[2] => [obj.position for obj in objects]
     )
 
-from_abstract_value(p::Abstractor, ::CompactSimilarObjects, source_values) =
+from_abstract_value(p::Abstractor, ::CompactSimilarObjects, common_shape, positions) =
     Dict(
-        p.output_keys[1] => [Object(source_values[1], position) for position in source_values[2]]
+        p.output_keys[1] => [Object(common_shape, position) for position in positions]
     )

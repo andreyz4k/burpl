@@ -47,5 +47,5 @@ function to_abstract_value(p::Abstractor, ::UniteInRect, source_value::AbstractV
     return Dict(p.output_keys[1] => out)
 end
 
-from_abstract_value(p::Abstractor, ::UniteInRect, source_values) =
-    Dict(p.output_keys[1] => source_values[1])
+from_abstract_value(p::Abstractor, ::UniteInRect, source_value) =
+    Dict(p.output_keys[1] => source_value)

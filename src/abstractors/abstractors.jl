@@ -46,13 +46,16 @@ function Abstractor(cls::AbstractorClass, key::String, to_abs::Bool, found_aux_k
 end
 
 
-
 function (p::Abstractor)(task_data)
+    out_data = copy(task_data)
+    input_values = fetch_input_values(p, out_data)
     if p.to_abstract
-        return to_abstract(p, p.cls, task_data)
+        func = to_abstract_value
     else
-        return from_abstract(p, p.cls, task_data)
+        func = from_abstract_value
     end
+    merge!(out_data, wrap_func_call_value(p, p.cls, func, input_values...))
+    return out_data
 end
 
 import ..Operations:needed_input_keys
@@ -70,50 +73,35 @@ Base.show(io::IO, p::Abstractor) = print(io,
 
 Base.:(==)(a::Abstractor, b::Abstractor) = a.cls == b.cls && a.to_abstract == b.to_abstract && a.input_keys == b.input_keys && a.output_keys == b.output_keys
 
-function to_abstract(p::Abstractor, cls::AbstractorClass, previous_data::Dict)::Dict
-    out_data = copy(previous_data)
-    input_values = fetch_input_values(p, out_data)
-    merge!(out_data, wrap_to_abstract_value(p, cls, input_values...))
-
-    return out_data
-end
 
 fetch_input_values(p::Abstractor, task_data) =
     [in(k, needed_input_keys(p)) ? task_data[k] : get(task_data, k, nothing) for k in p.input_keys]
 
 using DataStructures:DefaultDict
 
-function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value::AbstractDict, aux_values...)
-    result = DefaultDict(() -> Dict())
-    for (key, value) in source_value
-        for (out_key, out_value) in wrap_to_abstract_value(p, cls, value, aux_values...)
-            result[out_key][key] = out_value
-        end
-    end
-    return result
-end
+wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_values...) =
+    func(p, cls, source_values...)
 
-wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_values...) =
-    to_abstract_value(p, cls, source_values...)
 
-using ..PatternMatching:Either,Option
-
-function wrap_to_abstract_value(p::Abstractor, cls::AbstractorClass, source_value::Either, aux_values...)
-    outputs = DefaultDict(() -> Option[])
-    for option in source_value.options
-        for (key, value) in wrap_to_abstract_value(p, cls, option.value, aux_values...)
-            push!(outputs[key], Option(value, option.option_hash))
-        end
-    end
-    return Dict(key => Either(options) for (key, options) in outputs)
-end
+wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value::AbstractDict, aux_values...) =
+    wrap_func_call_dict_value(p, cls, func, source_value, aux_values...)
+wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value1::AbstractDict, source_value2::AbstractDict, aux_values...) =
+    wrap_func_call_dict_value(p, cls, func, source_value1, source_value2, aux_values...)
+wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value1::AbstractDict, source_value2::AbstractDict, source_value3::AbstractDict) =
+    wrap_func_call_dict_value(p, cls, func, source_value1, source_value2, source_value3)
+wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value1, source_value2::AbstractDict, aux_values...) =
+    wrap_func_call_dict_value(p, cls, func, source_value1, source_value2, aux_values...)
+wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value1, source_value2::AbstractDict, source_value3::AbstractDict) =
+    wrap_func_call_dict_value(p, cls, func, source_value1, source_value2, source_value3)
+wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value1, source_value2, source_value3::AbstractDict) =
+    wrap_func_call_dict_value(p, cls, func, source_value1, source_value2, source_value3)
 
 function iter_source_values(source_values)
     result = []
     for source_value in source_values
         if isa(source_value, Dict)
             for key in keys(source_value)
-                values = [isa(v, Dict) ? v[key] : v for v in source_values]
+                values = [isa(v, Dict) && issetequal(keys(v), keys(source_value)) ? v[key] : v for v in source_values]
                 push!(result, (key, values))
             end
             return result
@@ -122,22 +110,27 @@ function iter_source_values(source_values)
     result
 end
 
-function from_abstract(p::Abstractor, cls::AbstractorClass, previous_data::Dict)::Dict
-    out_data = copy(previous_data)
-    source_values = fetch_input_values(p, out_data)
-    if any(isa(v, Dict) for v in source_values)
-        result = DefaultDict(() -> Dict())
-        for (key, values) in iter_source_values(source_values)
-            for (out_key, out_value) in from_abstract_value(p, cls, values)
-                result[out_key][key] = out_value
-            end
+function wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func, source_values...)
+    result = DefaultDict(() -> Dict())
+    for (key, values) in iter_source_values(source_values)
+        for (out_key, out_value) in wrap_func_call_value(p, cls, func, values...)
+            result[out_key][key] = out_value
         end
-        merge!(out_data, result)
-    else
-        merge!(out_data, from_abstract_value(p, cls, source_values))
     end
+    return result
+end
 
-    return out_data
+
+using ..PatternMatching:Either,Option
+
+function wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func, source_value::Either, aux_values...)
+    outputs = DefaultDict(() -> Option[])
+    for option in source_value.options
+        for (key, value) in wrap_func_call_value(p, cls, func, option.value, aux_values...)
+            push!(outputs[key], Option(value, option.option_hash))
+        end
+    end
+    return Dict(key => Either(options) for (key, options) in outputs)
 end
 
 

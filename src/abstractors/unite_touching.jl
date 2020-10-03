@@ -61,6 +61,6 @@ function to_abstract_value(p::Abstractor, ::UniteTouching, source_value::Abstrac
     return Dict(p.output_keys[1] => out)
 end
 
-function from_abstract_value(p::Abstractor, ::UniteTouching, source_values)
-    return Dict(p.output_keys[1] => source_values[1])
+function from_abstract_value(p::Abstractor, ::UniteTouching, source_value)
+    return Dict(p.output_keys[1] => source_value)
 end

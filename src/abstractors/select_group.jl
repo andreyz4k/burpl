@@ -74,8 +74,9 @@ create_abstractors(cls::SelectGroup, data, key) =
             for selector_key in data["allowed_choices"]]
 
 
-wrap_to_abstract_value(p::Abstractor, cls::SelectGroup, source_value::AbstractDict, selected_key) =
-    to_abstract_value(p, cls, source_value, selected_key)
+function wrap_func_call_dict_value(p::Abstractor, cls::SelectGroup, func, source_value::AbstractDict, selected_key)
+    func(p, cls, source_value, selected_key)
+end
 
 function to_abstract_value(p::Abstractor, ::SelectGroup, source_value::AbstractDict, selected_key)
     rejected = copy(source_value)
@@ -86,15 +87,8 @@ function to_abstract_value(p::Abstractor, ::SelectGroup, source_value::AbstractD
     )
 end
 
-function from_abstract(p::Abstractor, cls::SelectGroup, previous_data::Dict)::Dict
-    out_data = copy(previous_data)
-    source_values = fetch_input_values(p, out_data)
-    merge!(out_data, from_abstract_value(p, cls, source_values))
-    return out_data
-end
-
-function from_abstract_value(p::Abstractor, ::SelectGroup, source_values)
-    out = copy(source_values[2])
-    out[source_values[3]] = source_values[1]
+function from_abstract_value(p::Abstractor, ::SelectGroup, selected, rejected, selector_key)
+    out = copy(rejected)
+    out[selector_key] = selected
     Dict(p.output_keys[1] => out)
 end

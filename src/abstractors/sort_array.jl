@@ -20,5 +20,5 @@ end
 to_abstract_value(p::Abstractor, ::SortArray, source_value) =
     Dict(p.output_keys[1] => sort(source_value))
 
-from_abstract_value(p::Abstractor, ::SortArray, source_values) =
-    Dict(p.output_keys[1] => source_values[1])
+from_abstract_value(p::Abstractor, ::SortArray, source_value) =
+    Dict(p.output_keys[1] => source_value)

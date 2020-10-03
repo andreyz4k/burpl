@@ -32,9 +32,9 @@ function _merge_objects(obj1::Object, obj2::Object)
     return Object(new_shape, new_pos)
 end
 
-function from_abstract_value(p::Abstractor, ::SplitObject, source_values)
-    result = source_values[1][1]
-    for obj in source_values[1][2:end]
+function from_abstract_value(p::Abstractor, ::SplitObject, objects)
+    result = objects[1]
+    for obj in objects[2:end]
         result = _merge_objects(result, obj)
     end
     return Dict(p.output_keys[1] => result)

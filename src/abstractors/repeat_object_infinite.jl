@@ -60,8 +60,7 @@ function to_abstract_value(p::Abstractor, ::RepeatObjectInfinite, source_value, 
     end
 end
 
-function from_abstract_value(p::Abstractor, ::RepeatObjectInfinite, source_values)
-    first, step, grid_size = source_values
+function from_abstract_value(p::Abstractor, ::RepeatObjectInfinite, first, step, grid_size)
     out_value = [first]
     i = 1
     while !isnothing(step)

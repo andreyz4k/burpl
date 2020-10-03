@@ -110,7 +110,7 @@ to_abstract_value(p::Abstractor, ::SelectColor, source_value::AbstractVector{Obj
         p.output_keys[2] => filter(obj -> get_color(obj) != color, source_value),
     )
 
-from_abstract_value(p::Abstractor, ::SelectColor, source_values) =
+from_abstract_value(p::Abstractor, ::SelectColor, selected, rejected) =
     Dict(
-        p.output_keys[1] => vcat(source_values...)
+        p.output_keys[1] => vcat(selected, rejected)
     )

@@ -3,7 +3,7 @@
 struct RemoveRedundantDict <: AbstractorClass end
 
 RemoveRedundantDict(key, to_abs) = Abstractor(RemoveRedundantDict(), key, to_abs)
-@memoize abs_keys(::RemoveRedundantDict) = ["to_value"]
+@memoize abs_keys(::RemoveRedundantDict) = ["to_value", "group_keys"]
 
 wrap_check_task_value(cls::RemoveRedundantDict, value::AbstractDict, data, aux_values) =
     check_task_value(cls, value, data, aux_values)
@@ -11,11 +11,19 @@ wrap_check_task_value(cls::RemoveRedundantDict, value::AbstractDict, data, aux_v
 check_task_value(::RemoveRedundantDict, value::AbstractDict, data, aux_values) =
     length(Set(values(value))) == 1
 
-wrap_to_abstract_value(p::Abstractor, cls::RemoveRedundantDict, source_value::AbstractDict, aux_values...) =
-    to_abstract_value(p, cls, source_value, aux_values...)
+function wrap_func_call_dict_value(p::Abstractor, cls::RemoveRedundantDict, func, source_values...)
+    if func == to_abstract_value
+        func(p, cls, source_values...)
+    else
+        invoke(wrap_func_call_dict_value, Tuple{Abstractor,AbstractorClass,Any,Vararg{Any}}, p, cls, func, source_values...)
+    end
+end
 
 to_abstract_value(p::Abstractor, ::RemoveRedundantDict, source_value::AbstractDict) =
-    Dict(p.output_keys[1] => first(values(source_value)))
+    Dict(
+        p.output_keys[1] => first(values(source_value)),
+        p.output_keys[2] => sort(collect(keys(source_value)))
+        )
 
-from_abstract_value(p::Abstractor, ::RemoveRedundantDict, source_values) =
-    Dict(p.output_keys[1] => source_values[1])
+from_abstract_value(p::Abstractor, ::RemoveRedundantDict, value, keys) =
+    Dict(p.output_keys[1] => Dict(key => value for key in keys))

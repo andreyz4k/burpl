@@ -10,10 +10,9 @@ wrap_check_task_value(cls::GroupMin, value::AbstractDict, data, aux_values) =
 check_task_value(::GroupMin, value::AbstractDict, data, aux_values) =
     all(isa(v, Int64) for v in values(value))
 
-wrap_to_abstract_value(p::Abstractor, cls::GroupMin, source_value::AbstractDict, aux_values...) =
-    to_abstract_value(p, cls, source_value, aux_values...)
+wrap_func_call_dict_value(p::Abstractor, cls::GroupMin, func, source_values...) =
+    func(p, cls, source_values...)
 
 function to_abstract_value(p::Abstractor, ::GroupMin, source_value::AbstractDict)
-    println("get group min")
     Dict(p.output_keys[1] => findmin(source_value)[2])
 end

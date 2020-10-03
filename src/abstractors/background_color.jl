@@ -19,7 +19,7 @@ function to_abstract_value(p::Abstractor, ::BackgroundColor, source_value::Abstr
         for color in options])
 end
 
-from_abstract_value(p::Abstractor, ::BackgroundColor, source_values) =
+from_abstract_value(p::Abstractor, ::BackgroundColor, bgr_grid, background) =
     Dict(
-        p.output_keys[1] => map(c -> c == -1 ? source_values[2] : c, source_values[1])
+        p.output_keys[1] => map(c -> c == -1 ? background : c, bgr_grid)
     )

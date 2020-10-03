@@ -29,21 +29,20 @@ function to_abstract_value(p::Abstractor, ::GroupObjectsByColor, source_value)
     )
 end
 
-function from_abstract_value(p::Abstractor, ::GroupObjectsByColor, source_values)
-    data, keys = source_values
+
+function wrap_func_call_dict_value(p::Abstractor, cls::GroupObjectsByColor, func, source_values...)
+    if func == from_abstract_value
+        func(p, cls, source_values...)
+    else
+        invoke(wrap_func_call_dict_value, Tuple{Abstractor,AbstractorClass,Any,Vararg{Any}}, p, cls, func, source_values...)
+    end
+end
+
+function from_abstract_value(p::Abstractor, ::GroupObjectsByColor, data, keys)
     results = reduce(
         vcat,
-        [isa(data, AbstractDict) ? data[key] : data for key in keys],
+        values(data),
         init=Object[]
     )
     return Dict(p.output_keys[1] => results)
-end
-
-function from_abstract(p::Abstractor, cls::GroupObjectsByColor, previous_data::Dict)::Dict
-    out_data = copy(previous_data)
-    source_values = fetch_input_values(p, out_data)
-
-    merge!(out_data, from_abstract_value(p, cls, source_values))
-
-    return out_data
 end

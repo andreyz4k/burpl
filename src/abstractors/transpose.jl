@@ -27,5 +27,5 @@ get_aux_values_for_task(::Transpose, task_data, key, solution) =
 to_abstract_value(p::Abstractor, ::Transpose, source_value::AbstractArray{Int,2}) =
     Dict(p.output_keys[1] => collect(transpose(source_value)))
 
-from_abstract_value(p::Abstractor, ::Transpose, source_values) =
-    Dict(p.output_keys[1] => collect(transpose(source_values[1])))
+from_abstract_value(p::Abstractor, ::Transpose, source_value) =
+    Dict(p.output_keys[1] => collect(transpose(source_value)))

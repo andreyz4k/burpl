@@ -14,5 +14,5 @@ to_abstract_value(p::Abstractor, ::CountObjects, source_value::AbstractVector) =
         p.output_keys[2] => length(source_value)
     )
 
-from_abstract_value(p::Abstractor, ::CountObjects, source_values) =
-    Dict(p.output_keys[1] => source_values[1][1:min(source_values[2], length(source_values[1]))])
+from_abstract_value(p::Abstractor, ::CountObjects, counted_items, len) =
+    Dict(p.output_keys[1] => counted_items[1:min(len, length(counted_items))])

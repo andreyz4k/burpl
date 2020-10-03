@@ -11,5 +11,5 @@ check_task_value(::UnwrapSingleList, value::AbstractVector, data, aux_values) =
 to_abstract_value(p::Abstractor, ::UnwrapSingleList, source_value) =
     Dict(p.output_keys[1] => source_value[1])
 
-from_abstract_value(p::Abstractor, ::UnwrapSingleList, source_values) =
-    Dict(p.output_keys[1] => source_values)
+from_abstract_value(p::Abstractor, ::UnwrapSingleList, source_value) =
+    Dict(p.output_keys[1] => [source_value])

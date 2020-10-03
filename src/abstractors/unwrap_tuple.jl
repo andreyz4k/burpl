@@ -14,9 +14,8 @@ to_abstract_value(p::Abstractor, ::UnwrapTuple, source_value::Tuple) =
 to_abstract_value(p::Abstractor, ::UnwrapTuple, source_value::AbstractVector) =
     Dict(p.output_keys[1] => [v[1] for v in source_value])
 
-_wrap_in_tuple(value) = (value,)
-_wrap_in_tuple(value::AbstractVector) =
-    [_wrap_in_tuple(v) for v in value]
+from_abstract_value(p::Abstractor, ::UnwrapTuple, source_value) =
+    Dict(p.output_keys[1] => (source_value,))
 
-from_abstract_value(p::Abstractor, ::UnwrapTuple, source_values) =
-    Dict(p.output_keys[1] => _wrap_in_tuple(source_values[1]))
+from_abstract_value(p::Abstractor, ::UnwrapTuple, source_value::AbstractVector) =
+    Dict(p.output_keys[1] => [(v,) for v in source_value])

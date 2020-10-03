@@ -44,5 +44,5 @@ end
 fetch_abs_values(p::Abstractor, ::SplitList, task_data) =
     [task_data[p.input_keys[i + 1]] for i in 1:task_data[p.input_keys[1]]]
 
-from_abstract_value(p::Abstractor, ::SplitList, source_values) =
+from_abstract_value(p::Abstractor, ::SplitList, source_values...) =
     Dict(p.output_keys[1] => source_values[2:1 + source_values[1]])
