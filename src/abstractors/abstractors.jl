@@ -95,23 +95,6 @@ function wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func::Functio
     wrappers[1](p, cls, func, wrappers[2:end], source_values...)
 end
 
-
-wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...) =
-    wrap_func_call_value(p, cls, func, wrappers, source_values...)
-
-wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value::AbstractDict, aux_values...) =
-    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value, aux_values...)
-wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1::AbstractDict, source_value2::AbstractDict, aux_values...) =
-    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value1, source_value2, aux_values...)
-wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1::AbstractDict, source_value2::AbstractDict, source_value3::AbstractDict) =
-    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
-wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2::AbstractDict, aux_values...) =
-    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value1, source_value2, aux_values...)
-wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2::AbstractDict, source_value3::AbstractDict) =
-    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
-wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2, source_value3::AbstractDict) =
-    wrap_func_call_dict_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
-
 function iter_source_values(source_values)
     result = []
     for source_value in source_values
@@ -126,43 +109,34 @@ function iter_source_values(source_values)
     result
 end
 
-function wrap_func_call_dict_value_inner(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
-    result = DefaultDict(() -> Dict())
-    for (key, values) in iter_source_values(source_values)
-        for (out_key, out_value) in wrap_func_call_value(p, cls, func, wrappers, values...)
-            result[out_key][key] = out_value
+
+function wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
+    if any(isa(v, AbstractDict) for v in source_values)
+        result = DefaultDict(() -> Dict())
+        for (key, values) in iter_source_values(source_values)
+            for (out_key, out_value) in wrap_func_call_value(p, cls, func, wrappers, values...)
+                result[out_key][key] = out_value
+            end
         end
+        return result
     end
-    return result
+    wrap_func_call_value(p, cls, func, wrappers, source_values...)
 end
 
 
 using ..PatternMatching:Either,Option
 
-wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...) =
-    wrap_func_call_value(p, cls, func, wrappers, source_values...)
-
-wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value::Either, aux_values...) =
-    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value, aux_values...)
-wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1::Either, source_value2::Either, aux_values...) =
-    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value1, source_value2, aux_values...)
-wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1::Either, source_value2::Either, source_value3::Either) =
-    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
-wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2::Either, aux_values...) =
-    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value1, source_value2, aux_values...)
-wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2::Either, source_value3::Either) =
-    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
-wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_value1, source_value2, source_value3::Either) =
-    wrap_func_call_either_value_inner(p, cls, func, wrappers, source_value1, source_value2, source_value3)
-
-function wrap_func_call_either_value_inner(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
-    outputs = DefaultDict(() -> Option[])
-    for option in source_values[1].options
-        for (key, value) in wrap_func_call_value(p, cls, func, wrappers, option.value, source_values[2:end]...)
-            push!(outputs[key], Option(value, option.option_hash))
+function wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
+    if any(isa(v, Either) for v in source_values)
+        outputs = DefaultDict(() -> Option[])
+        for option in source_values[1].options
+            for (key, value) in wrap_func_call_value(p, cls, func, wrappers, option.value, source_values[2:end]...)
+                push!(outputs[key], Option(value, option.option_hash))
+            end
         end
+        return Dict(key => Either(options) for (key, options) in outputs)
     end
-    return Dict(key => Either(options) for (key, options) in outputs)
+    wrap_func_call_value(p, cls, func, wrappers, source_values...)
 end
 
 
