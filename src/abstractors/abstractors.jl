@@ -109,7 +109,6 @@ function iter_source_values(source_values)
     result
 end
 
-
 function wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, AbstractDict) for v in source_values)
         result = DefaultDict(() -> Dict())
@@ -126,15 +125,60 @@ end
 
 using ..PatternMatching:Either,Option
 
-function wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
-    if any(isa(v, Either) for v in source_values)
-        outputs = DefaultDict(() -> Option[])
+_all_hashes(source_values) = reduce(vcat, [isa(v, Either) ? [o.option_hash for o in v.options if !isnothing(o.option_hash)] : [] for v in source_values], init=[])
+
+function iter_source_either_values(source_values)
+    if isempty(source_values)
+        return [([], [])]
+    end
+    if !isa(source_values[1], Either)
+        return [([source_values[1], tail[1]...], tail[2]) for tail in iter_source_either_values(source_values[2:end])]
+    end
+    result = []
+    for tail_res in iter_source_either_values(source_values[2:end])
         for option in source_values[1].options
-            for (key, value) in wrap_func_call_value(p, cls, func, wrappers, option.value, source_values[2:end]...)
-                push!(outputs[key], Option(value, option.option_hash))
+            if isnothing(option.option_hash)
+                push!(result, ([option.value, tail_res[1]...], tail_res[2]))
+            elseif !in(option.option_hash, _all_hashes(source_values[2:end]))
+                push!(result, ([option.value, tail_res[1]...], [option.option_hash, tail_res[2]...]))
+            elseif in(option.option_hash, tail_res[2])
+                push!(result, ([option.value, tail_res[1]...], tail_res[2]))
             end
         end
-        return Dict(key => Either(options) for (key, options) in outputs)
+    end
+    result
+end
+
+function push_to_tree!(tree::Dict, keys, value)
+    if length(keys) == 1
+        if !haskey(tree, keys[1])
+            tree[keys[1]] = [value]
+        else
+            push!(tree[keys[1]], value)
+        end
+    else
+        if !haskey(tree, keys[1])
+            tree[keys[1]] = Dict()
+        end
+        push_to_tree!(tree[keys[1]], keys[2:end], value)
+    end
+end
+
+unfold_options(options::AbstractVector) =
+    Either(options)
+
+unfold_options(options::Dict) =
+    Either([Option(unfold_options(vals), option_hash) for (option_hash, vals) in options])
+
+function wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
+    if any(isa(v, Either) for v in source_values)
+        outputs = Dict()
+        for (vals, hashes) in iter_source_either_values(source_values)
+            for (key, value) in wrap_func_call_value(p, cls, func, wrappers, vals...)
+                push_to_tree!(outputs, [key, hashes...], value)
+            end
+        end
+        return Dict(key => unfold_options(options) for (key, options) in outputs)
     end
     wrap_func_call_value(p, cls, func, wrappers, source_values...)
 end

@@ -2,6 +2,7 @@
 using .FindSolution:match_fields
 using .PatternMatching:Either,make_either,Option,compare_values,update_value,unpack_value
 using .ObjectPrior:Object
+using .Abstractors:iter_source_either_values
 
 @testset "Patten Matching" begin
 
@@ -191,6 +192,23 @@ using .ObjectPrior:Object
             Object([1], (18, 1)),
             Object([1], (18, 7))
         ]
+    end
+
+    @testset "iterate either cases" begin
+        vals = [1, 2, 3]
+        @test iter_source_either_values(vals) == [([1, 2, 3], [])]
+        vals = [1, Either([Option(1), Option(2)])]
+        @test iter_source_either_values(vals) == [([1,1], []), ([1, 2], [])]
+        vals = [1, Either([Option(1), Option(2)]), Either([Option(3), Option(4)])]
+        @test iter_source_either_values(vals) == [([1, 1, 3], []), ([1, 2, 3], []), ([1, 1, 4], []), ([1, 2, 4], [])]
+        vals = [1, Either([Option(1, 123), Option(2, 456)])]
+        @test iter_source_either_values(vals) == [([1,1], [123]), ([1, 2], [456])]
+        vals = [1, Either([Option(1, 123), Option(2, 456)]), Either([Option(3, 123), Option(4, 456)])]
+        @test iter_source_either_values(vals) == [([1, 1, 3], [123]), ([1, 2, 4], [456])]
+        vals = [1, Either([Option(1, 123), Option(2, 456)]), Either([Option(3, 23), Option(4, 56)])]
+        @test iter_source_either_values(vals) == [([1, 1, 3], [123, 23]), ([1, 2, 3], [456, 23]), ([1, 1, 4], [123, 56]), ([1, 2, 4], [456, 56])]
+        vals = [1, Either([Option(1, 123), Option(2, 456)]), Either([Option(3), Option(4)])]
+        @test iter_source_either_values(vals) == [([1, 1, 3], [123]), ([1, 2, 3], [456]), ([1, 1, 4], [123]), ([1, 2, 4], [456])]
     end
 
 end
