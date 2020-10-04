@@ -64,9 +64,8 @@ needed_input_keys(p::Abstractor, ::AbstractorClass) = p.input_keys
 
 Base.show(io::IO, p::Abstractor) = print(io,
         string(nameof(typeof(p.cls))),
-        "(\"",
-        p.to_abstract ? p.input_keys[1] : p.output_keys[1],
-        "\", ",
+        "(",
+        (vcat((["\"", k, "\", "] for k in (p.to_abstract ? p.input_keys : p.output_keys))...))...,
         p.to_abstract,
         ")"
     )
@@ -79,14 +78,15 @@ fetch_input_values(p::Abstractor, task_data) =
 
 using DataStructures:DefaultDict
 
-call_wrappers(::AbstractorClass, ::Function) = [
+call_wrappers() = [
     wrap_func_call_dict_value,
     wrap_func_call_either_value,
     wrap_func_call_prefix_value,
+    wrap_func_call_shape_value,
 ]
 
 function wrap_func_call_value_root(p::Abstractor, cls::AbstractorClass, func::Function, source_values...)
-    wrap_func_call_value(p, cls, func, call_wrappers(cls, func), source_values...)
+    wrap_func_call_value(p, cls, func, call_wrappers(), source_values...)
 end
 
 function wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
@@ -202,6 +202,7 @@ function wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::
     wrap_func_call_value(p, cls, func, wrappers, source_values...)
 end
 
+
 using ..PatternMatching:ArrayPrefix
 function wrap_func_call_prefix_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, ArrayPrefix) for v in source_values)
@@ -209,6 +210,26 @@ function wrap_func_call_prefix_value(p::Abstractor, cls::AbstractorClass, func::
         for (key, value) in wrap_func_call_value(p, cls, func, wrappers, [isa(v, ArrayPrefix) ? v.value : v for v in source_values]...)
             if isa(value, AbstractVector)
                 outputs[key] = ArrayPrefix(value)
+            else
+                outputs[key] = value
+            end
+        end
+        return outputs
+    end
+    wrap_func_call_value(p, cls, func, wrappers, source_values...)
+end
+
+
+using ..PatternMatching:ObjectShape
+function wrap_func_call_shape_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
+    if any(isa(v, ObjectShape) || isa(v, AbstractVector{ObjectShape}) for v in source_values)
+        outputs = Dict()
+        unwrapped_values = [isa(v, ObjectShape) ? v.object : isa(v, AbstractVector{ObjectShape}) ? [i.object for i in v] : v for v in source_values]
+        for (key, value) in wrap_func_call_value(p, cls, func, wrappers, unwrapped_values...)
+            if isa(value, Object)
+                outputs[key] = ObjectShape(value)
+            elseif isa(value, AbstractVector{Object})
+                outputs[key] = [ObjectShape(v) for v in value]
             else
                 outputs[key] = value
             end

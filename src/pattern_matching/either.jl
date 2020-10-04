@@ -51,6 +51,29 @@ function make_either(keys, options)
     end
 end
 
+function _common_value(val1, val2::Either)
+    valid_options = Option[]
+    for option in val2.options
+        m = common_value(val1, option.value)
+        if !isnothing(m)
+            if isa(m, Either)
+                append!(valid_options, m.options)
+            else
+                push!(valid_options, Option(m))
+            end
+        end
+    end
+    if isempty(valid_options)
+        return nothing
+    else
+        return Either(unique(valid_options))
+    end
+end
+
+
+_common_value(val1::Matcher, val2::Either) =
+    invoke(_common_value, Tuple{Any,Either}, val1, val2)
+
 function match(val1::Either, val2)
     valid_options = Option[]
     for option in val1.options

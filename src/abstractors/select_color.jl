@@ -26,7 +26,7 @@ function init_create_check_data(::SelectColor, key, solution)
         "interesting_choices" => Set{String}(),
         "prefix" => split(key, '|')[1],
     )
-    matcher = Regex("$key\\|selected_by_color\\|(.*)")
+    matcher = Regex("$(replace(key, '|' => "\\|"))\\|selected_by_color\\|(.*)")
     sample_task = solution.observed_data[1]
     for k in keys(sample_task)
         m = match(matcher, k)

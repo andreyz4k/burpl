@@ -39,9 +39,10 @@ end
 function init_create_check_data(::SelectGroup, key, solution)
     data = Dict(
         "existing_choices" => Set{String}(),
-        "key" => key
+        "key" => key,
+        "effective" => false,
     )
-    matcher = Regex("$key\\|selected_by\\|(.*)")
+    matcher = Regex("$(replace(key, '|' => "\\|"))\\|selected_by\\|(.*)")
     sample_task = solution.taskdata[1]
     for k in keys(sample_task)
         m = match(matcher, k)
@@ -53,6 +54,7 @@ function init_create_check_data(::SelectGroup, key, solution)
 end
 
 function check_task_value(::SelectGroup, value::AbstractDict, data, task_data)
+    data["effective"] |= length(value) > 1
     if !haskey(data, "allowed_choices")
         data["allowed_choices"] = Set{String}()
         for (key, data_value) in task_data
@@ -67,18 +69,19 @@ function check_task_value(::SelectGroup, value::AbstractDict, data, task_data)
     return !isempty(data["allowed_choices"])
 end
 
-create_abstractors(cls::SelectGroup, data, key) =
-    [(priority(cls),
-        (to_abstract = Abstractor(cls, key, selector_key, true),
-            from_abstract = Abstractor(cls, key, selector_key, false)))
-            for selector_key in data["allowed_choices"]]
-
-
-call_wrappers(::SelectGroup, ::Function) =
-    [
-        wrap_func_call_either_value,
-        wrap_func_call_prefix_value
-    ]
+function create_abstractors(cls::SelectGroup, data, key)
+    if data["effective"]
+        [(priority(cls),
+          (to_abstract = Abstractor(cls, key, selector_key, true),
+           from_abstract = Abstractor(cls, key, selector_key, false)))
+         for selector_key in data["allowed_choices"]]
+    else
+        []
+    end
+end
+function wrap_func_call_dict_value(p::Abstractor, cls::SelectGroup, func::Function, wrappers::AbstractVector{Function}, source_values...)
+    wrap_func_call_value(p, cls, func, wrappers, source_values...)
+end
 
 function to_abstract_value(p::Abstractor, ::SelectGroup, source_value::AbstractDict, selected_key)
     rejected = copy(source_value)

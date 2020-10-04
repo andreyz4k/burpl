@@ -6,36 +6,6 @@ using ..DataTransformers:match_fields
 using ..Solutions:Solution,get_unmatched_complexity_score
 
 
-function get_new_input_perceptors(solution::Solution)::Array{Tuple{Float64,Solution}}
-    # unfilled_data_types = Set()
-    # for key_info in solution.unfilled_fields.params.values()
-    #     unfilled_data_types.update(key_info.precursor_data_types)
-    #     unfilled_data_types.add(key_info.data_type)
-    # end
-    output = []
-    for (priority, perceptor_pair) in get_next_perceptors(solution, "input",
-                                                   [task["input"] for task in solution.taskdata])
-        perceptor = perceptor_pair.to_abstract
-        new_solution = Solution(solution, perceptor)
-        # for abs_key in perceptor.output_keys
-        #     if new_solution.get_key_data_type(abs_key) in unfilled_data_types
-        #         priority /= 2
-        #         break
-        #     end
-        # else
-        #     priority *= 2
-        # end
-
-        for matched_solution in match_fields(new_solution)
-            push!(output,
-                  (priority * get_unmatched_complexity_score(matched_solution) *
-                   matched_solution.score, matched_solution))
-        end
-    end
-    output
-end
-
-
 import ..Abstractors
 
 get_next_operations(solution, key) =
@@ -75,7 +45,7 @@ function get_new_solutions_for_input_key(solution, key)
         for matched_solution in match_fields(new_solution)
             push!(output,
                   (priority * get_unmatched_complexity_score(matched_solution) *
-                   matched_solution.score, matched_solution))
+                   matched_solution.score^1.5, matched_solution))
         end
     end
     output
@@ -102,7 +72,7 @@ function get_new_solutions_for_unfilled_key(solution::Solution, key::String)
         for matched_solution in match_fields(new_solution)
             push!(output,
                   (priority * get_unmatched_complexity_score(matched_solution) *
-                   matched_solution.score, matched_solution))
+                   matched_solution.score^1.5, matched_solution))
         end
     end
     output
@@ -213,7 +183,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
             new_priority = min(new_priority, get(queue, (new_solution, i - 1), new_priority))
             queue[(new_solution, i - 1)] = new_priority
         end
-        if real_visited > 2000
+        if real_visited > 1000
             break
         end
     end

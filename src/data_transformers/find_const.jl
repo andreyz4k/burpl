@@ -13,6 +13,7 @@ Base.show(io::IO, op::SetConst) = print(io, "SetConst(", op.output_keys[1], ", "
 Base.:(==)(a::SetConst, b::SetConst) = a.output_keys == b.output_keys && a.value == b.value
 Base.hash(op::SetConst, h::UInt64) = hash(op.output_keys, h) + hash(op.value, h)
 
+
 function (op::SetConst)(task_data)
     data = update_value(task_data, op.output_keys[1], op.value)
     data
@@ -27,7 +28,7 @@ function find_const(taskdata::Vector{Dict{String,Any}}, _, key::String)::Vector{
         if isnothing(result)
             result = task_data[key]
         end
-        possible_value = compare_values(result, task_data[key])
+        possible_value = common_value(result, task_data[key])
         if isnothing(possible_value)
             return []
         end

@@ -18,14 +18,7 @@ function (op::CopyParam)(task_data)
     data
 end
 
-_check_value(input_value, output_value) = false
-_check_value(input_value::Matcher, output_value) = false
-_check_value(input_value::Matcher, output_value::Matcher) = false
-_check_value(input_value::AbstractDict, output_value::AbstractDict) = _check_value_inner(input_value, output_value)
-_check_value(input_value::T, output_value::T) where T = _check_value_inner(input_value, output_value)
-_check_value(input_value::T, output_value::Matcher{T}) where T = _check_value_inner(input_value, output_value)
-
-_check_value_inner(input_value, output_value) = !isnothing(compare_values(input_value, output_value))
+_check_value(input_value, output_value, _) = !isnothing(common_value(input_value, output_value))
 
 function find_dependent_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
     result = []
@@ -44,7 +37,7 @@ function find_dependent_key(taskdata::Vector{Dict{String,Any}}, invalid_sources:
             end
             input_value = task_data[input_key]
             out_value = task_data[key]
-            if !_check_value(input_value, out_value)
+            if !compare_values(input_value, out_value, nothing, _check_value, Any)
                 good = false
                 break
             end
