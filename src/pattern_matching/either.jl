@@ -51,7 +51,7 @@ function make_either(keys, options)
     end
 end
 
-function _common_value(val1, val2::Either)
+function match(val1, val2::Either)
     valid_options = Option[]
     for option in val2.options
         m = common_value(val1, option.value)
@@ -71,37 +71,15 @@ function _common_value(val1, val2::Either)
 end
 
 
-_common_value(val1::Matcher, val2::Either) =
-    invoke(_common_value, Tuple{Any,Either}, val1, val2)
-
-function match(val1::Either, val2)
-    valid_options = Option[]
-    for option in val1.options
-        m = compare_values(val2, option.value)
-        if !isnothing(m)
-            if isa(m, Either)
-                append!(valid_options, m.options)
-            else
-                push!(valid_options, Option(m))
-            end
-        end
-    end
-    if isempty(valid_options)
-        return nothing
-    else
-        return Either(unique(valid_options))
-    end
-end
-
-match(val1::Either, val2::Matcher) =
-    invoke(match, Tuple{Either,Any}, val1, val2)
+match(val1::Matcher, val2::Either) =
+    invoke(match, Tuple{Any,Either}, val1, val2)
 
 unpack_value(value::Either) = vcat([unpack_value(option.value) for option in value.options]...)
 
 
 function update_value(data::Dict, path_keys::Array, value, current_value::Either)
     for option in current_value.options
-        if !isnothing(compare_values(value, option.value))
+        if !isnothing(common_value(value, option.value))
             if !isnothing(option.option_hash)
                 data = select_hash(data, option.option_hash)
             else

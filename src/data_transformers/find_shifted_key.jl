@@ -24,23 +24,7 @@ function (op::IncParam)(task_data)
     update_value(data, op.output_keys[2], op.shift)
 end
 
-function _check_shifted(input_value::AbstractDict, output_value::AbstractDict, possible_shifts)
-    if !issetequal(keys(input_value), keys(output_value))
-        return false
-    end
-    all(_check_shifted(value, output_value[key], possible_shifts)
-       for (key, value) in input_value)
-end
-
-_check_shifted(input_value, output_value, possible_shifts) = false
-
-_check_shifted(input_value::T, output_value::T, possible_shifts) where {T <: Union{Int64,Tuple{Int64,Int64}}} =
-    _check_shifted_inner(input_value, output_value, possible_shifts)
-
-_check_shifted(input_value::T, output_value::Matcher{T}, possible_shifts) where {T <: Union{Int64,Tuple{Int64,Int64}}} =
-    _check_shifted_inner(input_value, output_value, possible_shifts)
-
-function _check_shifted_inner(input_value, output_value, possible_shifts)
+function _check_shifted(input_value, output_value, possible_shifts)
     if isempty(possible_shifts)
         for value in unpack_value(output_value)
             if value != input_value
@@ -48,7 +32,7 @@ function _check_shifted_inner(input_value, output_value, possible_shifts)
             end
         end
     else
-        filter!(shift -> !isnothing(compare_values(input_value .+ shift, output_value)), possible_shifts)
+        filter!(shift -> !isnothing(common_value(input_value .+ shift, output_value)), possible_shifts)
     end
     return !isempty(possible_shifts)
 end
@@ -71,7 +55,7 @@ function find_shifted_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::A
             end
             input_value = task_data[input_key]
             out_value = task_data[key]
-            if !_check_shifted(input_value, out_value, possible_shifts)
+            if !compare_values(input_value, out_value, possible_shifts, _check_shifted, Union{Int64,Tuple{Int64,Int64}})
                 good = false
                 break
             end

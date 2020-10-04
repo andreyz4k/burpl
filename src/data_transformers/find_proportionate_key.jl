@@ -25,28 +25,12 @@ function (op::MultParam)(task_data)
     update_value(data, op.output_keys[2], op.factor)
 end
 
-function _check_proportions(input_value::AbstractDict, output_value::AbstractDict, possible_factors)
-    if !issetequal(keys(input_value), keys(output_value))
-        return false
-    end
-    all(_check_proportions(inp_value, output_value[key], possible_factors) for (key, inp_value) in input_value)
-end
 FACTORS = [-9, -8, -7, -6, -5, -4, -3, -2, -1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-_check_proportions(input_value, output_value, possible_factors) = false
-
-_check_proportions(input_value::T, output_value::T, possible_factors) where
-    T <: Union{Int64,Tuple{Int64,Int64}} =
-    inner_check_proportions(input_value, output_value, possible_factors)
-_check_proportions(input_value::T, output_value::Matcher{T}, possible_factors) where
-    T <: Union{Int64,Tuple{Int64,Int64}} =
-    inner_check_proportions(input_value, output_value, possible_factors)
-
-function inner_check_proportions(input_value, output_value, possible_factors)
-    filter!(factor -> !isnothing(compare_values(input_value .* factor, output_value)), possible_factors)
+function _check_proportions(input_value, output_value, possible_factors)
+    filter!(factor -> !isnothing(common_value(input_value .* factor, output_value)), possible_factors)
     return !isempty(possible_factors)
 end
-
 
 function find_proportionate_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
     result = []
@@ -66,7 +50,7 @@ function find_proportionate_key(taskdata::Vector{Dict{String,Any}}, invalid_sour
             end
             input_value = task_data[input_key]
             out_value = task_data[key]
-            if !_check_proportions(input_value, out_value, possible_factors)
+            if !compare_values(input_value, out_value, possible_factors, _check_proportions, Union{Int64,Tuple{Int64,Int64}})
                 good = false
                 break
             end

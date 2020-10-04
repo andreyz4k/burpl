@@ -23,34 +23,18 @@ function (op::MultByParam)(task_data)
     update_value(task_data, op.output_keys[1], output_value)
 end
 
-function _check_proportions_key(input_value::AbstractDict, output_value::AbstractDict, possible_factor_keys, task_data, invalid_sources)
-    if !issetequal(keys(input_value), keys(output_value))
-        return false
-    end
-    all(_check_proportions_key(value, output_value[key], possible_factor_keys, task_data, invalid_sources)
-        for (key, value) in input_value)
-end
-
-_check_proportions_key(input_value, output_value, possible_factor_keys, task_data, invalid_sources) = false
-_check_proportions_key(input_value::T, output_value::T, possible_factor_keys, task_data, invalid_sources) where
-    T <: Union{Int64,Tuple{Int64,Int64}} =
-    _check_proportions_key_inner(input_value, output_value, possible_factor_keys, task_data, invalid_sources)
-_check_proportions_key(input_value::T, output_value::Matcher{T}, possible_factor_keys, task_data, invalid_sources) where
-    T <: Union{Int64,Tuple{Int64,Int64}} =
-    _check_proportions_key_inner(input_value, output_value, possible_factor_keys, task_data, invalid_sources)
-
-function _check_proportions_key_inner(input_value, output_value, possible_factor_keys, task_data, invalid_sources)
+function _check_proportions_key(input_value, output_value, possible_factor_keys, task_data, invalid_sources)
     if isempty(possible_factor_keys)
         for (key, value) in task_data
             if !in(key, invalid_sources) &&
                     isa(value, Union{Int64,Tuple{Int64,Int64}}) &&
-                    !isnothing(compare_values(input_value .* value, output_value))
+                    !isnothing(common_value(input_value .* value, output_value))
                 push!(possible_factor_keys, key)
             end
         end
     else
         filter!(factor_key -> haskey(task_data, factor_key) && isa(task_data[factor_key], Union{Int64,Tuple{Int64,Int64}}) &&
-                              !isnothing(compare_values(input_value .* task_data[factor_key], output_value)),
+                              !isnothing(common_value(input_value .* task_data[factor_key], output_value)),
                 possible_factor_keys)
     end
     return !isempty(possible_factor_keys)
@@ -75,7 +59,10 @@ function find_proportionate_by_key(taskdata::Vector{Dict{String,Any}}, invalid_s
             end
             input_value = task_data[input_key]
             out_value = task_data[key]
-            if !_check_proportions_key(input_value, out_value, possible_factor_keys, task_data, invalid_sources)
+            if !compare_values(input_value, out_value, possible_factor_keys,
+                               (inp_val, out_val, candidates) ->
+                                _check_proportions_key(inp_val, out_val, candidates, task_data, invalid_sources),
+                               Union{Int64,Tuple{Int64,Int64}})
                 good = false
                 break
             end

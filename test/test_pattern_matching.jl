@@ -1,6 +1,6 @@
 
 using .FindSolution:match_fields
-using .PatternMatching:Either,make_either,Option,compare_values,update_value,unpack_value
+using .PatternMatching:Either,make_either,Option,common_value,update_value,unpack_value
 using .ObjectPrior:Object
 using .Abstractors:iter_source_either_values
 
@@ -41,7 +41,7 @@ using .Abstractors:iter_source_either_values
                 Option(Object([1], (7, 6)), -8036724089052714593)
             ]), -1731569779980110441)
         ])
-        @test compare_values(val1, val2) == val1
+        @test common_value(val1, val2) == val1
     end
 
     @testset "fix value" begin

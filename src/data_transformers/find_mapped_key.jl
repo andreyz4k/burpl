@@ -29,22 +29,13 @@ function (op::MapValues)(task_data)
     update_value(task_data, op.output_keys[1], output_value)
 end
 
-function compare_mapped_fields(input_value::AbstractDict, output_value::AbstractDict, matching_items)
-    if !issetequal(keys(input_value), keys(output_value))
-        return false
-    end
-    all(compare_mapped_fields(value, output_value[key], matching_items)
-        for (key, value) in input_value)
-end
 
-compare_mapped_fields(input_value, output_value, matching_items) = false
-
-function compare_mapped_fields(input_value::Union{Int64,Tuple}, output_value::Union{Int64,Tuple,Matcher{T}}, matching_items) where {T <: Union{Int64,Tuple}}
+function compare_mapped_fields(input_value, output_value, matching_items)
     if !haskey(matching_items, input_value)
         matching_items[input_value] = output_value
         return true
     else
-        possible_value = compare_values(matching_items[input_value], output_value)
+        possible_value = common_value(matching_items[input_value], output_value)
         if !isnothing(possible_value)
             matching_items[input_value] = possible_value
             return true
@@ -95,7 +86,7 @@ function find_mapped_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::Ab
             end
             input_value = task_data[input_key]
             out_value = task_data[key]
-            if !compare_mapped_fields(input_value, out_value, matching_items)
+            if !compare_values(input_value, out_value, matching_items, compare_mapped_fields, Union{Int64,Tuple}, false)
                 good = false
                 break
             end

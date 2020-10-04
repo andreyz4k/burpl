@@ -3,12 +3,12 @@ module PatternMatching
 
 abstract type Matcher{T} end
 
-common_value(value1, value2) = value1 == value2 ? value2 : _common_value(value1, value2)
+common_value(value1, value2) = value1 == value2 ? value2 : match(value1, value2)
 
-_common_value(val1, val2) = nothing
+match(val1, val2) = nothing
 
-_common_value(value1::Matcher, value2) = _common_value(value2, value1)
-function _common_value(val1::AbstractDict, val2::AbstractDict)
+match(value1::Matcher, value2) = match(value2, value1)
+function match(val1::AbstractDict, val2::AbstractDict)
     if !issetequal(keys(val1), keys(val2))
         return nothing
     end
@@ -23,7 +23,7 @@ function _common_value(val1::AbstractDict, val2::AbstractDict)
     return result
 end
 
-function _common_value(val1::AbstractVector, val2::AbstractVector)
+function match(val1::AbstractVector, val2::AbstractVector)
     if length(val1) != length(val2)
         return nothing
     end
@@ -39,67 +39,39 @@ function _common_value(val1::AbstractVector, val2::AbstractVector)
 end
 
 
-compare_values(val1::Matcher, val2, candidates, func, types) = false
+compare_values(val1::Matcher, val2, candidates, func, types, same_type=true) = false
 
-function compare_values(val1::AbstractDict, val2::AbstractDict, candidates, func, types)
+function compare_values(val1::AbstractDict, val2::AbstractDict, candidates, func, types, same_type=true)
     if !issetequal(keys(val1), keys(val2))
         return false
     end
-    return all(compare_values(val1[key], val2[key], candidates, func, types) for key in keys(val1))
+    return all(compare_values(val1[key], val2[key], candidates, func, types, same_type) for key in keys(val1))
 end
 
-function compare_values(val1::AbstractVector, val2::AbstractVector, candidates, func, types)
+function compare_values(val1::AbstractVector, val2::AbstractVector, candidates, func, types, same_type=true)
     if length(val1) != length(val2)
         return false
     end
-    return all(compare_values(v1, v2, candidates, func, types) for (v1, v2) in zip(val1, val2))
+    return all(compare_values(v1, v2, candidates, func, types, same_type) for (v1, v2) in zip(val1, val2))
 end
 
-function compare_values(val1, val2, candidates, func, types)
+function compare_values(val1, val2, candidates, func, types, same_type=true)
     if !isa(val1, types)
         return false
     end
-    T = typeof(val1)
-    if !isa(val2, T) && !isa(val2, Matcher{T})
+    if same_type
+        T = typeof(val1)
+    else
+        T = types
+    end
+    check_type(::Any) = false
+    check_type(::Matcher{S}) where {S} = S <: T
+    if !isa(val2, T) && !check_type(val2)
         return false
     end
     return func(val1, val2, candidates)
 end
 
-compare_values(value1, value2) = value1 == value2 ? value2 : match(value1, value2)
-
-match(val1, val2) = nothing
-function match(val1::Dict, val2::Dict)
-    if !issetequal(keys(val1), keys(val2))
-        return nothing
-    end
-    result = Dict()
-    for key in keys(val1)
-        m = compare_values(val1[key], val2[key])
-        if isnothing(m)
-            return nothing
-        end
-        result[key] = m
-    end
-    return result
-end
-
-function match(val1::AbstractVector, val2::AbstractVector)
-    if length(val1) != length(val2)
-        return nothing
-    end
-    result = []
-    for (v1, v2) in zip(val1, val2)
-        m = compare_values(v1, v2)
-        if isnothing(m)
-            return nothing
-        end
-        push!(result, m)
-    end
-    result
-end
-
-match(value1, value2::Matcher) = match(value2, value1)
 
 unpack_value(value) = [value]
 
