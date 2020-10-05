@@ -15,7 +15,7 @@ end
 function check_matching_group(input_value, output_value, candidates)
     options = []
     for (key, value) in input_value
-        if !isnothing(common_value(value, output_value))
+        if compare_values(value, output_value, nothing, _check_value, Any)
             push!(options, key)
         end
     end
@@ -51,8 +51,8 @@ function _get_matching_transformers(taskdata::Vector{Dict{String,Any}}, invalid_
         if good
             for group_keys in unroll_groups(matching_groups)
                 key_name = key * "|selected_group"
-                to_abs = MapValues(key_name, key, Dict(task_data[key] => value for (task_data, value) in zip(taskdata, group_keys)))
-                from_abs = Abstractor(SelectGroup(), true, [input_key, key_name], [key])
+                to_abs = MapValues(key_name, "output", Dict(task_data["output"] => value for (task_data, value) in zip(taskdata, group_keys)))
+                from_abs = Abstractor(SelectGroup(), true, [input_key, key_name], [key, key * "|rejected"])
                 push!(result, (to_abstract = to_abs, from_abstract = from_abs))
             end
         end
