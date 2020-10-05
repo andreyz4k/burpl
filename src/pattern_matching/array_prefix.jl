@@ -9,7 +9,7 @@ Base.hash(p::ArrayPrefix, h::UInt64) = hash(p.value, h)
 Base.show(io::IO, p::ArrayPrefix{T}) where {T} = print(io, "ArrayPrefix{", T, "}(", p.value, ")")
 
 
-match(val1, val2::ArrayPrefix) = nothing
+match(::Any, ::ArrayPrefix) = nothing
 
 function match(val1::T, val2::ArrayPrefix{T}) where T <: AbstractVector
     if length(val1) >= length(val2.value) && val1[1:length(val2.value)] == val2.value
@@ -31,5 +31,7 @@ end
 
 match(val1::Either, val2::ArrayPrefix) =
     invoke(match, Tuple{Any,Either}, val2, val1)
+
+match(::Matcher, ::ArrayPrefix) = nothing
 
 unpack_value(p::ArrayPrefix) = [p.value]

@@ -39,34 +39,39 @@ function match(val1::AbstractVector, val2::AbstractVector)
 end
 
 
-compare_values(val1::Matcher, val2, candidates, func, types, same_type=true) = false
+compare_values(val1::Matcher, val2, candidates, func, types, same_type=true, first_symbol=:(T)) = false
 
-function compare_values(val1::AbstractDict, val2::AbstractDict, candidates, func, types, same_type=true)
+function compare_values(val1::AbstractDict, val2::AbstractDict, candidates, func, types, same_type=true, first_symbol=:(T))
     if !issetequal(keys(val1), keys(val2))
         return false
     end
-    return all(compare_values(val1[key], val2[key], candidates, func, types, same_type) for key in keys(val1))
+    return all(compare_values(val1[key], val2[key], candidates, func, types, same_type, first_symbol) for key in keys(val1))
 end
 
-function compare_values(val1::AbstractVector, val2::AbstractVector, candidates, func, types, same_type=true)
+function compare_values(val1::AbstractVector, val2::AbstractVector, candidates, func, types, same_type=true, first_symbol=:(T))
     if length(val1) != length(val2)
         return false
     end
-    return all(compare_values(v1, v2, candidates, func, types, same_type) for (v1, v2) in zip(val1, val2))
+    return all(compare_values(v1, v2, candidates, func, types, same_type, first_symbol) for (v1, v2) in zip(val1, val2))
 end
 
-function compare_values(val1, val2, candidates, func, types, same_type=true)
-    if !isa(val1, types)
-        return false
+type_checks = Dict()
+
+function compare_values(val1, val2, candidates, func, types, same_type=true, first_symbol=:(T))
+    if !haskey(type_checks, (types, same_type, first_symbol))
+        fname = gensym("check_type")
+        @eval $(fname)(::Any, ::Any) = false
+        if same_type
+            @eval $(fname)(::$first_symbol, ::T) where {T <: $types} = true
+            @eval $(fname)(::$first_symbol, ::Matcher{T}) where {T <: $types} = true
+        else
+            @eval $(fname)(::$first_symbol, ::S) where {T <: $types,S <: $types} = true
+            @eval $(fname)(::$first_symbol, ::Matcher{S}) where {T <: $types,S <: $types} = true
+        end
+        @eval out = $(fname)
+        type_checks[(types, same_type, first_symbol)] = out
     end
-    if same_type
-        T = typeof(val1)
-    else
-        T = types
-    end
-    check_type(::Any) = false
-    check_type(::Matcher{S}) where {S} = S <: T
-    if !isa(val2, T) && !check_type(val2)
+    if !Base.invokelatest(type_checks[(types, same_type, first_symbol)], val1, val2)
         return false
     end
     return func(val1, val2, candidates)

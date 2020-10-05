@@ -10,7 +10,7 @@ Base.hash(p::ObjectShape, h::UInt64) = hash(p.object, h)
 Base.show(io::IO, p::ObjectShape) = print(io, "ObjectShape(", p.object, ")")
 
 
-match(val1, val2::ObjectShape) = nothing
+match(::Any, ::ObjectShape) = nothing
 
 function match(val1::Object, val2::ObjectShape)
     if val2.object.shape == val1.shape
@@ -28,6 +28,8 @@ end
 
 match(val1::Either, val2::ObjectShape) =
     invoke(match, Tuple{Any,Either}, val2, val1)
+
+match(::Matcher, ::ObjectShape) = nothing
 
 unpack_value(p::ObjectShape) = [p.object]
 unpack_value(p::AbstractVector{ObjectShape}) = [[v.object for v in p]]
