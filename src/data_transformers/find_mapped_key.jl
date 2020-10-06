@@ -8,7 +8,7 @@ struct MapValues <: Operation
     complexity::Float64
     generability
     function MapValues(key, inp_key, match_pairs)
-        generability = min(get_generability(keys(match_pairs)), 100000000)
+        generability = min(get_generability(keys(match_pairs)), 100000000) + 1
         complexity = get_complexity(match_pairs) * generability
         new([inp_key], [key], match_pairs, complexity, generability)
     end

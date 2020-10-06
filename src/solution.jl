@@ -59,12 +59,13 @@ struct Solution
     used_fields::Set{String}
     input_transformed_fields::Set{String}
     complexity_score::Float64
+    generality::Float64
     score::Int
     inp_val_hashes::Array{Set{UInt64}}
     out_val_hashes::Array{Set{UInt64}}
     function Solution(taskdata, blocks, unfilled_fields,
              filled_fields, transformed_fields, unused_fields, used_fields,
-             input_transformed_fields, complexity_score::Float64)
+             input_transformed_fields, complexity_score::Float64, generality)
         inp_val_hashes = Set{UInt64}[]
         out_val_hashes = Set{UInt64}[]
         for task_data in taskdata
@@ -84,7 +85,7 @@ struct Solution
         new(taskdata, blocks,
             unfilled_fields, filled_fields, transformed_fields,
             unused_fields, used_fields, input_transformed_fields,
-            complexity_score, get_score(taskdata, complexity_score),
+            complexity_score, generality, get_score(taskdata, complexity_score),
             inp_val_hashes, out_val_hashes)
     end
 end
@@ -98,6 +99,7 @@ Solution(taskdata) = Solution(
     Set(["input"]),
     Set(),
     Set(),
+    0.0,
     0.0
 )
 
@@ -195,7 +197,8 @@ function move_to_next_block(solution::Solution)::Solution
         unused_fields,
         solution.used_fields,
         solution.input_transformed_fields,
-        solution.complexity_score
+        solution.complexity_score,
+        solution.generality
     )
 end
 
@@ -329,6 +332,7 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
         used_fields,
         input_transformed_fields,
         solution.complexity_score + added_complexity,
+        solution.generality + (hasfield(typeof(operation), :generability) ? operation.generability : 0.0),
     )
     if need_next_block
         return move_to_next_block(new_solution)
@@ -338,7 +342,7 @@ end
 
 Base.show(io::IO, s::Solution) =
     print(io, "Solution(", s.score, ", ",
-          get_unmatched_complexity_score(s), ", ",
+          get_unmatched_complexity_score(s), ", ", s.generality, ", ",
           "unfilled: ", s.unfilled_fields, "\n\t",
           "transformed: ", s.transformed_fields, "\n\t",
           "filled: ", s.filled_fields, "\n\t",
@@ -381,9 +385,9 @@ function get_score(taskdata, complexity_score)::Int
     score = sum(compare_grids(task["output"], get(task, "projected|output", Array{Int}(undef, 0, 0)))
                 for task
                 in taskdata)
-    if complexity_score > 100
-        score += floor(complexity_score)
-    end
+    # if complexity_score > 100
+    #     score += floor(complexity_score)
+    # end
     score
 end
 

@@ -248,7 +248,7 @@ using .DataTransformers:MapValues
                 (false, false, false, true) => (0, -1)
             )
         )
-        @test m.complexity == 32.5950625
+        @test m.complexity == 65.190125
 
         m = MapValues(
             "spatial_objects|distance",
@@ -260,7 +260,7 @@ using .DataTransformers:MapValues
                 (4, 0) => (8, 0)
             )
         )
-        @test m.complexity == 286.45000000000005
+        @test m.complexity == 303.3
         @test get_generability(keys(m.match_pairs)) == 17
 
         m = MapValues(
@@ -277,7 +277,7 @@ using .DataTransformers:MapValues
                 [-1 -1 -1 -1 -1; -1 2 2 -1 -1; -1 2 2 -1 -1; -1 -1 -1 2 2; -1 -1 -1 2 2] => [1 0 0; 0 0 0; 1 0 0]
             )
         )
-        @test m.generability == 993
+        @test m.generability == 994
 
         m = MapValues(
             "output|grid|bgr_grid",
@@ -333,7 +333,7 @@ using .DataTransformers:MapValues
                 ] => [1 -1 -1; -1 -1 -1; 1 -1 -1]
             )
         )
-        @test m.generability == 1000
+        @test m.generability == 1001
 
         m = MapValues(
             "output|grid|bgr_grid|spatial_objects|item3",
@@ -345,6 +345,6 @@ using .DataTransformers:MapValues
                 [0 0 0 0 0 0 0; 0 0 2 2 0 2 2; 0 0 2 2 0 2 2; 0 0 0 0 0 0 0; 2 2 0 2 2 0 0; 2 2 0 2 2 0 0; 0 0 0 0 0 0 0] => Object([1], (2, 2))
             )
         )
-        @test m.generability == 997.0
+        @test m.generability == 998.0
     end
 end
