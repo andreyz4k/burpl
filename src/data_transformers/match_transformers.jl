@@ -7,7 +7,8 @@ function get_match_transformers(taskdata::Array{Dict{String,Any}}, invalid_sourc
         find_proportionate_key,
         find_shifted_key,
         find_proportionate_by_key,
-        find_shifted_by_key
+        find_shifted_by_key,
+        find_neg_shifted_by_key,
     ]
     for func in find_matches_funcs
         if length(result) == 1
@@ -19,7 +20,7 @@ function get_match_transformers(taskdata::Array{Dict{String,Any}}, invalid_sourc
 
 end
 
-using ..Solutions:Solution
+using ..Solutions:Solution,insert_operation
 
 function find_matched_fields(key, solution::Solution, get_transformers_func)
     new_solutions = []
@@ -28,7 +29,7 @@ function find_matched_fields(key, solution::Solution, get_transformers_func)
         if transformer.generability > 5
             continue
         end
-        new_solution = Solution(solution, transformer,
+        new_solution = insert_operation(solution, transformer,
                                 added_complexity=transformer.complexity)
         push!(new_solutions, new_solution)
     end

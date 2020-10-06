@@ -61,13 +61,13 @@ function _get_matching_transformers(taskdata::Vector{Dict{String,Any}}, invalid_
 end
 
 
-using ..Solutions:Solution
+using ..Solutions:Solution,insert_operation
 
 function find_matching_obj_group(key, solution::Solution)
     new_solutions = []
     transformers = _get_matching_transformers(solution.taskdata, union(solution.unfilled_fields, solution.transformed_fields), key)
     for transformer in transformers
-        new_solution = Solution(solution, transformer.from_abstract, transformer.to_abstract)
+        new_solution = insert_operation(solution, transformer.from_abstract, reversed_op=transformer.to_abstract)
         push!(new_solutions, new_solution)
     end
     return new_solutions

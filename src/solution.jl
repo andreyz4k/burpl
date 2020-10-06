@@ -11,37 +11,21 @@ end
 
 Block() = Block([])
 
-function insert_operation(block::Block, operation::Operation, ::Val{true})::Tuple{Block,Int}
-    operations = copy(block.operations)
-    needed_fields = union(Set(operation.input_keys), operation.output_keys)
-    for index in length(operations):-1:1
-        op = operations[index]
-        if any(in(key, needed_fields) for key in op.output_keys)
-            insert!(operations, index + 1, operation)
-            return Block(operations), index + 1
-        end
-    end
-    insert!(operations, 1, operation)
-    Block(operations), 1
-end
-
-function insert_operation(block::Block, operation::Operation, ::Val{false})::Tuple{Block,Int}
-    operations = copy(block.operations)
-    needed_fields = Set(get_sorting_keys(operation))
-    if isempty(needed_fields)
-        push!(operations, operation)
-        return Block(operations), length(operations)
-    end
-    for index in length(operations):-1:1
-        op = operations[index]
-        setdiff!(needed_fields, op.input_keys)
-        if isempty(needed_fields)
+function insert_operation(blocks::AbstractVector{Block}, operation::Operation)::Tuple{Block,Int}
+    filled_keys = reduce(union, [op.output_keys for block in blocks[1:end - 1] for op in block.operations], init=Set(["input"]))
+    last_block_outputs = reduce(union, [op.output_keys for op in blocks[end].operations], init=Set{String}())
+    needed_fields = setdiff(operation.input_keys, filled_keys)
+    union!(needed_fields, filter(k -> in(k, last_block_outputs), operation.output_keys))
+    operations = copy(blocks[end].operations)
+    for (index, op) in enumerate(operations)
+        if isempty(needed_fields) || any(in(key, op.input_keys) for key in operation.output_keys)
             insert!(operations, index, operation)
             return Block(operations), index
         end
+        setdiff!(needed_fields, op.output_keys)
     end
-    insert!(operations, 1, operation)
-    Block(operations), 1
+    push!(operations, operation)
+    Block(operations), length(operations)
 end
 
 Base.show(io::IO, b::Block) =
@@ -164,7 +148,7 @@ function move_to_next_block(solution::Solution)::Solution
 
     reverse!(new_block.operations)
     unused_fields = solution.unused_fields
-    taskdata = solution.taskdata
+    taskdata = [merge(task_data, block_output) for (task_data, block_output) in zip(solution.taskdata, last_block_output)]
 
     if !isempty(solution.unfilled_fields) && !isempty(new_block.operations)
         project_op = Project(new_block.operations, union(solution.unfilled_fields, solution.transformed_fields))
@@ -285,12 +269,18 @@ function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transf
     end
 end
 
-function Solution(solution::Solution, operation::Operation; added_complexity::Float64=0.0)
+_check_matcher(::Any) = false
+_check_matcher(::Matcher) = true
+_check_matcher(value::AbstractDict) = any(_check_matcher(v) for v in values(value))
+_check_matcher(value::AbstractVector) = any(_check_matcher(v) for v in value)
+
+function insert_operation(solution::Solution, operation::Operation; added_complexity::Float64=0.0, reversed_op=nothing)::Solution
     blocks = copy(solution.blocks)
-    blocks[end], index = insert_operation(blocks[end], operation, Val(true))
+    blocks[end], index = insert_operation(blocks, operation)
+    op = isnothing(reversed_op) ? operation : reversed_op
 
     taskdata = [
-        operation(task)
+        op(task)
         for task
         in solution.taskdata
     ]
@@ -302,8 +292,11 @@ function Solution(solution::Solution, operation::Operation; added_complexity::Fl
     input_transformed_fields = copy(solution.input_transformed_fields)
 
     need_next_block = false
-    union!(unused_fields, operation.output_keys)
-    for key in operation.input_keys
+
+    new_input_fields = filter(key -> !in(key, unused_fields) && !in(key, used_fields) && !in(key, input_transformed_fields), operation.input_keys)
+    union!(unfilled_fields, new_input_fields)
+
+    for key in setdiff(operation.input_keys, new_input_fields)
         if in(key, unused_fields)
             delete!(unused_fields, key)
             push!(input_transformed_fields, key)
@@ -312,14 +305,17 @@ function Solution(solution::Solution, operation::Operation; added_complexity::Fl
 
     for key in operation.output_keys
         if in(key, unfilled_fields)
-            need_next_block = true
-            mark_used_fields(key, index, blocks, unfilled_fields, filled_fields, transformed_fields, unused_fields, used_fields, input_transformed_fields, taskdata)
-        end
-    end
-
-    for key in operation.output_keys
-        if any(isa(get(task, key, nothing), Matcher) for task in taskdata)
-            push!(unfilled_fields, key)
+            delete!(unfilled_fields, key)
+            push!(transformed_fields, key)
+            if isempty(new_input_fields)
+                need_next_block = true
+                mark_used_fields(key, index, blocks, unfilled_fields, filled_fields, transformed_fields, unused_fields, used_fields, input_transformed_fields, taskdata)
+            end
+        else
+            push!(unused_fields, key)
+            if any(_check_matcher(get(task, key, nothing)) for task in taskdata)
+                push!(unfilled_fields, key)
+            end
         end
     end
 
@@ -338,39 +334,6 @@ function Solution(solution::Solution, operation::Operation; added_complexity::Fl
         return move_to_next_block(new_solution)
     end
     new_solution
-end
-
-function Solution(solution::Solution, operation::Operation, reversed_op::Operation)
-    blocks = copy(solution.blocks)
-    blocks[end], index = insert_operation(blocks[end], operation, Val(false))
-
-    taskdata = [
-        reversed_op(task)
-        for task
-        in solution.taskdata
-    ]
-    unfilled_fields = copy(solution.unfilled_fields)
-    transformed_fields = copy(solution.transformed_fields)
-
-    union!(unfilled_fields, key for key in operation.input_keys if !in(key, solution.filled_fields))
-    for key in operation.output_keys
-        if in(key, unfilled_fields)
-            delete!(unfilled_fields, key)
-            push!(transformed_fields, key)
-        end
-    end
-
-    Solution(
-        taskdata,
-        blocks,
-        unfilled_fields,
-        solution.filled_fields,
-        transformed_fields,
-        solution.unused_fields,
-        solution.used_fields,
-        solution.input_transformed_fields,
-        solution.complexity_score,
-    )
 end
 
 Base.show(io::IO, s::Solution) =

@@ -16,9 +16,9 @@ Base.hash(op::IncParam, h::UInt64) = hash(op.output_keys, h) + hash(op.input_key
 function (op::IncParam)(task_data)
     input_value = task_data[op.input_keys[1]]
     if isa(input_value, Dict)
-        output_value = Dict(key => value .+ op.shift for (key, value) in input_value)
+        output_value = Dict(key => shift_value(value, op.shift) for (key, value) in input_value)
     else
-        output_value = input_value .+ op.shift
+        output_value = shift_value(input_value, op.shift)
     end
     data = update_value(task_data, op.output_keys[1], output_value)
     update_value(data, op.output_keys[2], op.shift)

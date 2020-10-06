@@ -38,7 +38,7 @@ Base.show(io::IO, p::DotProduct) = print(io,
 
 Base.:(==)(a::DotProduct, b::DotProduct) = a.abstractors == b.abstractors && a.input_keys == b.input_keys && a.output_keys == b.output_keys
 
-using ..Solutions:Solution
+using ..Solutions:insert_operation
 
 function get_abstractor_options(abs_classes, solution, key, to_abs)
     if isempty(abs_classes)
@@ -48,9 +48,9 @@ function get_abstractor_options(abs_classes, solution, key, to_abs)
     res = []
     for (priority, abstractor) in available_abstractors
         if to_abs
-            new_solution = Solution(solution, abstractor.to_abstract)
+            new_solution = insert_operation(solution, abstractor.to_abstract)
         else
-            new_solution = Solution(solution, abstractor.from_abstract, abstractor.to_abstract)
+            new_solution = insert_operation(solution, abstractor.from_abstract, reversed_op=abstractor.to_abstract)
         end
         for new_key in abstractor.to_abstract.output_keys
             for abs_options in get_abstractor_options(abs_classes[2:end], new_solution, new_key, to_abs)

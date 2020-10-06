@@ -13,12 +13,15 @@ Base.show(io::IO, op::MultByParam) = print(io, "MultByParam(", op.output_keys[1]
 Base.:(==)(a::MultByParam, b::MultByParam) = a.output_keys == b.output_keys && a.input_keys == b.input_keys
 Base.hash(op::MultByParam, h::UInt64) = hash(op.output_keys, h) + hash(op.input_keys, h)
 
+mult_value(value, factor) = value .* factor
+mult_value(value::AbstractVector, factor) = [mult_value(v, factor) for v in value]
+
 function (op::MultByParam)(task_data)
     input_value = task_data[op.input_keys[1]]
     if isa(input_value, Dict)
-        output_value = Dict(key => value .* task_data[op.input_keys[2]] for (key, value) in input_value)
+        output_value = Dict(key => mult_value(value, task_data[op.input_keys[2]]) for (key, value) in input_value)
     else
-        output_value = input_value = input_value .* task_data[op.input_keys[2]]
+        output_value = input_value = mult_value(input_value, task_data[op.input_keys[2]])
     end
     update_value(task_data, op.output_keys[1], output_value)
 end
@@ -68,7 +71,8 @@ function find_proportionate_by_key(taskdata::Vector{Dict{String,Any}}, invalid_s
             end
         end
         if good
-            append!(result, [MultByParam(key, input_key, factor_key) for factor_key in possible_factor_keys])
+            append!(result, [MultByParam(key, input_key, factor_key) for factor_key in possible_factor_keys
+                             if any(task_data[factor_key] != 1 for task_data in taskdata)])
         end
     end
     return result

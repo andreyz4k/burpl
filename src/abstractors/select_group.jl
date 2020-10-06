@@ -3,7 +3,7 @@
 struct SelectGroup <: AbstractorClass end
 
 @memoize abs_keys(::SelectGroup) = ["selected_by", "rejected_by"]
-@memoize priority(::SelectGroup) = 2
+@memoize priority(::SelectGroup) = 4
 
 @memoize abs_keys(cls::SelectGroup, key::String, param_key::String) = [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
 @memoize aux_keys(::SelectGroup, key::String, param_key::String) = [param_key]

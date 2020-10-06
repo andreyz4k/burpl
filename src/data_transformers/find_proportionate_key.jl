@@ -17,9 +17,9 @@ Base.hash(op::MultParam, h::UInt64) = hash(op.output_keys, h) + hash(op.input_ke
 function (op::MultParam)(task_data)
     input_value = task_data[op.input_keys[1]]
     if isa(input_value, Dict)
-        output_value = Dict(key => value .* op.factor for (key, value) in input_value)
+        output_value = Dict(key => mult_value(value, op.factor) for (key, value) in input_value)
     else
-        output_value = input_value .* op.factor
+        output_value = mult_value(input_value, op.factor)
     end
     data = update_value(task_data, op.output_keys[1], output_value)
     update_value(data, op.output_keys[2], op.factor)

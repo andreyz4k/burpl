@@ -3,7 +3,7 @@ module FindSolution
 export generate_solution
 
 using ..DataTransformers:match_fields
-using ..Solutions:Solution,get_unmatched_complexity_score
+using ..Solutions:Solution,get_unmatched_complexity_score,insert_operation
 
 
 import ..Abstractors
@@ -20,7 +20,7 @@ function get_new_solutions_for_input_key(solution, key)
     # end
     output = []
     for (priority, abstractor) in get_next_operations(solution, key)
-        new_solution = Solution(solution, abstractor.to_abstract)
+        new_solution = insert_operation(solution, abstractor.to_abstract)
         # for abs_key in abstractor.abs_keys
         #     if new_solution.get_key_data_type(abs_key) in unfilled_data_types
         #         priority /= 2
@@ -59,7 +59,7 @@ function get_new_solutions_for_unfilled_key(solution::Solution, key::String)
         #     precursors.append(new_solution.unfilled_fields[key])
         # end
 
-        new_solution = Solution(solution, abstractor.from_abstract, abstractor.to_abstract)
+        new_solution = insert_operation(solution, abstractor.from_abstract, reversed_op=abstractor.to_abstract)
 
         # for abs_key in abstractor.abs_keys
         #     new_solution.unfilled_fields[abs_key].precursor_data_types = {
@@ -183,7 +183,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
             new_priority = min(new_priority, get(queue, (new_solution, i - 1), new_priority))
             queue[(new_solution, i - 1)] = new_priority
         end
-        if real_visited > 1000
+        if real_visited > 2000
             break
         end
     end

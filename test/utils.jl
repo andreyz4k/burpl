@@ -12,13 +12,14 @@ end
 
 (op::FakeOperation)(task_data) = task_data
 
-make_dummy_solution(data, unfilled=[]) =
+function make_dummy_solution(data, unfilled=[])
+    unused = Set(filter(k -> !in(k, unfilled) && k != "input" && k != "output", keys(data[1])))
     Solution([merge(Dict("input" => Array{Int}(undef, 0, 0),
                          "output" => Array{Int}(undef, 0, 0)),
                     task)
               for task in data],
-             [Block([FakeOperation(unfilled, ["output"])])], Set(unfilled), Set(), Set(), Set(), Set(), Set(), 0.0)
-
+             [Block([FakeOperation(unfilled, ["output"])])], Set(unfilled), Set(), Set(), unused, Set(), Set(), 0.0)
+end
 function _compare_operations(expected, solutions)
     for solution in solutions
         ops = filtered_ops(solution)
