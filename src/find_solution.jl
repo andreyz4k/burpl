@@ -35,7 +35,7 @@ function get_new_solutions_for_input_key(solution, key)
         end
 
         if in(key, solution.used_fields)
-            priority *= 8
+            priority *= 4
         end
 
         if startswith(key, "projected|")
@@ -147,11 +147,10 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
     border = Set()
     enqueue!(queue, (init_solution, 0), 0)
     best_solution = init_solution
-    min_generality = Inf64
     while !isempty(queue)
         (solution, i), pr = peek(queue)
         dequeue!(queue)
-        if in(solution, visited) || solution.generality >= min_generality
+        if in(solution, visited)
             continue
         end
         push!(visited, solution)
@@ -164,7 +163,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
         # println((pr, i, solution))
         new_solutions = get_new_solutions(solution, debug)
         for (priority, new_solution) in new_solutions
-            if new_solution.generality >= min_generality || in(new_solution, visited) || !check_border(new_solution, border)
+            if in(new_solution, visited) || !check_border(new_solution, border)
                 continue
             end
             new_error = new_solution.score
@@ -173,15 +172,8 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
             end
             # println((priority, new_error))
             if new_error == 0
-                min_generality = new_solution.generality
-                if min_generality == 0.0
-                    println((real_visited, length(queue)))
-                    return new_solution
-                else
-                    println(min_generality, " ", new_solution)
-                    best_solution = new_solution
-                    continue
-                end
+                println((real_visited, length(queue)))
+                return new_solution
             end
             i += 1
             if new_error < best_solution.score

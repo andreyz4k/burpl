@@ -4,8 +4,7 @@ struct CopyParam <: Operation
     input_keys::Array{String}
     output_keys::Array{String}
     complexity::Float64
-    generability
-    CopyParam(key, inp_key) = new([inp_key], [key], 1, 0)
+    CopyParam(key, inp_key) = new([inp_key], [key], 1)
 end
 
 Base.show(io::IO, op::CopyParam) = print(io, "CopyParam(", op.output_keys[1], ", ", op.input_keys[1], ")")

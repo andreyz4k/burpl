@@ -4,8 +4,7 @@ struct MultByParam <: Operation
     input_keys::Array{String}
     output_keys::Array{String}
     complexity::Float64
-    generability
-    MultByParam(key, inp_key, factor_key) = new([inp_key, factor_key], [key], 1, 0)
+    MultByParam(key, inp_key, factor_key) = new([inp_key, factor_key], [key], 1)
 end
 
 Base.show(io::IO, op::MultByParam) = print(io, "MultByParam(", op.output_keys[1], ", ", op.input_keys[1], ", ", op.input_keys[2], ")")

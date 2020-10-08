@@ -3,8 +3,7 @@ struct DecByParam <: Operation
     input_keys::Array{String}
     output_keys::Array{String}
     complexity::Float64
-    generability
-    DecByParam(key, inp_key, shift_key) = new([inp_key, shift_key], [key], 1, 0)
+    DecByParam(key, inp_key, shift_key) = new([inp_key, shift_key], [key], 1)
 end
 
 Base.show(io::IO, op::DecByParam) = print(io, "DecByParam(", op.output_keys[1], ", ", op.input_keys[1], ", ", op.input_keys[2], ")")

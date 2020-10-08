@@ -59,13 +59,12 @@ struct Solution
     used_fields::Set{String}
     input_transformed_fields::Set{String}
     complexity_score::Float64
-    generality::Float64
     score::Int
     inp_val_hashes::Array{Set{UInt64}}
     out_val_hashes::Array{Set{UInt64}}
     function Solution(taskdata, blocks, unfilled_fields,
              filled_fields, transformed_fields, unused_fields, used_fields,
-             input_transformed_fields, complexity_score::Float64, generality)
+             input_transformed_fields, complexity_score::Float64)
         inp_val_hashes = Set{UInt64}[]
         out_val_hashes = Set{UInt64}[]
         for task_data in taskdata
@@ -85,7 +84,7 @@ struct Solution
         new(taskdata, blocks,
             unfilled_fields, filled_fields, transformed_fields,
             unused_fields, used_fields, input_transformed_fields,
-            complexity_score, generality, get_score(taskdata, complexity_score),
+            complexity_score, get_score(taskdata, complexity_score),
             inp_val_hashes, out_val_hashes)
     end
 end
@@ -100,7 +99,6 @@ Solution(taskdata) = Solution(
     Set(),
     Set(),
     0.0,
-    0.0
 )
 
 function move_to_next_block(solution::Solution)::Solution
@@ -198,7 +196,6 @@ function move_to_next_block(solution::Solution)::Solution
         solution.used_fields,
         solution.input_transformed_fields,
         solution.complexity_score,
-        solution.generality
     )
 end
 
@@ -332,7 +329,6 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
         used_fields,
         input_transformed_fields,
         solution.complexity_score + added_complexity,
-        solution.generality + (hasfield(typeof(operation), :generability) ? operation.generability : 0.0),
     )
     if need_next_block
         return move_to_next_block(new_solution)
@@ -342,7 +338,7 @@ end
 
 Base.show(io::IO, s::Solution) =
     print(io, "Solution(", s.score, ", ",
-          get_unmatched_complexity_score(s), ", ", s.generality, ", ",
+          get_unmatched_complexity_score(s), ", ",
           "unfilled: ", s.unfilled_fields, "\n\t",
           "transformed: ", s.transformed_fields, "\n\t",
           "filled: ", s.filled_fields, "\n\t",
@@ -406,7 +402,7 @@ function get_unmatched_complexity_score(solution::Solution)
     ]
     unused_data_score = [
         sum(
-            Float64[startswith(key, "projected|") ? get_complexity(value) / 3  : get_complexity(value)
+            Float64[startswith(key, "projected|") ? get_complexity(value) / 6  : get_complexity(value)
             for (key, value) in task_data if in(key, solution.unused_fields)],
         ) for task_data in solution.taskdata
     ]
@@ -422,7 +418,7 @@ function get_unmatched_complexity_score(solution::Solution)
             sum(unused_data_score) +
             sum(inp_transformed_data_score) +
             solution.complexity_score
-    ) / length(solution.taskdata)
+    ) * length(solution.unfilled_fields) / length(solution.taskdata)
 end
 
 function validate_solution(solution, taskdata)

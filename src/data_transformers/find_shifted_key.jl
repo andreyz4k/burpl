@@ -4,8 +4,7 @@ struct IncParam <: Operation
     output_keys::Array{String}
     shift::Union{Int64,Tuple{Int64,Int64}}
     complexity::Float64
-    generability
-    IncParam(key, inp_key, shift) = new([inp_key], [key, key * "|inc_shift"], shift, 1, 0)
+    IncParam(key, inp_key, shift) = new([inp_key], [key, key * "|inc_shift"], shift, 1)
 end
 
 Base.show(io::IO, op::IncParam) = print(io, "IncParam(", op.output_keys[1], ", ", op.input_keys[1], ", ", op.shift, ")")

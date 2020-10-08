@@ -5,8 +5,7 @@ struct MultParam <: Operation
     output_keys::Array{String}
     factor::Int64
     complexity::Float64
-    generability
-    MultParam(key, inp_key, factor) = new([inp_key], [key, key * "|mult_factor"], factor, 1, 0)
+    MultParam(key, inp_key, factor) = new([inp_key], [key, key * "|mult_factor"], factor, 1)
 end
 
 Base.show(io::IO, op::MultParam) = print(io, "MultParam(", op.output_keys[1], ", ", op.input_keys[1], ", ", op.factor, ")")

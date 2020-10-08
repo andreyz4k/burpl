@@ -4,8 +4,7 @@ struct SetConst <: Operation
     output_keys::Array{String}
     value
     complexity::Float64
-    generability
-    SetConst(key, value) = new([], [key], value, get_complexity(value), 0)
+    SetConst(key, value) = new([], [key], value, get_complexity(value))
 end
 
 Base.show(io::IO, op::SetConst) = print(io, "SetConst(", op.output_keys[1], ", ", op.value, ")")
