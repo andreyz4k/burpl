@@ -1,8 +1,9 @@
 
 using .FindSolution:match_fields
-using .PatternMatching:Either,make_either,Option,common_value,update_value,unpack_value
+using .PatternMatching:Either,make_either,Option,common_value,update_value,unpack_value,MDict,Matcher
 using .ObjectPrior:Object
 using .Abstractors:iter_source_either_values
+using DataStructures:DefaultDict
 
 @testset "Patten Matching" begin
 
@@ -276,6 +277,51 @@ using .Abstractors:iter_source_either_values
             ([1, 2], [54, 456], Set([123, 456, 54, 209])),
             ([1, 4], [209], Set([123, 456, 54, 209]))
         ]
+    end
+
+    @testset "create mdict" begin
+        source = Dict(
+            2 => Object[Object([2], (6, 1))],
+            8 => Object[Object([8], (8, 10))]
+        )
+        expected_type = Dict{Int64,Union{Array{<:Object,1},Matcher{<:Array{<:Object,1}},Array{<:Matcher{<:Object},1},Matcher{<:Array{<:Matcher{<:Object},1}}}}
+        @test typeof(MDict(source)) == expected_type
+
+        @test typeof(MDict(k => v for (k, v) in source)) == expected_type
+        res = DefaultDict(() -> Object[])
+        merge!(res, source)
+        @test typeof(MDict(res)) == expected_type
+        @test typeof(MDict(Dict(res))) == expected_type
+        @test typeof(MDict(k => v for (k, v) in res)) == expected_type
+        @test typeof(MDict(Dict(k => v for (k, v) in res))) == expected_type
+
+        source = Dict(
+            2 => Object[Object([2], (6, 1))],
+            8 => Either([
+                Option(Object[Object([8], (8, 10))]),
+                Option(Object[Object([3], (8, 10))]),
+            ])
+        )
+        @test typeof(MDict(source)) == expected_type
+        source = Dict(
+            2 => Either([
+                Option(Object[Object([2], (6, 1))]),
+                Option(Object[Object([4], (6, 1))]),
+            ]),
+            8 => Either([
+                Option(Object[Object([8], (8, 10))]),
+                Option(Object[Object([3], (8, 10))]),
+            ])
+        )
+        @test typeof(MDict(source)) == expected_type
+        source = Dict(
+            2 => Either([
+                Option(Object[Object([2], (6, 1))]),
+                Option(Object[Object([4], (6, 1))]),
+            ]),
+            8 => Object[Object([8], (8, 10))]
+        )
+        @test typeof(MDict(source)) == expected_type
     end
 
 end

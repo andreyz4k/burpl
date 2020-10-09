@@ -3,6 +3,19 @@ module PatternMatching
 
 abstract type Matcher{T} end
 
+using Memoization
+
+@memoize _matcher_types(::Type{T}) where T = [T, Matcher{<:T}]
+@memoize _matcher_types(::Type{T} where T <: Matcher{S}) where S = _matcher_types(S)
+@memoize _matcher_types(::Type{T} where T <: AbstractVector{S}) where S = vcat([[Vector{<:V}, Matcher{<:Vector{<:V}}] for V in _matcher_types(S)]...)
+
+function MDict(kv)
+    k, v = first(kv)
+    K = typeof(k)
+    V = typeof(v)
+    return Dict{K,Union{_matcher_types(V)...}}(kv)
+end
+
 common_value(value1, value2) = value1 == value2 ? value2 : match(value1, value2)
 
 match(val1, val2) = nothing

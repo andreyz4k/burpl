@@ -24,7 +24,8 @@ function to_abstract_value(p::Abstractor, ::GroupObjectsByColor, source_value)
         push!(results[key], obj)
     end
     return Dict(
-        p.output_keys[1] => Dict(k => v for (k, v) in results),
+        # p.output_keys[1] => Dict{Int64,Union{Vector{Object},Matcher{Vector{Object}},Vector{Matcher{Object}}}}(k => v for (k, v) in results),
+        p.output_keys[1] => MDict(results),
         p.output_keys[2] => sort([k for k in keys(results)])
     )
 end

@@ -110,6 +110,8 @@ function iter_source_values(source_values)
     result
 end
 
+using ..PatternMatching:MDict
+
 function wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, AbstractDict) for v in source_values)
         result = DefaultDict(() -> Dict())
@@ -118,7 +120,7 @@ function wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Fu
                 result[out_key][key] = out_value
             end
         end
-        return result
+        return Dict(out_key => MDict(res) for (out_key, res) in result)
     end
     wrap_func_call_value(p, cls, func, wrappers, source_values...)
 end
