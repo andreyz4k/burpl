@@ -2,8 +2,8 @@
 struct RepeatObjectInfinite <: AbstractorClass end
 
 RepeatObjectInfinite(key, to_abs, taskdata) = Abstractor(RepeatObjectInfinite(), key, to_abs, aux_keys(RepeatObjectInfinite(), key, taskdata))
-@memoize abs_keys(::RepeatObjectInfinite) = ["first", "step"]
-@memoize aux_keys(::RepeatObjectInfinite) = ["grid_size"]
+abs_keys(::RepeatObjectInfinite) = ["first", "step"]
+aux_keys(::RepeatObjectInfinite) = ["grid_size"]
 
 init_create_check_data(::RepeatObjectInfinite, key, solution) = Dict("effective" => false)
 

@@ -2,7 +2,7 @@
 
 struct DistanceBetweenObjects <: ComputeFunctionClass end
 
-@memoize abs_keys(::DistanceBetweenObjects) = ["distance"]
+abs_keys(::DistanceBetweenObjects) = ["distance"]
 
 check_task_value(::DistanceBetweenObjects, value::AbstractVector{Object}, data, aux_values) =
     length(value) == 2

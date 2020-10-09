@@ -2,7 +2,7 @@
 struct SortArray <: AbstractorClass end
 
 SortArray(key, to_abs) = Abstractor(SortArray(), key, to_abs)
-@memoize abs_keys(::SortArray) = ["sorted"]
+abs_keys(::SortArray) = ["sorted"]
 
 init_create_check_data(::SortArray, key, solution) = Dict("effective" => false)
 

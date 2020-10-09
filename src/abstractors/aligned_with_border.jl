@@ -1,8 +1,8 @@
 
 
 struct AlignedWithBorder <: ComputeFunctionClass end
-@memoize abs_keys(::AlignedWithBorder) = ["border_alignment"]
-@memoize aux_keys(::AlignedWithBorder) = ["grid_size"]
+abs_keys(::AlignedWithBorder) = ["border_alignment"]
+aux_keys(::AlignedWithBorder) = ["grid_size"]
 priority(::AlignedWithBorder) = 8
 
 check_task_value(::AlignedWithBorder, ::Object, data, aux_values) = true

@@ -2,7 +2,7 @@
 
 struct UnwrapTuple <: AbstractorClass end
 UnwrapTuple(key, to_abs) = Abstractor(UnwrapTuple(), key, to_abs)
-@memoize abs_keys(::UnwrapTuple) = ["unwrapped"]
+abs_keys(::UnwrapTuple) = ["unwrapped"]
 
 check_task_value(::UnwrapTuple, value::Tuple{Any}, data, aux_values) = true
 check_task_value(cls::UnwrapTuple, value::AbstractVector, data, aux_values) =

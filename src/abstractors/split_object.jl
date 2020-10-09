@@ -1,9 +1,9 @@
 
 
 struct SplitObject <: AbstractorClass end
-@memoize allow_concrete(::SplitObject) = false
+allow_concrete(::SplitObject) = false
 SplitObject(key, to_abs) = Abstractor(SplitObject(), key, to_abs)
-@memoize abs_keys(::SplitObject) = ["splitted"]
+abs_keys(::SplitObject) = ["splitted"]
 
 init_create_check_data(::SplitObject, key, solution) = Dict("effective" => false)
 

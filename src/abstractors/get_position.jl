@@ -2,7 +2,7 @@
 
 struct GetPosition <: AbstractorClass end
 
-@memoize abs_keys(::GetPosition) = ["shapes", "positions"]
+abs_keys(::GetPosition) = ["shapes", "positions"]
 
 check_task_value(::GetPosition, value::Object, data, aux_values) = true
 check_task_value(::GetPosition, value::AbstractVector{Object}, data, aux_values) = true

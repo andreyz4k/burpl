@@ -1,19 +1,18 @@
 export Abstractors
 module Abstractors
 
-using Memoization
 
 using ..Operations:Operation,OperationClass
 
 abstract type AbstractorClass <: OperationClass end
 
-@memoize allow_concrete(p::AbstractorClass) = true
-@memoize abs_keys(::AbstractorClass) = []
-@memoize aux_keys(::AbstractorClass) = []
-@memoize priority(::AbstractorClass) = 8
+allow_concrete(p::AbstractorClass) = true
+abs_keys(::AbstractorClass) = []
+aux_keys(::AbstractorClass) = []
+priority(::AbstractorClass) = 8
 
-@memoize abs_keys(cls::AbstractorClass, key::String) = [key * "|" * a_key for a_key in abs_keys(cls)]
-@memoize detail_keys(::AbstractorClass, key::String) = [key]
+abs_keys(cls::AbstractorClass, key::String) = [key * "|" * a_key for a_key in abs_keys(cls)]
+detail_keys(::AbstractorClass, key::String) = [key]
 function aux_keys(cls::AbstractorClass, key::String, taskdata)::Array{String}
     result = []
     for a_key in aux_keys(cls)

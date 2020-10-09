@@ -3,7 +3,7 @@
 struct UnwrapSingleList <: AbstractorClass end
 
 UnwrapSingleList(key, to_abs) = Abstractor(UnwrapSingleList(), key, to_abs)
-@memoize abs_keys(::UnwrapSingleList) = ["single_value"]
+abs_keys(::UnwrapSingleList) = ["single_value"]
 
 check_task_value(::UnwrapSingleList, value::AbstractVector, data, aux_values) =
     length(value) == 1

@@ -2,7 +2,7 @@
 
 struct GroupMin <: ComputeFunctionClass end
 
-@memoize abs_keys(::GroupMin) = ["group_min"]
+abs_keys(::GroupMin) = ["group_min"]
 
 wrap_check_task_value(cls::GroupMin, value::AbstractDict, data, aux_values) =
     check_task_value(cls, value, data, aux_values)

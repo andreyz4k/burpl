@@ -2,8 +2,8 @@
 struct GridSize <: AbstractorClass end
 
 GridSize(key, to_abs) = Abstractor(GridSize(), key, to_abs)
-@memoize abs_keys(::GridSize) = ["grid", "grid_size"]
-@memoize priority(::GridSize) = 6
+abs_keys(::GridSize) = ["grid", "grid_size"]
+priority(::GridSize) = 6
 
 init_create_check_data(::GridSize, key, solution) = Dict("effective" => false)
 

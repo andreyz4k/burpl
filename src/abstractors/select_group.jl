@@ -2,11 +2,11 @@
 
 struct SelectGroup <: AbstractorClass end
 
-@memoize abs_keys(::SelectGroup) = ["selected_by", "rejected_by"]
-@memoize priority(::SelectGroup) = 4
+abs_keys(::SelectGroup) = ["selected_by", "rejected_by"]
+priority(::SelectGroup) = 4
 
-@memoize abs_keys(cls::SelectGroup, key::String, param_key::String) = [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
-@memoize aux_keys(::SelectGroup, key::String, param_key::String) = [param_key]
+abs_keys(cls::SelectGroup, key::String, param_key::String) = [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
+aux_keys(::SelectGroup, key::String, param_key::String) = [param_key]
 
 
 SelectGroup(key, selector_key, to_abs) = Abstractor(SelectGroup(), key, selector_key, to_abs)

@@ -3,8 +3,8 @@
 struct UniteInRect <: AbstractorClass end
 
 UniteInRect(key, to_abs) = Abstractor(UniteInRect(), key, to_abs)
-@memoize abs_keys(::UniteInRect) = ["united_rect"]
-@memoize priority(::UniteInRect) = 12
+abs_keys(::UniteInRect) = ["united_rect"]
+priority(::UniteInRect) = 12
 
 init_create_check_data(::UniteInRect, key, solution) = Dict("effective" => false)
 

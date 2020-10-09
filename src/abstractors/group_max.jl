@@ -2,7 +2,7 @@
 
 struct GroupMax <: ComputeFunctionClass end
 
-@memoize abs_keys(::GroupMax) = ["group_max"]
+abs_keys(::GroupMax) = ["group_max"]
 
 wrap_check_task_value(cls::GroupMax, value::AbstractDict, data, aux_values) =
     check_task_value(cls, value, data, aux_values)

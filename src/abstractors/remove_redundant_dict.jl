@@ -3,7 +3,7 @@
 struct RemoveRedundantDict <: AbstractorClass end
 
 RemoveRedundantDict(key, to_abs) = Abstractor(RemoveRedundantDict(), key, to_abs)
-@memoize abs_keys(::RemoveRedundantDict) = ["to_value", "group_keys"]
+abs_keys(::RemoveRedundantDict) = ["to_value", "group_keys"]
 
 wrap_check_task_value(cls::RemoveRedundantDict, value::AbstractDict, data, aux_values) =
     check_task_value(cls, value, data, aux_values)

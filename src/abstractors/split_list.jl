@@ -2,11 +2,11 @@
 
 struct SplitList <: AbstractorClass end
 
-@memoize priority(::SplitList) = 15
+priority(::SplitList) = 15
 
-@memoize abs_keys(::SplitList) = ["size", "item"]
+abs_keys(::SplitList) = ["size", "item"]
 
-@memoize abs_keys(cls::SplitList, key::String, max_count::Int) = [key * "|" * abs_keys(cls)[1], [key * "|" * abs_keys(cls)[2] * string(i) for i in 1:max_count]...]
+abs_keys(cls::SplitList, key::String, max_count::Int) = [key * "|" * abs_keys(cls)[1], [key * "|" * abs_keys(cls)[2] * string(i) for i in 1:max_count]...]
 SplitList(key, max_count, to_abs) = Abstractor(SplitList(), key, max_count, to_abs)
 
 function Abstractor(cls::SplitList, key::String, max_count::Int, to_abs::Bool)

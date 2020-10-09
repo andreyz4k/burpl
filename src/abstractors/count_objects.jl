@@ -3,8 +3,8 @@
 struct CountObjects <: AbstractorClass end
 
 CountObjects(key, to_abs) = Abstractor(CountObjects(), key, to_abs)
-@memoize priority(::CountObjects) = 30
-@memoize abs_keys(::CountObjects) = ["counted", "length"]
+priority(::CountObjects) = 30
+abs_keys(::CountObjects) = ["counted", "length"]
 
 check_task_value(::CountObjects, value::AbstractVector, data, aux_values) = true
 

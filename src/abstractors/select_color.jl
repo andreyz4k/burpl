@@ -1,12 +1,12 @@
 
 struct SelectColor <: AbstractorClass end
 
-@memoize priority(::SelectColor) = 2
+priority(::SelectColor) = 2
 
-@memoize abs_keys(::SelectColor) = ["selected_by_color", "rejected_by_color"]
+abs_keys(::SelectColor) = ["selected_by_color", "rejected_by_color"]
 
-@memoize abs_keys(cls::SelectColor, key::String, param_key::String) = [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
-@memoize aux_keys(::SelectColor, key::String, param_key::String) = [param_key]
+abs_keys(cls::SelectColor, key::String, param_key::String) = [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
+aux_keys(::SelectColor, key::String, param_key::String) = [param_key]
 
 
 SelectColor(key, selector_key, to_abs) = Abstractor(SelectColor(), key, selector_key, to_abs)

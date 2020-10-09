@@ -2,7 +2,7 @@
 
 abstract type ComputeFunctionClass <: AbstractorClass end
 
-@memoize priority(::ComputeFunctionClass) = 10
+priority(::ComputeFunctionClass) = 10
 
 ComputeFunction(cls::ComputeFunctionClass, key::String, found_aux_keys::AbstractVector{String}=String[]) =
     Abstractor(cls, key, true, found_aux_keys)

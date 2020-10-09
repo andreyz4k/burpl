@@ -2,7 +2,7 @@
 struct CompactSimilarObjects <: AbstractorClass end
 
 CompactSimilarObjects(key, to_abs) = Abstractor(CompactSimilarObjects(), key, to_abs)
-@memoize abs_keys(::CompactSimilarObjects) = ["common_shape", "positions"]
+abs_keys(::CompactSimilarObjects) = ["common_shape", "positions"]
 
 init_create_check_data(::CompactSimilarObjects, key, solution) = Dict("effective" => false)
 
