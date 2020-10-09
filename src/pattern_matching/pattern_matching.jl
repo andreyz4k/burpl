@@ -39,7 +39,7 @@ function match(val1::AbstractVector, val2::AbstractVector)
 end
 
 
-compare_values(val1::Matcher, val2, candidates, func, types, same_type=true, first_symbol=:(T)) = false
+compare_values(val1::Matcher, val2, candidates, func, types, same_type=true, first_symbol=:(T)) = error("try to match from matcher")
 
 function compare_values(val1::AbstractDict, val2::AbstractDict, candidates, func, types, same_type=true, first_symbol=:(T))
     if !issetequal(keys(val1), keys(val2))
@@ -79,6 +79,22 @@ end
 
 
 unpack_value(value) = [value]
+
+function unpack_value(value::AbstractDict)
+    out = [[]]
+    for (key, val) in value
+        out = [[part..., key => v] for part in out for v in unpack_value(val)]
+    end
+    [Dict(k => v for (k, v) in pairs) for pairs in out]
+end
+
+function unpack_value(value::AbstractVector)
+    out = [[]]
+    for val in value
+        out = [[part..., v] for part in out for v in unpack_value(val)]
+    end
+    out
+end
 
 import ..Complexity:get_complexity
 using Statistics:mean

@@ -78,7 +78,7 @@ function _get_matching_transformers(taskdata::Vector{Dict{String,Any}}, invalid_
         end
         if good
             for group_keys in unroll_groups(matching_groups)
-                key_name = key * "|selected_group"
+                key_name = input_key * "|selected_group"
                 to_abs = MapValues(key_name, "output", Dict(task_data["output"] => value for (task_data, value) in zip(taskdata, group_keys)))
                 from_abs = Abstractor(SelectGroup(), true, [input_key, key_name], [key, key * "|rejected"])
                 push!(result, (to_abstract = to_abs, from_abstract = from_abs))

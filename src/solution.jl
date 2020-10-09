@@ -162,7 +162,7 @@ function move_to_next_block(solution::Solution)::Solution
 
         taskdata = [
             filter(keyval -> !startswith(keyval[1], "projected|"), task_data)
-            for task_data in solution.taskdata
+            for task_data in taskdata
         ]
         unused_fields = filter(key -> !startswith(key, "projected|"), solution.unused_fields)
 
@@ -245,7 +245,7 @@ function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transf
     else
         for field in unfilled_fields
             if !in(field, output_chain)
-                if all(!isa(get(task, field, nothing), Matcher) for task in taskdata)
+                if all(!_check_matcher(get(task, field, nothing)) for task in taskdata)
                     delete!(unfilled_fields, field)
                 end
             end
@@ -418,7 +418,7 @@ function get_unmatched_complexity_score(solution::Solution)
             sum(unused_data_score) +
             sum(inp_transformed_data_score) +
             solution.complexity_score
-    ) * length(solution.unfilled_fields) / length(solution.taskdata)
+    ) / length(solution.taskdata)
 end
 
 function validate_solution(solution, taskdata)

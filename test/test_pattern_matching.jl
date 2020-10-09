@@ -194,6 +194,37 @@ using .Abstractors:iter_source_either_values
         ]
     end
 
+    @testset "unpack dict" begin
+        value = Dict{Any,Any}(
+            1 => Either([
+                Option((2, 0), 15706271595680077155),
+                Option((-2, 0), 2425360325578724088)
+            ])
+        )
+        @test unpack_value(value) == [
+            Dict(
+                1 => (2, 0)
+            ),
+            Dict(
+                1 => (-2, 0)
+            )
+        ]
+    end
+
+    @testset "unpack array" begin
+        value = [
+            Either([
+                Option((2, 0), 15706271595680077155),
+                Option((-2, 0), 2425360325578724088)
+            ]),
+            (1, 1)
+        ]
+        @test unpack_value(value) == [
+            [(2, 0), (1, 1)],
+            [(-2, 0), (1, 1)]
+        ]
+    end
+
     @testset "iterate either cases" begin
         vals = [1, 2, 3]
         @test iter_source_either_values(vals) == [([1, 2, 3], [], Set())]

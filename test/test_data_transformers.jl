@@ -1,8 +1,9 @@
 
-using .PatternMatching:Either,Option
+using .PatternMatching:Either,Option,ObjectShape
 using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key,
 MultParam,MultByParam,IncParam,IncByParam,MapValues,match_fields
 using .ObjectPrior:Object
+using .Abstractors:SelectGroup,Abstractor
 
 @testset "Data transformers" begin
     @testset "find const" begin
@@ -429,7 +430,7 @@ using .ObjectPrior:Object
                     ])
                 )
             )
-        ], ["spatial_objects|grouped|0|first|splitted|first"])
+        ], ["spatial_objects|grouped|0|first|splitted|first", "spatial_objects|grouped|0|first|splitted|step", "spatial_objects|grouped|0|step"])
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 1
         new_solution = new_solutions[1]
@@ -783,4 +784,128 @@ using .ObjectPrior:Object
         _compare_operations(expected_operations, new_solutions)
     end
 
+    @testset "find matching group" begin
+        solution = make_dummy_solution([
+            Dict(
+                "input|bgr_grid|grid|spatial_objects|grouped" => Dict{Int64,Array{Main.Randy.ObjectPrior.Object,1}}(
+                    2 => [
+                        Object([2], (1, 13)),
+                        Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
+                        Object([2], (7, 17)),
+                        Object([2; 2], (9, 17))
+                    ],
+                    8 => [
+                        Object([8 8 8 8 8 -1 8 8 8; 8 -1 8 8 8 -1 8 -1 8; 8 -1 8 -1 8 -1 8 -1 8; 8 8 -1 8 8 8 8 8 8; 8 -1 -1 8 -1 8 -1 -1 8; -1 -1 -1 8 8 -1 -1 -1 8; 8 -1 8 8 8 8 8 8 -1; 8 8 8 -1 -1 -1 -1 8 8; 8 8 8 8 8 -1 -1 -1 -1; 8 8 8 8 8 8 -1 -1 -1], (1, 1)),
+                        Object([8], (6, 2)),
+                        Object([8], (9, 7)),
+                        Object([8], (10, 8)),
+                        Object([8 8 8 8 8 8 8 8 8; 8 8 8 8 8 -1 8 -1 8; 8 8 -1 -1 8 -1 8 8 8; 8 -1 8 -1 -1 -1 -1 8 8; -1 -1 8 -1 8 8 8 8 8; 8 -1 8 8 8 -1 8 8 -1; 8 8 8 8 8 -1 8 8 -1], (15, 1)),
+                        Object([8 8 8 8 8 8 8 8; 8 8 8 8 8 -1 8 -1; -1 8 8 -1 8 8 -1 -1; 8 8 -1 8 8 -1 -1 -1; 8 -1 -1 8 8 8 -1 -1; -1 -1 -1 8 -1 8 -1 -1; -1 -1 -1 -1 -1 8 8 -1], (15, 12)),
+                        Object([-1 8; 8 8; 8 8], (15, 20)),
+                        Object([8], (18, 18)),
+                        Object([8 -1 8; 8 8 8; -1 8 8], (19, 19)),
+                        Object([8], (20, 13)),
+                        Object([8], (21, 12)),
+                        Object([8], (21, 14))
+                    ]
+                ),
+                "output|grid|bgr_grid|spatial_objects|shapes" => ObjectShape{Object}[
+                    ObjectShape(Object([2], (1, 2))),
+                    ObjectShape(Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 1))),
+                    ObjectShape(Object([2], (7, 6))),
+                    ObjectShape(Object([2; 2], (9, 6)))
+                ],
+                "input|bgr_grid|grid_size" => (21, 21),
+                "output|grid_size" => (10, 10),
+                "input|background" => 0,
+                "output|grid|bgr_grid|spatial_objects|positions" => [(1, 2), (1, 1), (7, 6), (9, 6)],
+                "input|bgr_grid|grid|spatial_objects|group_keys" => [2, 8],
+                "output" => [1 2; 3 4]
+            ),
+            Dict(
+                "input|bgr_grid|grid|spatial_objects|grouped" => Dict{Int64,Array{Main.Randy.ObjectPrior.Object,1}}(
+                    2 => [
+                        Object([2 2 -1 -1 -1 -1; -1 2 -1 -1 -1 -1; 2 2 2 2 -1 -1; 2 2 2 -1 2 -1; 2 -1 -1 2 2 2; 2 2 2 2 2 -1; -1 2 -1 -1 2 2], (1, 1)),
+                        Object([2], (1, 4)),
+                        Object([-1 2; 2 2; -1 2], (1, 5)),
+                        Object([2], (1, 12)),
+                        Object([-1 -1 -1 2 2 2; -1 2 2 2 -1 -1; 2 2 2 2 -1 -1], (1, 12)),
+                        Object([-1 2; 2 2], (2, 17)),
+                        Object([-1 -1 -1 -1 2; -1 -1 -1 -1 2; -1 2 2 2 2; 2 2 -1 2 -1], (4, 12)),
+                        Object([2; 2], (5, 18)),
+                        Object([2], (7, 17)),
+                        Object([2], (11, 1)),
+                        Object([-1 -1 2 -1 -1 -1; -1 2 2 2 -1 -1; 2 2 2 2 -1 2; 2 2 -1 2 2 2; 2 2 2 2 2 2; 2 2 2 2 -1 2; -1 -1 2 2 2 -1; -1 -1 2 -1 2 2; -1 -1 2 -1 2 -1], (11, 1)),
+                        Object([2], (11, 6)),
+                        Object([2], (19, 1))
+                    ],
+                    3 => [
+                        Object([-1 3 3 3 3; 3 3 3 3 -1; 3 3 3 -1 -1; 3 -1 -1 -1 -1; 3 -1 -1 -1 -1; 3 -1 -1 -1 -1], (11, 12)),
+                        Object([3 3; 3 3], (12, 17)),
+                        Object([3], (15, 14)),
+                        Object([-1 -1 -1 -1 3 3 -1; -1 -1 -1 3 -1 3 3; -1 3 3 3 3 3 -1; 3 3 -1 3 -1 -1 -1; 3 -1 -1 3 3 3 -1], (15, 12)),
+                        Object([3], (18, 18))
+                    ]
+                ),
+                "output|grid|bgr_grid|spatial_objects|shapes" => ObjectShape{Object}[
+                    ObjectShape(Object([-1 3 3 3 3; 3 3 3 3 -1; 3 3 3 -1 -1; 3 -1 -1 -1 -1; 3 -1 -1 -1 -1; 3 -1 -1 -1 -1], (1, 1))),
+                    ObjectShape(Object([3 3; 3 3], (2, 6))),
+                    ObjectShape(Object([3], (5, 3))),
+                    ObjectShape(Object([-1 -1 -1 -1 3 3 -1; -1 -1 -1 3 -1 3 3; -1 3 3 3 3 3 -1; 3 3 -1 3 -1 -1 -1; 3 -1 -1 3 3 3 -1], (5, 1))),
+                    ObjectShape(Object([3], (8, 7)))
+                ],
+                "input|bgr_grid|grid_size" => (19, 18),
+                "output|grid_size" => (9, 7),
+                "input|background" => 0,
+                "output|grid|bgr_grid|spatial_objects|positions" => [(1, 1), (2, 6), (5, 3), (5, 1), (8, 7)],
+                "input|bgr_grid|grid|spatial_objects|group_keys" => [2, 3],
+                "output" => [2 3; 4 5]
+            ),
+            Dict(
+                "input|bgr_grid|grid|spatial_objects|grouped" => Dict{Int64,Array{Main.Randy.ObjectPrior.Object,1}}(
+                    4 => [
+                        Object([4 4 4 -1 4 -1 -1 -1 4; -1 4 -1 4 4 4 4 4 4; -1 4 4 4 4 4 4 -1 -1; 4 4 -1 4 -1 4 4 -1 -1; -1 -1 -1 4 4 4 -1 -1 -1; -1 -1 -1 -1 4 -1 -1 -1 -1], (1, 11)),
+                        Object([4], (4, 19)),
+                        Object([4 4 4], (6, 11)),
+                        Object([4], (6, 17)),
+                        Object([4], (6, 19))
+                    ],
+                    1 => [
+                        Object([1 1 1 -1 -1 -1; -1 1 1 1 -1 -1; -1 -1 -1 1 -1 -1; -1 -1 -1 1 1 1; -1 -1 -1 -1 -1 1], (1, 2)),
+                        Object([1], (1, 6)),
+                        Object([1], (2, 1)),
+                        Object([1], (3, 2)),
+                        Object([1; 1; 1], (4, 1)),
+                        Object([1 -1; 1 1; -1 1], (4, 3)),
+                        Object([1 1 1 1 1 1 1; 1 1 1 1 1 1 1; -1 1 1 -1 -1 -1 1; 1 1 1 1 -1 -1 -1; -1 1 1 1 -1 1 -1; -1 1 1 1 1 1 1; -1 -1 -1 1 1 1 -1; -1 1 1 1 1 1 -1; -1 1 1 1 -1 1 1], (9, 1)),
+                        Object([1 1], (9, 11)),
+                        Object([-1 -1 -1 1 1 -1 -1 -1 -1; -1 -1 1 1 1 1 1 -1 -1; -1 1 -1 -1 1 -1 -1 -1 -1; 1 1 -1 -1 1 -1 -1 -1 -1; 1 1 1 1 1 -1 -1 -1 -1; 1 1 1 -1 1 -1 1 -1 1; 1 1 1 1 1 1 1 1 1; 1 1 1 -1 1 1 1 -1 1; 1 -1 1 1 -1 1 -1 -1 -1], (9, 11)),
+                        Object([-1 1 1; -1 -1 1; -1 1 1; 1 1 -1; -1 1 -1], (9, 17)),
+                        Object([1], (17, 18))
+                    ]
+                ),
+                "output|grid|bgr_grid|spatial_objects|shapes" => ObjectShape{Object}[
+                    ObjectShape(Object([4 4 4 -1 4 -1 -1 -1 4; -1 4 -1 4 4 4 4 4 4; -1 4 4 4 4 4 4 -1 -1; 4 4 -1 4 -1 4 4 -1 -1; -1 -1 -1 4 4 4 -1 -1 -1; -1 -1 -1 -1 4 -1 -1 -1 -1], (1, 1))),
+                    ObjectShape(Object([4], (4, 9))),
+                    ObjectShape(Object([4 4 4], (6, 1))),
+                    ObjectShape(Object([4], (6, 7))),
+                    ObjectShape(Object([4], (6, 9)))
+                ],
+                "input|bgr_grid|grid_size" => (17, 19),
+                "output|grid_size" => (6, 9),
+                "input|background" => 0,
+                "output|grid|bgr_grid|spatial_objects|positions" => [(1, 1), (4, 9), (6, 1), (6, 7), (6, 9)],
+                "input|bgr_grid|grid|spatial_objects|group_keys" => [1, 4],
+                "output" => [3 4; 5 6]
+            )
+        ], ["output|grid|bgr_grid|spatial_objects|shapes", "output|grid_size", "output|grid|bgr_grid|spatial_objects|positions"])
+        new_solutions = match_fields(solution)
+        @test length(new_solutions) == 1
+        new_solution = new_solutions[1]
+        @test filtered_ops(new_solution) == [
+            Abstractor(SelectGroup(), true,
+                       ["input|bgr_grid|grid|spatial_objects|grouped", "input|bgr_grid|grid|spatial_objects|grouped|selected_group"],
+                       ["output|grid|bgr_grid|spatial_objects|shapes", "output|grid|bgr_grid|spatial_objects|shapes|rejected"],)
+        ]
+    end
 end
