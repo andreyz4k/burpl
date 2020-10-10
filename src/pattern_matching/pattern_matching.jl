@@ -38,44 +38,14 @@ function match(val1::AbstractVector, val2::AbstractVector)
     result
 end
 
+apply_func(value, func, param) = func(value, param)
+apply_func(value::Vector, func, param) = [apply_func(v, func, param) for v in value]
+apply_func(value::Dict, func, param) = Dict(key => apply_func(v, func, param) for (key, v) in value)
 
-compare_values(val1::Matcher, val2, candidates, func, types, same_type=true, first_symbol=:(T)) = error("try to match from matcher")
 
-function compare_values(val1::AbstractDict, val2::AbstractDict, candidates, func, types, same_type=true, first_symbol=:(T))
-    if !issetequal(keys(val1), keys(val2))
-        return false
-    end
-    return all(compare_values(val1[key], val2[key], candidates, func, types, same_type, first_symbol) for key in keys(val1))
-end
-
-function compare_values(val1::AbstractVector, val2::AbstractVector, candidates, func, types, same_type=true, first_symbol=:(T))
-    if length(val1) != length(val2)
-        return false
-    end
-    return all(compare_values(v1, v2, candidates, func, types, same_type, first_symbol) for (v1, v2) in zip(val1, val2))
-end
-
-type_checks = Dict()
-
-function compare_values(val1, val2, candidates, func, types, same_type=true, first_symbol=:(T))
-    if !haskey(type_checks, (types, same_type, first_symbol))
-        fname = gensym("check_type")
-        @eval $(fname)(::Any, ::Any) = false
-        if same_type
-            @eval $(fname)(::$first_symbol, ::T) where {T <: $types} = true
-            @eval $(fname)(::$first_symbol, ::Matcher{T}) where {T <: $types} = true
-        else
-            @eval $(fname)(::$first_symbol, ::S) where {T <: $types,S <: $types} = true
-            @eval $(fname)(::$first_symbol, ::Matcher{S}) where {T <: $types,S <: $types} = true
-        end
-        @eval out = $(fname)
-        type_checks[(types, same_type, first_symbol)] = out
-    end
-    if !Base.invokelatest(type_checks[(types, same_type, first_symbol)], val1, val2)
-        return false
-    end
-    return func(val1, val2, candidates)
-end
+check_type(existing::Type, expected::Type) = existing <: expected
+check_type(::Type{Dict{K,V}}, expected::Type) where {K,V} = check_type(V, expected)
+check_type(::Type{Vector{T}}, expected::Type) where T = check_type(T, expected)
 
 
 unpack_value(value) = [value]

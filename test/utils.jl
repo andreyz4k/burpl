@@ -18,7 +18,7 @@ function make_dummy_solution(data, unfilled=[])
                          "output" => Array{Int}(undef, 0, 0)),
                     task)
               for task in data],
-             [Block([FakeOperation(unfilled, ["output"])])], Set(unfilled), Set(), Set(), unused, Set(), Set(), 0.0)
+             Dict(), [Block([FakeOperation(unfilled, ["output"])])], Set(unfilled), Set(), Set(), unused, Set(), Set(), 0.0)
 end
 function _compare_operations(expected, solutions)
     for solution in solutions

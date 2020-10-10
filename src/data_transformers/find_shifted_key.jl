@@ -13,55 +13,26 @@ Base.:(==)(a::IncParam, b::IncParam) = a.output_keys == b.output_keys && a.input
 Base.hash(op::IncParam, h::UInt64) = hash(op.output_keys, h) + hash(op.input_keys, h) + hash(op.shift, h)
 
 function (op::IncParam)(task_data)
-    input_value = task_data[op.input_keys[1]]
-    if isa(input_value, Dict)
-        output_value = Dict(key => shift_value(value, op.shift) for (key, value) in input_value)
-    else
-        output_value = shift_value(input_value, op.shift)
-    end
+    output_value = shift_value(task_data[op.input_keys[1]], op.shift)
     data = update_value(task_data, op.output_keys[1], output_value)
     update_value(data, op.output_keys[2], op.shift)
 end
 
-function _check_shifted(input_value, output_value, possible_shifts)
-    if isempty(possible_shifts)
-        for value in unpack_value(output_value)
-            if value != input_value
-                push!(possible_shifts, value .- input_value)
-            end
-        end
-    else
-        filter!(shift -> !isnothing(common_value(input_value .+ shift, output_value)), possible_shifts)
+_get_diff_value(val1, val2) = val1 .- val2
+_get_diff_value(val1::Vector, val2::Vector) = _get_diff_value(val1[1], val2[1])
+function _get_diff_value(val1::Dict, val2::Dict)
+    key, v1 = first(val1)
+    if !haskey(val2, key)
+        return nothing
     end
-    return !isempty(possible_shifts)
+    _get_diff_value(v1, val2[key])
 end
 
-function find_shifted_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
-    result = []
-    for input_key in keys(taskdata[1])
-        if in(input_key, invalid_sources)
-            continue
-        end
-        good = true
-        possible_shifts = []
-        for task_data in taskdata
-            if !haskey(task_data, input_key)
-                good = false
-                break
-            end
-            if !haskey(task_data, key)
-                continue
-            end
-            input_value = task_data[input_key]
-            out_value = task_data[key]
-            if !compare_values(input_value, out_value, possible_shifts, _check_shifted, Union{Int64,Tuple{Int64,Int64}})
-                good = false
-                break
-            end
-        end
-        if good
-            append!(result, [IncParam(key, input_key, shift) for shift in possible_shifts])
-        end
-    end
-    return result
-end
+_init_shift(input_value, output_value, _, _) =
+    filter(v -> !isnothing(v), [_get_diff_value(value, input_value) for value in unpack_value(output_value) if value != input_value])
+
+_shifted_filter(shift, input_value, output_value, _) = !isnothing(common_value(apply_func(input_value, (x, y) -> x .+ y, shift), output_value))
+
+
+find_shifted_key(taskdata::Vector{Dict{String,Any}}, field_info, invalid_sources::AbstractSet{String}, key::String) =
+    find_matching_for_key(taskdata, field_info, invalid_sources, key, _init_shift, _shifted_filter, IncParam, (_, _) -> true)

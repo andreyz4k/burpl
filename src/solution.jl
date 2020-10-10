@@ -45,12 +45,29 @@ Base.:(==)(a::Block, b::Block) = a.operations == b.operations
 
 Base.hash(b::Block, h::UInt64) = hash(b.operations, h)
 
-struct UnfilledFields
-    # TODO: fill
+struct FieldInfo
+    type::Type
+end
+
+Base.show(io::IO, f::FieldInfo) = print(io, "FieldInfo(", f.type, ")")
+
+using ..PatternMatching:Matcher,unpack_value
+
+_get_type(::T) where T = T
+_get_type(val::Matcher) = _get_type(unpack_value(val)[1])
+function _get_type(val::Dict)
+    key, value = first(val)
+    Dict{_get_type(key),_get_type(value)}
+end
+_get_type(val::Vector) = Vector{_get_type(val[1])}
+
+function get_field_info(value)
+    return FieldInfo(_get_type(value))
 end
 
 struct Solution
     taskdata::Array{Dict{String,Any}}
+    field_info::Dict{String,FieldInfo}
     blocks::Array{Block}
     unfilled_fields::Set{String}
     filled_fields::Set{String}
@@ -62,15 +79,18 @@ struct Solution
     score::Int
     inp_val_hashes::Array{Set{UInt64}}
     out_val_hashes::Array{Set{UInt64}}
-    function Solution(taskdata, blocks, unfilled_fields,
-             filled_fields, transformed_fields, unused_fields, used_fields,
-             input_transformed_fields, complexity_score::Float64)
+    function Solution(taskdata, field_info, blocks,
+             unfilled_fields, filled_fields, transformed_fields, unused_fields,
+             used_fields, input_transformed_fields, complexity_score::Float64)
         inp_val_hashes = Set{UInt64}[]
         out_val_hashes = Set{UInt64}[]
         for task_data in taskdata
             inp_vals = Set{UInt64}()
             out_vals = Set{UInt64}()
             for (key, value) in task_data
+                if !haskey(field_info, key)
+                    field_info[key] = get_field_info(value)
+                end
                 if in(key, transformed_fields) || in(key, filled_fields) ||  in(key, unfilled_fields)
                     push!(out_vals, hash(value))
                 end
@@ -81,7 +101,7 @@ struct Solution
             push!(inp_val_hashes, inp_vals)
             push!(out_val_hashes, out_vals)
         end
-        new(taskdata, blocks,
+        new(taskdata, field_info, blocks,
             unfilled_fields, filled_fields, transformed_fields,
             unused_fields, used_fields, input_transformed_fields,
             complexity_score, get_score(taskdata, complexity_score),
@@ -91,6 +111,7 @@ end
 
 Solution(taskdata) = Solution(
     taskdata,
+    Dict(),
     [Block()],
     Set(["output"]),
     Set(),
@@ -188,6 +209,7 @@ function move_to_next_block(solution::Solution)::Solution
 
     Solution(
         taskdata,
+        solution.field_info,
         blocks,
         solution.unfilled_fields,
         solution.filled_fields,
@@ -199,7 +221,6 @@ function move_to_next_block(solution::Solution)::Solution
     )
 end
 
-using ..PatternMatching:Matcher
 
 function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transformed_fields, unused_fields, used_fields, input_transformed_fields, taskdata)
     output_chain = ["output"]
@@ -321,6 +342,7 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
 
     new_solution = Solution(
         taskdata,
+        solution.field_info,
         blocks,
         unfilled_fields,
         filled_fields,
@@ -346,6 +368,7 @@ Base.show(io::IO, s::Solution) =
           "used: ", s.used_fields, "\n\t",
           "input transformed: ", s.input_transformed_fields, "\n\t[\n\t",
           s.blocks..., "\n\t]\n\t",
+          Dict(k => v for (k, v) in s.field_info if haskey(s.taskdata[1], k)), "\n\t",
           [
               filter(keyval -> in(keyval[1], s.unfilled_fields) || in(keyval[1], s.unused_fields),
                      task_data)

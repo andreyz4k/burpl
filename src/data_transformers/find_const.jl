@@ -18,7 +18,7 @@ function (op::SetConst)(task_data)
     data
 end
 
-function find_const(taskdata::Vector{Dict{String,Any}}, _, key::String)::Vector{SetConst}
+function find_const(taskdata::Vector{Dict{String,Any}}, _, _, key::String)::Vector{SetConst}
     result = nothing
     for task_data in taskdata
         if !haskey(task_data, key)

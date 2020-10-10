@@ -43,7 +43,7 @@ end
 function check_matching_group(input_value, output_value, candidates)
     options = []
     for (key, value) in input_value
-        if compare_values(value, output_value, nothing, _check_value, Any)
+        if !isnothing(common_value(value, output_value))
             push!(options, key)
         end
     end
@@ -53,10 +53,13 @@ end
 
 using ..Abstractors:Abstractor,SelectGroup
 
-function _get_matching_transformers(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
+_check_group_type(::Type, ::Type) = false
+_check_group_type(::Type{Dict{K,V}}, expected::Type) where {K,V} = V == expected
+
+function _get_matching_transformers(taskdata::Vector{Dict{String,Any}}, field_info, invalid_sources::AbstractSet{String}, key::String)
     result = []
     for input_key in keys(taskdata[1])
-        if in(input_key, invalid_sources)
+        if in(input_key, invalid_sources) || !_check_group_type(field_info[input_key].type, field_info[key].type)
             continue
         end
         good = true
@@ -71,7 +74,7 @@ function _get_matching_transformers(taskdata::Vector{Dict{String,Any}}, invalid_
             end
             input_value = task_data[input_key]
             out_value = task_data[key]
-            if !compare_values(input_value, out_value, matching_groups, check_matching_group, Any, true, :(AbstractDict{Any,T}))
+            if !check_matching_group(input_value, out_value, matching_groups)
                 good = false
                 break
             end
@@ -93,7 +96,7 @@ using ..Solutions:Solution,insert_operation
 
 function find_matching_obj_group(key, solution::Solution)
     new_solutions = []
-    transformers = _get_matching_transformers(solution.taskdata, union(solution.unfilled_fields, solution.transformed_fields), key)
+    transformers = _get_matching_transformers(solution.taskdata, solution.field_info, union(solution.unfilled_fields, solution.transformed_fields), key)
     for transformer in transformers
         new_solution = insert_operation(solution, transformer.from_abstract, reversed_op=transformer.to_abstract)
         push!(new_solutions, new_solution)

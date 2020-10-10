@@ -17,12 +17,11 @@ function (op::CopyParam)(task_data)
     data
 end
 
-_check_value(input_value, output_value, _) = !isnothing(common_value(input_value, output_value))
 
-function find_dependent_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
+function find_dependent_key(taskdata::Vector{Dict{String,Any}}, field_info, invalid_sources::AbstractSet{String}, key::String)
     result = []
     for input_key in keys(taskdata[1])
-        if in(input_key, invalid_sources)
+        if in(input_key, invalid_sources) || field_info[key].type != field_info[input_key].type
             continue
         end
         good = true
@@ -36,7 +35,7 @@ function find_dependent_key(taskdata::Vector{Dict{String,Any}}, invalid_sources:
             end
             input_value = task_data[input_key]
             out_value = task_data[key]
-            if !compare_values(input_value, out_value, nothing, _check_value, Any)
+            if isnothing(common_value(input_value, out_value))
                 good = false
                 break
             end

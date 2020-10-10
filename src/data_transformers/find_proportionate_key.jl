@@ -14,49 +14,14 @@ Base.:(==)(a::MultParam, b::MultParam) = a.output_keys == b.output_keys && a.inp
 Base.hash(op::MultParam, h::UInt64) = hash(op.output_keys, h) + hash(op.input_keys, h) + hash(op.factor, h)
 
 function (op::MultParam)(task_data)
-    input_value = task_data[op.input_keys[1]]
-    if isa(input_value, Dict)
-        output_value = Dict(key => mult_value(value, op.factor) for (key, value) in input_value)
-    else
-        output_value = mult_value(input_value, op.factor)
-    end
+    output_value = mult_value(task_data[op.input_keys[1]], op.factor)
     data = update_value(task_data, op.output_keys[1], output_value)
     update_value(data, op.output_keys[2], op.factor)
 end
 
-FACTORS = [-9, -8, -7, -6, -5, -4, -3, -2, -1, 2, 3, 4, 5, 6, 7, 8, 9]
+_init_factors(::Any...) = [-9, -8, -7, -6, -5, -4, -3, -2, -1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-function _check_proportions(input_value, output_value, possible_factors)
-    filter!(factor -> !isnothing(common_value(input_value .* factor, output_value)), possible_factors)
-    return !isempty(possible_factors)
-end
+_factor_filter(factor, input_value, output_value, _) = !isnothing(common_value(apply_func(input_value, (x, y) -> x .* y, factor), output_value))
 
-function find_proportionate_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
-    result = []
-    for input_key in keys(taskdata[1])
-        if in(input_key, invalid_sources)
-            continue
-        end
-        good = true
-        possible_factors = copy(FACTORS)
-        for task_data in taskdata
-            if !haskey(task_data, input_key)
-                good = false
-                break
-            end
-            if !haskey(task_data, key)
-                continue
-            end
-            input_value = task_data[input_key]
-            out_value = task_data[key]
-            if !compare_values(input_value, out_value, possible_factors, _check_proportions, Union{Int64,Tuple{Int64,Int64}})
-                good = false
-                break
-            end
-        end
-        if good
-            append!(result, [MultParam(key, input_key, factor) for factor in possible_factors])
-        end
-    end
-    return result
-end
+find_proportionate_key(taskdata::Vector{Dict{String,Any}}, field_info, invalid_sources::AbstractSet{String}, key::String) =
+    find_matching_for_key(taskdata, field_info, invalid_sources, key, _init_factors, _factor_filter, MultParam, (_, _) -> true)

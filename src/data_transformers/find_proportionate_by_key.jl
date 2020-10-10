@@ -14,65 +14,21 @@ Base.hash(op::MultByParam, h::UInt64) = hash(op.output_keys, h) + hash(op.input_
 
 mult_value(value, factor) = value .* factor
 mult_value(value::AbstractVector, factor) = [mult_value(v, factor) for v in value]
+mult_value(value::Dict, factor) = Dict(key => mult_value(val, factor) for (key, val) in value)
 
 function (op::MultByParam)(task_data)
-    input_value = task_data[op.input_keys[1]]
-    if isa(input_value, Dict)
-        output_value = Dict(key => mult_value(value, task_data[op.input_keys[2]]) for (key, value) in input_value)
-    else
-        output_value = input_value = mult_value(input_value, task_data[op.input_keys[2]])
-    end
+    output_value =  mult_value(task_data[op.input_keys[1]], task_data[op.input_keys[2]])
     update_value(task_data, op.output_keys[1], output_value)
 end
 
-function _check_proportions_key(input_value, output_value, possible_factor_keys, task_data, invalid_sources)
-    if isempty(possible_factor_keys)
-        for (key, value) in task_data
-            if !in(key, invalid_sources) &&
-                    isa(value, Union{Int64,Tuple{Int64,Int64}}) &&
-                    !isnothing(common_value(input_value .* value, output_value))
-                push!(possible_factor_keys, key)
-            end
-        end
-    else
-        filter!(factor_key -> haskey(task_data, factor_key) && isa(task_data[factor_key], Union{Int64,Tuple{Int64,Int64}}) &&
-                              !isnothing(common_value(input_value .* task_data[factor_key], output_value)),
-                possible_factor_keys)
-    end
-    return !isempty(possible_factor_keys)
-end
 
+_init_factor_keys(_, _, task_data, invalid_sources) =
+    [key for (key, value) in task_data if !in(key, invalid_sources) && isa(value, Union{Int64,Tuple{Int64,Int64}})]
 
-function find_proportionate_by_key(taskdata::Vector{Dict{String,Any}}, invalid_sources::AbstractSet{String}, key::String)
-    result = []
-    for input_key in keys(taskdata[1])
-        if in(input_key, invalid_sources)
-            continue
-        end
-        good = true
-        possible_factor_keys = []
-        for task_data in taskdata
-            if !haskey(task_data, input_key)
-                good = false
-                break
-            end
-            if !haskey(task_data, key)
-                continue
-            end
-            input_value = task_data[input_key]
-            out_value = task_data[key]
-            if !compare_values(input_value, out_value, possible_factor_keys,
-                               (inp_val, out_val, candidates) ->
-                                _check_proportions_key(inp_val, out_val, candidates, task_data, invalid_sources),
-                               Union{Int64,Tuple{Int64,Int64}})
-                good = false
-                break
-            end
-        end
-        if good
-            append!(result, [MultByParam(key, input_key, factor_key) for factor_key in possible_factor_keys
-                             if any(task_data[factor_key] != 1 for task_data in taskdata)])
-        end
-    end
-    return result
-end
+_factor_key_filter(shift_key, input_value, output_value, task_data) = haskey(task_data, shift_key) &&
+                         !isnothing(common_value(apply_func(input_value, (x, y) -> x .* y, task_data[shift_key]), output_value))
+
+_check_effective_factor_key(shift_key, taskdata) = any(task_data[shift_key] != 1 for task_data in taskdata)
+
+find_proportionate_by_key(taskdata::Vector{Dict{String,Any}}, field_info, invalid_sources::AbstractSet{String}, key::String) =
+    find_matching_for_key(taskdata, field_info, invalid_sources, key, _init_factor_keys, _factor_key_filter, MultByParam, _check_effective_factor_key)

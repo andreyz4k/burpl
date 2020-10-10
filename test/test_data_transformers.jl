@@ -4,6 +4,7 @@ using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key,
 MultParam,MultByParam,IncParam,IncByParam,MapValues,match_fields
 using .ObjectPrior:Object
 using .Abstractors:SelectGroup,Abstractor
+using .Solutions:get_field_info
 
 @testset "Data transformers" begin
     @testset "find const" begin
@@ -16,7 +17,7 @@ using .Abstractors:SelectGroup,Abstractor
                 )
             ]
 
-        @test find_const(taskdata, [], "background") == [SetConst("background", 1)]
+        @test find_const(taskdata, Dict("background" => get_field_info(1)), [], "background") == [SetConst("background", 1)]
 
         taskdata = [
                 Dict{String,Any}(
@@ -27,7 +28,7 @@ using .Abstractors:SelectGroup,Abstractor
                 )
             ]
 
-        @test find_const(taskdata, [], "background") == [SetConst("background", 1)]
+        @test find_const(taskdata, Dict("background" => get_field_info(1)), [], "background") == [SetConst("background", 1)]
 
         taskdata = [
                 Dict{String,Any}(
@@ -38,7 +39,7 @@ using .Abstractors:SelectGroup,Abstractor
                 ),
             ]
 
-        @test find_const(taskdata, [], "background") == [SetConst("background", 1)]
+        @test find_const(taskdata, Dict("background" => get_field_info(1)), [], "background") == [SetConst("background", 1)]
 
         taskdata = [
                 Dict{String,Any}(
@@ -49,7 +50,7 @@ using .Abstractors:SelectGroup,Abstractor
                 ),
             ]
 
-        @test find_const(taskdata, [], "background") == [SetConst("background", 1)]
+        @test find_const(taskdata, Dict("background" => get_field_info(1)), [], "background") == [SetConst("background", 1)]
 
         taskdata = [
                 Dict{String,Any}(
@@ -60,7 +61,7 @@ using .Abstractors:SelectGroup,Abstractor
                 ),
             ]
 
-        @test issetequal(find_const(taskdata, [], "background"), [SetConst("background", 1), SetConst("background", 2)])
+        @test issetequal(find_const(taskdata, Dict("background" => get_field_info(1)), [], "background"), [SetConst("background", 1), SetConst("background", 2)])
     end
 
     @testset "match dicts" begin
@@ -78,7 +79,7 @@ using .Abstractors:SelectGroup,Abstractor
                 )
             )
         ]
-        @test find_const(taskdata, [], "key") == [SetConst("key", Dict(2 => 2, 1 => 1))]
+        @test find_const(taskdata, Dict("key" => get_field_info(1)), [], "key") == [SetConst("key", Dict(2 => 2, 1 => 1))]
 
         taskdata = [
             Dict{String,Any}(
@@ -94,7 +95,7 @@ using .Abstractors:SelectGroup,Abstractor
                 )
             )
         ]
-        @test find_const(taskdata, [], "key") == [SetConst("key", Dict(
+        @test find_const(taskdata, Dict("key" => get_field_info(1)), [], "key") == [SetConst("key", Dict(
             1 => 1,
             2 => 2
         ))]
@@ -670,7 +671,7 @@ using .Abstractors:SelectGroup,Abstractor
                 "key" => 2
             )
         ]
-        @test find_dependent_key(taskdata, Set(["key"]), "key") == []
+        @test find_dependent_key(taskdata, Dict("key" => get_field_info(1), "key_none" => get_field_info(nothing)), Set(["key"]), "key") == []
     end
 
     @testset "fund multiply" begin
