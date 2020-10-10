@@ -33,8 +33,8 @@ function get_complexity(value::AbstractDict)::Float64
         denominator = 1
     end
     denominator = min(denominator, length(value))
-    return 2 + sum(get_complexity(k) for k in keys(value)) / length(value) +
-        sum(get_complexity(v) for v in values(value)) / denominator
+    return 2 + sum(Float64[get_complexity(k) for k in keys(value)]) / length(value) +
+        sum(Float64[get_complexity(v) for v in values(value)]) / denominator
 end
 
 end
