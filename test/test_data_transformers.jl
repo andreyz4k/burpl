@@ -905,7 +905,7 @@ using .Solutions:get_field_info
         new_solution = new_solutions[1]
         @test filtered_ops(new_solution) == [
             Abstractor(SelectGroup(), true,
-                       ["input|bgr_grid|grid|spatial_objects|grouped", "input|bgr_grid|grid|spatial_objects|grouped|selected_group"],
+                       ["input|bgr_grid|grid|spatial_objects|grouped", "output|grid|bgr_grid|spatial_objects|shapes|selected_group"],
                        ["output|grid|bgr_grid|spatial_objects|shapes", "output|grid|bgr_grid|spatial_objects|shapes|rejected"],)
         ]
     end
