@@ -13,16 +13,17 @@ Block() = Block([])
 
 function insert_operation(blocks::AbstractVector{Block}, operation::Operation)::Tuple{Block,Int}
     filled_keys = reduce(union, [op.output_keys for block in blocks[1:end - 1] for op in block.operations], init=Set(["input"]))
-    last_block_outputs = reduce(union, [op.output_keys for op in blocks[end].operations], init=Set{String}())
+    last_block_outputs = reduce(merge, [Dict(key => index for key in op.output_keys) for (index, op) in enumerate(blocks[end].operations)], init=Dict())
+    # last_block_outputs = reduce(union, [op.output_keys for op in blocks[end].operations], init=Set{String}())
     needed_fields = setdiff(operation.input_keys, filled_keys)
-    union!(needed_fields, filter(k -> in(k, last_block_outputs), operation.output_keys))
+    union!(needed_fields, filter(k -> haskey(last_block_outputs, k), operation.output_keys))
     operations = copy(blocks[end].operations)
     for (index, op) in enumerate(operations)
         if isempty(needed_fields) || any(in(key, op.input_keys) for key in operation.output_keys)
             insert!(operations, index, operation)
             return Block(operations), index
         end
-        setdiff!(needed_fields, op.output_keys)
+        setdiff!(needed_fields, filter(key -> last_block_outputs[key] == index, op.output_keys))
     end
     push!(operations, operation)
     Block(operations), length(operations)
