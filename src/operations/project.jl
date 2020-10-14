@@ -5,7 +5,7 @@ struct Project <: Operation
     input_keys
     output_keys
     Project(operations, out_keys) =
-        new(copy(operations), [], ["projected|" * key for key in out_keys])
+        new(copy(operations), vcat((op.input_keys for op in operations)...), ["projected|" * key for key in out_keys])
 end
 
 Base.show(io::IO, p::Project) = print(io, "Project(", (vcat(([op,", "] for op in p.operations)...))..., ")")

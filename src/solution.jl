@@ -48,9 +48,11 @@ Base.hash(b::Block, h::UInt64) = hash(b.operations, h)
 
 struct FieldInfo
     type::Type
+    derived_from::String
+    FieldInfo(type::Type, derived_from::String) = new(type, derived_from)
 end
 
-Base.show(io::IO, f::FieldInfo) = print(io, "FieldInfo(", f.type, ")")
+Base.show(io::IO, f::FieldInfo) = print(io, "FieldInfo(", f.type, ", \"", f.derived_from, "\")")
 
 using ..PatternMatching:Matcher,unpack_value
 
@@ -62,8 +64,8 @@ function _get_type(val::Dict)
 end
 _get_type(val::Vector) = Vector{_get_type(val[1])}
 
-function get_field_info(value)
-    return FieldInfo(_get_type(value))
+function FieldInfo(value, derived_from)
+    return FieldInfo(_get_type(value), derived_from)
 end
 
 struct Solution
@@ -89,9 +91,6 @@ struct Solution
             inp_vals = Set{UInt64}()
             out_vals = Set{UInt64}()
             for (key, value) in task_data
-                if !haskey(field_info, key)
-                    field_info[key] = get_field_info(value)
-                end
                 if in(key, transformed_fields) || in(key, filled_fields) ||  in(key, unfilled_fields)
                     push!(out_vals, hash(value))
                 end
@@ -112,7 +111,10 @@ end
 
 Solution(taskdata) = Solution(
     taskdata,
-    Dict(),
+    Dict(
+        "input" => FieldInfo(taskdata[1]["input"], "input"),
+        "output" => FieldInfo(taskdata[1]["output"], "input")
+    ),
     [Block()],
     Set(["output"]),
     Set(),
@@ -172,9 +174,29 @@ function move_to_next_block(solution::Solution)::Solution
     unused_fields = solution.unused_fields
     taskdata = [merge(task_data, block_output) for (task_data, block_output) in zip(solution.taskdata, last_block_output)]
 
+    field_info = solution.field_info
+    for op in blocks[end].operations
+        for key in op.output_keys
+            if !haskey(field_info, key)
+                input_field_info = [field_info[k] for k in op.input_keys if haskey(field_info, k)]
+                i = argmin([length(info.derived_from) for info in input_field_info])
+                dependent_key = input_field_info[i].derived_from
+                for task in taskdata
+                    if haskey(task, key)
+                        field_info[key] = FieldInfo(task[key], dependent_key)
+                    end
+                end
+            end
+        end
+    end
+
     if !isempty(solution.unfilled_fields) && !isempty(new_block.operations)
         project_op = Project(new_block.operations, union(solution.unfilled_fields, solution.transformed_fields))
         push!(blocks[end].operations, project_op)
+
+        input_field_info = [field_info[key] for key in project_op.input_keys if haskey(field_info, key)]
+        i = argmin([length(info.derived_from) for info in input_field_info])
+        dependent_key = input_field_info[i].derived_from
 
         projected_output = [
             project_op(block_output)
@@ -187,12 +209,16 @@ function move_to_next_block(solution::Solution)::Solution
             for task_data in taskdata
         ]
         unused_fields = filter(key -> !startswith(key, "projected|"), solution.unused_fields)
+        field_info = filter(keyval -> !startswith(keyval[1], "|projected"), field_info)
 
         for (observed_task, output) in zip(taskdata, projected_output)
             for key in project_op.output_keys
                 if haskey(output, key)
                     observed_task[key] = output[key]
                     push!(unused_fields, key)
+                    if !haskey(field_info, key)
+                        field_info[key] = FieldInfo(output[key], dependent_key)
+                    end
                 end
             end
         end
@@ -210,7 +236,7 @@ function move_to_next_block(solution::Solution)::Solution
 
     Solution(
         taskdata,
-        solution.field_info,
+        field_info,
         blocks,
         solution.unfilled_fields,
         solution.filled_fields,
@@ -313,16 +339,38 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
     used_fields = copy(solution.used_fields)
     input_transformed_fields = copy(solution.input_transformed_fields)
 
+    field_info = copy(solution.field_info)
+    input_field_info = [field_info[key] for key in operation.input_keys if haskey(field_info, key)]
+    output_field_info = [field_info[key] for key in operation.output_keys if haskey(field_info, key)]
+
     need_next_block = false
 
     new_input_fields = filter(key -> !in(key, unused_fields) && !in(key, used_fields) && !in(key, input_transformed_fields), operation.input_keys)
     union!(unfilled_fields, new_input_fields)
+
+    if !isempty(new_input_fields)
+        i = argmax([length(info.derived_from) for info in output_field_info])
+        dependent_key = output_field_info[i].derived_from
+        for key in new_input_fields
+            for task in taskdata
+                if haskey(task, key)
+                    field_info[key] = FieldInfo(task[key], dependent_key)
+                    break
+                end
+            end
+        end
+    end
 
     for key in setdiff(operation.input_keys, new_input_fields)
         if in(key, unused_fields)
             delete!(unused_fields, key)
             push!(input_transformed_fields, key)
         end
+    end
+
+    if !isempty(input_field_info)
+        i = argmax([length(info.derived_from) for info in input_field_info])
+        dependent_key = input_field_info[i].derived_from
     end
 
     for key in operation.output_keys
@@ -338,12 +386,18 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
             if any(_check_matcher(get(task, key, nothing)) for task in taskdata)
                 push!(unfilled_fields, key)
             end
+            for task in taskdata
+                if haskey(task, key)
+                    field_info[key] = FieldInfo(task[key], dependent_key)
+                    break
+                end
+            end
         end
     end
 
     new_solution = Solution(
         taskdata,
-        solution.field_info,
+        field_info,
         blocks,
         unfilled_fields,
         filled_fields,
