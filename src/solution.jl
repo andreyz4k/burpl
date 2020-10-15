@@ -50,10 +50,11 @@ struct FieldInfo
     type::Type
     derived_from::String
     precursor_types::Vector{Type}
-    FieldInfo(type::Type, derived_from::String, precursor_types) = new(type, derived_from, precursor_types)
+    previous_fields::Set{String}
+    FieldInfo(type::Type, derived_from::String, precursor_types, previous_fields) = new(type, derived_from, precursor_types, Set(previous_fields))
 end
 
-Base.show(io::IO, f::FieldInfo) = print(io, "FieldInfo(", f.type, ", \"", f.derived_from, "\", ", f.precursor_types, ")")
+Base.show(io::IO, f::FieldInfo) = print(io, "FieldInfo(", f.type, ", \"", f.derived_from, "\", ", f.precursor_types, ", ", f.previous_fields, ")")
 
 using ..PatternMatching:Matcher,unpack_value
 
@@ -65,9 +66,9 @@ function _get_type(val::Dict)
 end
 _get_type(val::Vector) = Vector{_get_type(val[1])}
 
-function FieldInfo(value, derived_from, precursor_types)
+function FieldInfo(value, derived_from, precursor_types, previous_fields)
     type = _get_type(value)
-    return FieldInfo(type, derived_from, unique([precursor_types..., type]))
+    return FieldInfo(type, derived_from, unique([precursor_types..., type]), union(previous_fields...))
 end
 
 struct Solution
@@ -114,8 +115,8 @@ end
 Solution(taskdata) = Solution(
     taskdata,
     Dict(
-        "input" => FieldInfo(taskdata[1]["input"], "input", []),
-        "output" => FieldInfo(taskdata[1]["output"], "input", [])
+        "input" => FieldInfo(taskdata[1]["input"], "input", [], [["input"]]),
+        "output" => FieldInfo(taskdata[1]["output"], "input", [], [Set()])
     ),
     [Block()],
     Set(["output"]),
@@ -185,7 +186,8 @@ function move_to_next_block(solution::Solution)::Solution
                 dependent_key = input_field_info[i].derived_from
                 for task in taskdata
                     if haskey(task, key)
-                        field_info[key] = FieldInfo(task[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...))
+                        field_info[key] = FieldInfo(task[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...),
+                                                    [(field_info[k].previous_fields for k in op.input_keys)..., [key]])
                     end
                 end
             end
@@ -219,7 +221,8 @@ function move_to_next_block(solution::Solution)::Solution
                     observed_task[key] = output[key]
                     push!(unused_fields, key)
                     if !haskey(field_info, key)
-                        field_info[key] = FieldInfo(output[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...))
+                        field_info[key] = FieldInfo(output[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...),
+                                                    [(field_info[k].previous_fields for k in project_op.input_keys)..., [key]])
                     end
                 end
             end
@@ -276,7 +279,7 @@ function mark_dependent_sections(blocks, fill_fields, unf_fields, field_info, un
     if !isnothing(source_key)
         for needed_key in unf_fields
             if length(source_key) > length(field_info[needed_key].derived_from)
-                field_info[needed_key] = FieldInfo(field_info[needed_key].type, source_key, field_info[needed_key].precursor_types)
+                field_info[needed_key] = FieldInfo(field_info[needed_key].type, source_key, field_info[needed_key].precursor_types, field_info[needed_key].previous_fields)
             end
         end
     end
@@ -307,6 +310,8 @@ function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transf
                             push!(filled_fields, k)
                         end
                         push!(used_fields, k)
+                        field_info[k] = FieldInfo(field_info[k].type, field_info[k].derived_from, field_info[k].precursor_types,
+                                                  union([(field_info[pk].previous_fields for pk in op.input_keys)..., [k]]...))
                     end
                 elseif !isempty(fill_fields)
                     mark_dependent_sections(blocks, fill_fields, unf_fields, field_info, unfilled_fields, transformed_fields)
@@ -348,6 +353,10 @@ function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transf
                         if in(k, transformed_fields)
                             delete!(transformed_fields, k)
                             push!(filled_fields, k)
+                        end
+                        if haskey(field_info, k)
+                            field_info[k] = FieldInfo(field_info[k].type, field_info[k].derived_from, field_info[k].precursor_types,
+                                                      union([(field_info[pk].previous_fields for pk in op.input_keys)..., [k]]...))
                         end
                     end
                 end
@@ -395,7 +404,7 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
         for key in new_input_fields
             for task in taskdata
                 if haskey(task, key)
-                    field_info[key] = FieldInfo(task[key], out_dependent_key, vcat([info.precursor_types for info in output_field_info]...))
+                    field_info[key] = FieldInfo(task[key], out_dependent_key, vcat([info.precursor_types for info in output_field_info]...), [Set()])
                     break
                 end
             end
@@ -430,7 +439,8 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
             end
             for task in taskdata
                 if haskey(task, key)
-                    field_info[key] = FieldInfo(task[key], inp_dependent_key, vcat([info.precursor_types for info in input_field_info]...))
+                    field_info[key] = FieldInfo(task[key], inp_dependent_key, vcat([info.precursor_types for info in input_field_info]...),
+                                                [(field_info[k].previous_fields for k in operation.input_keys)..., [key]])
                     break
                 end
             end

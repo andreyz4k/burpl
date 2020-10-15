@@ -14,7 +14,7 @@ end
 (op::FakeOperation)(task_data) = task_data
 
 make_field_info(taskdata) =
-    Dict(key => FieldInfo(val, "input", []) for (key, val) in taskdata[1])
+    Dict(key => FieldInfo(val, "input", [], [Set()]) for (key, val) in taskdata[1])
 
 function make_dummy_solution(data, unfilled=[])
     unused = Set(filter(k -> !in(k, unfilled) && k != "input" && k != "output", keys(data[1])))
