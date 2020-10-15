@@ -17,7 +17,7 @@ using .Solutions:FieldInfo
                 )
             ]
 
-        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input")), [], "background") == [SetConst("background", 1)]
+        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [])), [], "background") == [SetConst("background", 1)]
 
         taskdata = [
                 Dict{String,Any}(
@@ -28,7 +28,7 @@ using .Solutions:FieldInfo
                 )
             ]
 
-        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input")), [], "background") == [SetConst("background", 1)]
+        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [])), [], "background") == [SetConst("background", 1)]
 
         taskdata = [
                 Dict{String,Any}(
@@ -39,7 +39,7 @@ using .Solutions:FieldInfo
                 ),
             ]
 
-        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input")), [], "background") == [SetConst("background", 1)]
+        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [])), [], "background") == [SetConst("background", 1)]
 
         taskdata = [
                 Dict{String,Any}(
@@ -50,7 +50,7 @@ using .Solutions:FieldInfo
                 ),
             ]
 
-        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input")), [], "background") == [SetConst("background", 1)]
+        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [])), [], "background") == [SetConst("background", 1)]
 
         taskdata = [
                 Dict{String,Any}(
@@ -61,7 +61,7 @@ using .Solutions:FieldInfo
                 ),
             ]
 
-        @test issetequal(find_const(taskdata, Dict("background" => FieldInfo(1, "input")), [], "background"), [SetConst("background", 1), SetConst("background", 2)])
+        @test issetequal(find_const(taskdata, Dict("background" => FieldInfo(1, "input", [])), [], "background"), [SetConst("background", 1), SetConst("background", 2)])
     end
 
     @testset "match dicts" begin
@@ -79,7 +79,7 @@ using .Solutions:FieldInfo
                 )
             )
         ]
-        @test find_const(taskdata, Dict("key" => FieldInfo(1, "input")), [], "key") == [SetConst("key", Dict(2 => 2, 1 => 1))]
+        @test find_const(taskdata, Dict("key" => FieldInfo(1, "input", [])), [], "key") == [SetConst("key", Dict(2 => 2, 1 => 1))]
 
         taskdata = [
             Dict{String,Any}(
@@ -95,7 +95,7 @@ using .Solutions:FieldInfo
                 )
             )
         ]
-        @test find_const(taskdata, Dict("key" => FieldInfo(1, "input")), [], "key") == [SetConst("key", Dict(
+        @test find_const(taskdata, Dict("key" => FieldInfo(1, "input", [])), [], "key") == [SetConst("key", Dict(
             1 => 1,
             2 => 2
         ))]
@@ -671,7 +671,7 @@ using .Solutions:FieldInfo
                 "key" => 2
             )
         ]
-        @test find_dependent_key(taskdata, Dict("key" => FieldInfo(1, "input"), "key_none" => FieldInfo(nothing, "input")), Set(["key"]), "key") == []
+        @test find_dependent_key(taskdata, Dict("key" => FieldInfo(1, "input", []), "key_none" => FieldInfo(nothing, "input", [])), Set(["key"]), "key") == []
     end
 
     @testset "fund multiply" begin
@@ -906,7 +906,7 @@ using .Solutions:FieldInfo
         @test filtered_ops(new_solution) == [
             Abstractor(SelectGroup(), true,
                        ["input|bgr_grid|grid|spatial_objects|grouped", "output|grid|bgr_grid|spatial_objects|shapes|selected_group"],
-                       ["output|grid|bgr_grid|spatial_objects|shapes", "output|grid|bgr_grid|spatial_objects|shapes|rejected"],)
+                       ["output|grid|bgr_grid|spatial_objects|shapes", "output|grid|bgr_grid|spatial_objects|shapes|rejected"], [])
         ]
     end
 end

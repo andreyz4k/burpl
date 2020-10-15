@@ -11,6 +11,7 @@ struct DotProduct <: Operation
     input_keys::Array{String}
     output_keys::Array{String}
     needed_input_keys::Array{String}
+    aux_keys::Array{String}
     DotProduct(abstractors) = new(abstractors, _get_keys_for_items(abstractors)...)
 end
 
@@ -67,14 +68,16 @@ function _get_keys_for_items(items)
     input_keys = []
     needed_inp_keys = []
     output_keys = []
+    aux_keys = []
     for item in items
         new_inp_keys = filter(k -> !in(k, output_keys), item.input_keys)
         append!(input_keys, new_inp_keys)
+        append!(aux_keys, filter(k -> !in(k, output_keys), item.aux_keys))
         append!(needed_inp_keys, filter(k -> in(k, needed_input_keys(item)), new_inp_keys))
         filter!(k -> !in(k, item.input_keys), output_keys)
         append!(output_keys, item.output_keys)
     end
-    input_keys, output_keys, needed_inp_keys
+    input_keys, output_keys, needed_inp_keys, aux_keys
 end
 
 using Statistics:mean

@@ -49,10 +49,11 @@ Base.hash(b::Block, h::UInt64) = hash(b.operations, h)
 struct FieldInfo
     type::Type
     derived_from::String
-    FieldInfo(type::Type, derived_from::String) = new(type, derived_from)
+    precursor_types::Vector{Type}
+    FieldInfo(type::Type, derived_from::String, precursor_types) = new(type, derived_from, precursor_types)
 end
 
-Base.show(io::IO, f::FieldInfo) = print(io, "FieldInfo(", f.type, ", \"", f.derived_from, "\")")
+Base.show(io::IO, f::FieldInfo) = print(io, "FieldInfo(", f.type, ", \"", f.derived_from, "\", ", f.precursor_types, ")")
 
 using ..PatternMatching:Matcher,unpack_value
 
@@ -64,8 +65,9 @@ function _get_type(val::Dict)
 end
 _get_type(val::Vector) = Vector{_get_type(val[1])}
 
-function FieldInfo(value, derived_from)
-    return FieldInfo(_get_type(value), derived_from)
+function FieldInfo(value, derived_from, precursor_types)
+    type = _get_type(value)
+    return FieldInfo(type, derived_from, unique([precursor_types..., type]))
 end
 
 struct Solution
@@ -112,8 +114,8 @@ end
 Solution(taskdata) = Solution(
     taskdata,
     Dict(
-        "input" => FieldInfo(taskdata[1]["input"], "input"),
-        "output" => FieldInfo(taskdata[1]["output"], "input")
+        "input" => FieldInfo(taskdata[1]["input"], "input", []),
+        "output" => FieldInfo(taskdata[1]["output"], "input", [])
     ),
     [Block()],
     Set(["output"]),
@@ -183,7 +185,7 @@ function move_to_next_block(solution::Solution)::Solution
                 dependent_key = input_field_info[i].derived_from
                 for task in taskdata
                     if haskey(task, key)
-                        field_info[key] = FieldInfo(task[key], dependent_key)
+                        field_info[key] = FieldInfo(task[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...))
                     end
                 end
             end
@@ -217,7 +219,7 @@ function move_to_next_block(solution::Solution)::Solution
                     observed_task[key] = output[key]
                     push!(unused_fields, key)
                     if !haskey(field_info, key)
-                        field_info[key] = FieldInfo(output[key], dependent_key)
+                        field_info[key] = FieldInfo(output[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...))
                     end
                 end
             end
@@ -248,8 +250,39 @@ function move_to_next_block(solution::Solution)::Solution
     )
 end
 
+function mark_dependent_sections(blocks, fill_fields, unf_fields, field_info, unfilled_fields, transformed_fields)
+    source_key = nothing
+    for block in blocks[end:-1:1], oper in block.operations[end:-1:1]
+        fields_in_chain = filter(k -> in(k, fill_fields), oper.output_keys)
+        if isnothing(source_key) && !isempty(fields_in_chain)
+            setdiff!(fill_fields, fields_in_chain)
+            union!(fill_fields, oper.input_keys)
+            if hasfield(typeof(oper), :aux_keys)
+                setdiff!(fill_fields, oper.aux_keys)
+            end
+            if length(fill_fields) == 1
+                for k in oper.output_keys
+                    if all(in(field_info[k].type, field_info[needed_key].precursor_types) for needed_key in unf_fields)
+                        source_key = k
+                        break
+                    end
+                end
+            end
+        end
+        if any(in(k, unf_fields) for k in oper.output_keys)
+            union!(unf_fields, filter(k -> in(k, unfilled_fields) || in(k, transformed_fields), oper.input_keys))
+        end
+    end
+    if !isnothing(source_key)
+        for needed_key in unf_fields
+            if length(source_key) > length(field_info[needed_key].derived_from)
+                field_info[needed_key] = FieldInfo(field_info[needed_key].type, source_key, field_info[needed_key].precursor_types)
+            end
+        end
+    end
+end
 
-function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transformed_fields, unused_fields, used_fields, input_transformed_fields, taskdata)
+function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transformed_fields, unused_fields, used_fields, input_transformed_fields, taskdata, field_info)
     output_chain = ["output"]
     for block in blocks[end:-1:1]
         for op in block.operations[end:-1:1]
@@ -260,17 +293,23 @@ function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transf
     end
     if in(key, output_chain)
         for op in blocks[end].operations[i:end]
-            if any(in(k, output_chain) for k in op.output_keys) && all(!in(k, unfilled_fields) && !in(k, transformed_fields) for k in op.input_keys)
-                for k in op.output_keys
-                    if in(k, unfilled_fields)
-                        delete!(unfilled_fields, k)
-                        push!(filled_fields, k)
+            if any(in(k, output_chain) for k in op.output_keys)
+                unf_fields = filter(k -> in(k, unfilled_fields) || in(k, transformed_fields), op.input_keys)
+                fill_fields = filter(k -> !in(k, unfilled_fields) && !in(k, transformed_fields) && (hasfield(typeof(op), :aux_keys) ? !in(k, op.aux_keys) : true), op.input_keys)
+                if isempty(unf_fields)
+                    for k in op.output_keys
+                        if in(k, unfilled_fields)
+                            delete!(unfilled_fields, k)
+                            push!(filled_fields, k)
+                        end
+                        if in(k, transformed_fields)
+                            delete!(transformed_fields, k)
+                            push!(filled_fields, k)
+                        end
+                        push!(used_fields, k)
                     end
-                    if in(k, transformed_fields)
-                        delete!(transformed_fields, k)
-                        push!(filled_fields, k)
-                    end
-                    push!(used_fields, k)
+                elseif !isempty(fill_fields)
+                    mark_dependent_sections(blocks, fill_fields, unf_fields, field_info, unfilled_fields, transformed_fields)
                 end
             end
         end
@@ -343,18 +382,20 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
     input_field_info = [field_info[key] for key in operation.input_keys if haskey(field_info, key)]
     output_field_info = [field_info[key] for key in operation.output_keys if haskey(field_info, key)]
 
-    need_next_block = false
-
-    new_input_fields = filter(key -> !in(key, unused_fields) && !in(key, used_fields) && !in(key, input_transformed_fields), operation.input_keys)
+    new_input_fields = filter(key -> !in(key, unused_fields) && !in(key, used_fields) &&
+                                     !in(key, input_transformed_fields) && !in(key, unfilled_fields) &&
+                                     !in(key, transformed_fields) && !in(key, filled_fields), operation.input_keys)
     union!(unfilled_fields, new_input_fields)
 
     if !isempty(new_input_fields)
-        i = argmax([length(info.derived_from) for info in output_field_info])
-        dependent_key = output_field_info[i].derived_from
+        if !isempty(output_field_info)
+            i = argmax([length(info.derived_from) for info in output_field_info])
+            out_dependent_key = output_field_info[i].derived_from
+        end
         for key in new_input_fields
             for task in taskdata
                 if haskey(task, key)
-                    field_info[key] = FieldInfo(task[key], dependent_key)
+                    field_info[key] = FieldInfo(task[key], out_dependent_key, vcat([info.precursor_types for info in output_field_info]...))
                     break
                 end
             end
@@ -370,16 +411,17 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
 
     if !isempty(input_field_info)
         i = argmax([length(info.derived_from) for info in input_field_info])
-        dependent_key = input_field_info[i].derived_from
+        inp_dependent_key = input_field_info[i].derived_from
     end
+
+    fields_to_mark = []
 
     for key in operation.output_keys
         if in(key, unfilled_fields)
             delete!(unfilled_fields, key)
             push!(transformed_fields, key)
             if isempty(new_input_fields)
-                need_next_block = true
-                mark_used_fields(key, index, blocks, unfilled_fields, filled_fields, transformed_fields, unused_fields, used_fields, input_transformed_fields, taskdata)
+                push!(fields_to_mark, key)
             end
         else
             push!(unused_fields, key)
@@ -388,11 +430,15 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
             end
             for task in taskdata
                 if haskey(task, key)
-                    field_info[key] = FieldInfo(task[key], dependent_key)
+                    field_info[key] = FieldInfo(task[key], inp_dependent_key, vcat([info.precursor_types for info in input_field_info]...))
                     break
                 end
             end
         end
+    end
+
+    for key in fields_to_mark
+        mark_used_fields(key, index, blocks, unfilled_fields, filled_fields, transformed_fields, unused_fields, used_fields, input_transformed_fields, taskdata, field_info)
     end
 
     new_solution = Solution(
@@ -407,7 +453,7 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
         input_transformed_fields,
         solution.complexity_score + added_complexity,
     )
-    if need_next_block
+    if !isempty(fields_to_mark)
         return move_to_next_block(new_solution)
     end
     new_solution
@@ -423,7 +469,9 @@ Base.show(io::IO, s::Solution) =
           "used: ", s.used_fields, "\n\t",
           "input transformed: ", s.input_transformed_fields, "\n\t[\n\t",
           s.blocks..., "\n\t]\n\t",
-          Dict(k => v for (k, v) in s.field_info if haskey(s.taskdata[1], k)), "\n\t",
+          "Dict(\n",
+          (vcat((["\t\t", keyval,",\n"] for keyval in s.field_info if haskey(s.taskdata[1], keyval[1]))...))...,
+          "\t)\n\t",
           [
               filter(keyval -> in(keyval[1], s.unfilled_fields) || in(keyval[1], s.unused_fields),
                      task_data)

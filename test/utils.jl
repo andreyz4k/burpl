@@ -8,12 +8,13 @@ make_sample_taskdata(len) =
 struct FakeOperation <: Operation
     input_keys
     output_keys
+    aux_keys
 end
 
 (op::FakeOperation)(task_data) = task_data
 
 make_field_info(taskdata) =
-    Dict(key => FieldInfo(val, "input") for (key, val) in taskdata[1])
+    Dict(key => FieldInfo(val, "input", []) for (key, val) in taskdata[1])
 
 function make_dummy_solution(data, unfilled=[])
     unused = Set(filter(k -> !in(k, unfilled) && k != "input" && k != "output", keys(data[1])))
@@ -22,7 +23,7 @@ function make_dummy_solution(data, unfilled=[])
                     task)
               for task in data]
     Solution(taskdata,
-             make_field_info(taskdata), [Block([FakeOperation(unfilled, ["output"])])], Set(unfilled), Set(), Set(), unused, Set(), Set(), 0.0)
+             make_field_info(taskdata), [Block([FakeOperation(unfilled, ["output"], [])])], Set(unfilled), Set(), Set(), unused, Set(), Set(), 0.0)
 end
 
 function _compare_operations(expected, solutions)

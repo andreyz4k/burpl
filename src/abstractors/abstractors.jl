@@ -34,13 +34,14 @@ struct Abstractor <: Operation
     to_abstract::Bool
     input_keys::Array{String}
     output_keys::Array{String}
+    aux_keys::Array{String}
 end
 
 function Abstractor(cls::AbstractorClass, key::String, to_abs::Bool, found_aux_keys::AbstractVector{String}=String[])
     if to_abs
-        return Abstractor(cls, true, vcat(detail_keys(cls, key), found_aux_keys), abs_keys(cls, key))
+        return Abstractor(cls, true, vcat(detail_keys(cls, key), found_aux_keys), abs_keys(cls, key), found_aux_keys)
     else
-        return Abstractor(cls, false, vcat(abs_keys(cls, key), found_aux_keys), detail_keys(cls, key))
+        return Abstractor(cls, false, vcat(abs_keys(cls, key), found_aux_keys), detail_keys(cls, key), found_aux_keys)
     end
 end
 

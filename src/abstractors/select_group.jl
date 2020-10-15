@@ -6,16 +6,16 @@ abs_keys(::SelectGroup) = ["selected_by", "rejected_by"]
 priority(::SelectGroup) = 4
 
 abs_keys(cls::SelectGroup, key::String, param_key::String) = [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
-aux_keys(::SelectGroup, key::String, param_key::String) = [param_key]
+detail_keys(::SelectGroup, key::String, param_key::String) = [key, param_key]
 
 
 SelectGroup(key, selector_key, to_abs) = Abstractor(SelectGroup(), key, selector_key, to_abs)
 
 function Abstractor(cls::SelectGroup, key::String, selector_key::String, to_abs::Bool)
     if to_abs
-        return Abstractor(cls, true, vcat(detail_keys(cls, key), aux_keys(cls, key, selector_key)), abs_keys(cls, key, selector_key))
+        return Abstractor(cls, true, detail_keys(cls, key, selector_key), abs_keys(cls, key, selector_key), [])
     else
-        return Abstractor(cls, false, vcat(abs_keys(cls, key, selector_key), aux_keys(cls, key, selector_key)), detail_keys(cls, key))
+        return Abstractor(cls, false, abs_keys(cls, key, selector_key), detail_keys(cls, key, selector_key), [])
     end
 end
 
