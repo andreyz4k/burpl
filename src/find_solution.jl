@@ -13,22 +13,16 @@ get_next_operations(solution, key) =
                   for op_class in Abstractors.classes), init=[])
 
 function get_new_solutions_for_input_key(solution, key)
-    # unfilled_data_types = set()
-    # for key_info in solution.unfilled_fields.params.values()
-    #     unfilled_data_types.update(key_info.precursor_data_types)
-    #     unfilled_data_types.add(key_info.data_type)
-    # end
     output = []
+
+    interesting_source = any(in(solution.field_info[k].derived_from, solution.field_info[key].previous_fields) for k in solution.unfilled_fields)
+
     for (priority, abstractor) in get_next_operations(solution, key)
         new_solution = insert_operation(solution, abstractor.to_abstract)
-        # for abs_key in abstractor.abs_keys
-        #     if new_solution.get_key_data_type(abs_key) in unfilled_data_types
-        #         priority /= 2
-        #         break
-        #     end
-        # else
-        #     priority *= 2
-        # end
+
+        if !interesting_source
+            priority *= 4
+        end
 
         if in(key, solution.input_transformed_fields)
             priority *= 4
@@ -43,6 +37,9 @@ function get_new_solutions_for_input_key(solution, key)
         end
 
         for matched_solution in match_fields(new_solution)
+            if matched_solution != new_solution
+                priority /= 4
+            end
             push!(output,
                   (priority * get_unmatched_complexity_score(matched_solution) *
                    matched_solution.score^1.5, matched_solution))
@@ -54,20 +51,8 @@ end
 function get_new_solutions_for_unfilled_key(solution::Solution, key::String)
     output = []
     for (priority, abstractor) in get_next_operations(solution, key)
-        # precursors = []
-        # for key in abstractor.detailed_keys
-        #     precursors.append(new_solution.unfilled_fields[key])
-        # end
 
         new_solution = insert_operation(solution, abstractor.from_abstract, reversed_op=abstractor.to_abstract)
-
-        # for abs_key in abstractor.abs_keys
-        #     new_solution.unfilled_fields[abs_key].precursor_data_types = {
-        #         data_type
-        #         for precursor in precursors
-        #         for data_type in {precursor.data_type}.union(precursor.precursor_data_types)
-        #     }
-        # end
 
         for matched_solution in match_fields(new_solution)
             push!(output,
