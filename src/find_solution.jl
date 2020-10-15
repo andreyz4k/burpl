@@ -14,6 +14,9 @@ get_next_operations(solution, key) =
 
 function get_new_solutions_for_input_key(solution, key)
     output = []
+    if !haskey(solution.field_info, key)
+        return []
+    end
 
     interesting_source = any(in(solution.field_info[k].derived_from, solution.field_info[key].previous_fields) for k in solution.unfilled_fields)
 

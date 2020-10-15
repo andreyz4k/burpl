@@ -310,8 +310,10 @@ function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transf
                             push!(filled_fields, k)
                         end
                         push!(used_fields, k)
-                        field_info[k] = FieldInfo(field_info[k].type, field_info[k].derived_from, field_info[k].precursor_types,
-                                                  union([(field_info[pk].previous_fields for pk in op.input_keys)..., [k]]...))
+                        if haskey(field_info, k)
+                            field_info[k] = FieldInfo(field_info[k].type, field_info[k].derived_from, field_info[k].precursor_types,
+                                                      union([(field_info[pk].previous_fields for pk in op.input_keys)..., [k]]...))
+                        end
                     end
                 elseif !isempty(fill_fields)
                     mark_dependent_sections(blocks, fill_fields, unf_fields, field_info, unfilled_fields, transformed_fields)
