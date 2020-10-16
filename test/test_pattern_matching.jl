@@ -1,6 +1,6 @@
 
 using .FindSolution:match_fields
-using .PatternMatching:Either,make_either,Option,common_value,update_value,unpack_value
+using .PatternMatching:Either,make_either,Option,common_value,update_value,unpack_value,ArrayPrefix,ObjectShape,Matcher
 using .ObjectPrior:Object
 using .Abstractors:iter_source_either_values
 
@@ -276,6 +276,24 @@ using .Abstractors:iter_source_either_values
             ([1, 2], [54, 456], Set([123, 456, 54, 209])),
             ([1, 4], [209], Set([123, 456, 54, 209]))
         ]
+    end
+
+    @testset "match counted array of shapes" begin
+        a = ArrayPrefix(
+            ObjectShape{Object}[
+                ObjectShape(Object([2], (1, 2))),
+                ObjectShape(Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 1))),
+                ObjectShape(Object([2], (7, 6))),
+                ObjectShape(Object([2; 2], (9, 6)))
+            ]
+        )
+        b = Object[
+            Object([2], (1, 13)),
+            Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
+            Object([2], (7, 17)),
+            Object([2; 2], (9, 17))
+        ]
+        @test !isnothing(common_value(b, a))
     end
 
 end

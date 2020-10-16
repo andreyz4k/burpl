@@ -3,6 +3,7 @@
 struct MaxValue <: ComputeFunctionClass end
 
 abs_keys(::MaxValue) = ["max_value"]
+priority(::MaxValue) = 15
 
 check_task_value(::MaxValue, value::AbstractVector{T}, data, aux_values) where
     T <: Union{Int64,Tuple{Int64,Int64}} = length(value) > 0

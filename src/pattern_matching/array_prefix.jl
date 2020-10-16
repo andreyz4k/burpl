@@ -1,7 +1,9 @@
 
 
 struct ArrayPrefix{T} <: Matcher{T}
-    value::T
+    value
+    ArrayPrefix(val::Vector{S}) where S = new{Vector{S}}(val)
+    ArrayPrefix(val::Vector{<:Matcher{S}}) where S = new{Vector{S}}(val)
 end
 
 Base.:(==)(a::ArrayPrefix, b::ArrayPrefix) = a.value == b.value
@@ -12,7 +14,7 @@ Base.show(io::IO, p::ArrayPrefix{T}) where {T} = print(io, "ArrayPrefix{", T, "}
 match(::Any, ::ArrayPrefix) = nothing
 
 function match(val1::T, val2::ArrayPrefix{T}) where T <: AbstractVector
-    if length(val1) >= length(val2.value) && val1[1:length(val2.value)] == val2.value
+    if length(val1) >= length(val2.value) && !isnothing(common_value(val1[1:length(val2.value)], val2.value))
         return val1
     end
     return nothing

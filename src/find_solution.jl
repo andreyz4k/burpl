@@ -19,16 +19,35 @@ function get_new_solutions_for_input_key(solution, key)
     end
 
     interesting_source = all(in(solution.field_info[k].derived_from, solution.field_info[key].previous_fields) for k in solution.unfilled_fields)
+    # println(key, " ", [solution.field_info[k].derived_from for k in solution.unfilled_fields], " ", interesting_source)
+    # println(solution.field_info[key])
+
+    # required_types = union([vcat([[t, Dict{Int64,t}] for t in solution.field_info[k].precursor_types]...) for k in solution.unfilled_fields]...)
+    # filled_types = isempty(solution.filled_fields) ? [] : union([vcat([[t, Dict{Int64,t}] for t in solution.field_info[k].precursor_types]...) for k in solution.filled_fields]...)
+
+    # println(required_types)
+    # println(filled_types)
 
     for (priority, abstractor) in get_next_operations(solution, key)
         new_solution = insert_operation(solution, abstractor.to_abstract)
 
+        # created_type = new_solution.field_info[abstractor.to_abstract.output_keys[1]].type
+        # if !in(created_type, required_types)
+        #     if in(created_type, filled_types)
+        #         priority *= 1.2
+        #     else
+        #         println(abstractor.to_abstract)
+        #         println([new_solution.field_info[k] for k in abstractor.to_abstract.output_keys])
+        #         priority *= 4
+        #     end
+        # end
+
         if !interesting_source
-            priority *= 4
+            priority *= 8
         end
 
         if in(key, solution.input_transformed_fields)
-            priority *= 4
+            priority *= 2
         end
 
         if in(key, solution.used_fields)
@@ -53,9 +72,16 @@ end
 
 function get_new_solutions_for_unfilled_key(solution::Solution, key::String)
     output = []
+    source_fields = [solution.field_info[k].derived_from for k in solution.unfilled_fields]
+    priority_key = all(in(k, solution.field_info[solution.field_info[key].derived_from].previous_fields) for k in source_fields)
+    # println(key, " ", source_fields, " ", priority_key)
+    # println(solution.field_info[solution.field_info[key].derived_from])
     for (priority, abstractor) in get_next_operations(solution, key)
-
         new_solution = insert_operation(solution, abstractor.from_abstract, reversed_op=abstractor.to_abstract)
+
+        if !priority_key
+            priority *= 8
+        end
 
         for matched_solution in match_fields(new_solution)
             push!(output,

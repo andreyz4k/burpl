@@ -674,7 +674,7 @@ using .Solutions:FieldInfo
         @test find_dependent_key(taskdata, Dict("key" => FieldInfo(1, "input", [], [Set()]), "key_none" => FieldInfo(nothing, "input", [], [Set()])), Set(["key"]), "key") == []
     end
 
-    @testset "fund multiply" begin
+    @testset "find multiply" begin
         solution = make_dummy_solution([
             Dict(
                 "key" => 10,
@@ -763,6 +763,39 @@ using .Solutions:FieldInfo
         _compare_operations(expected_operations, new_solutions)
     end
 
+    @testset "find shifted tuple list" begin
+        solution = make_dummy_solution([
+            Dict(
+                "input|bgr_grid|grid|spatial_objects|grouped|positions|selected_by|output|grid|bgr_grid|spatial_objects|shapes|selected_group" => [(1, 13), (1, 12), (7, 17), (9, 17)],
+                "input|bgr_grid|grid_size" => (21, 21),
+                "output|grid_size" => (10, 10),
+                "input|background" => 0,
+                "output|grid|bgr_grid|spatial_objects|positions" => [(1, 2), (1, 1), (7, 6), (9, 6)],
+            ),
+            Dict(
+                "input|bgr_grid|grid|spatial_objects|grouped|positions|selected_by|output|grid|bgr_grid|spatial_objects|shapes|selected_group" => [(11, 12), (12, 17), (15, 14), (15, 12), (18, 18)],
+                "input|bgr_grid|grid_size" => (19, 18),
+                "output|grid_size" => (9, 7),
+                "input|background" => 0,
+                "output|grid|bgr_grid|spatial_objects|positions" => [(1, 1), (2, 6), (5, 3), (5, 1), (8, 7)],
+            ),
+            Dict(
+                "input|bgr_grid|grid|spatial_objects|grouped|positions|selected_by|output|grid|bgr_grid|spatial_objects|shapes|selected_group" => [(1, 11), (4, 19), (6, 11), (6, 17), (6, 19)],
+                "input|bgr_grid|grid_size" => (17, 19),
+                "output|grid_size" => (6, 9),
+                "input|background" => 0,
+                "output|grid|bgr_grid|spatial_objects|positions" => [(1, 1), (4, 9), (6, 1), (6, 7), (6, 9)],
+            )
+        ], ["output|grid|bgr_grid|spatial_objects|positions"])
+        # new_solutions = match_fields(solution)
+        # @test length(new_solutions) == 1
+        # expected_operations = Set([
+        #     [IncByParam("key", "key1", "key2")],
+        #     [IncByParam("key", "key2", "key1")],
+        # ])
+        # _compare_operations(expected_operations, new_solutions)
+    end
+
     @testset "find shift by key" begin
         solution = make_dummy_solution([
             Dict(
@@ -781,6 +814,30 @@ using .Solutions:FieldInfo
         expected_operations = Set([
             [IncByParam("key", "key1", "key2")],
             [IncByParam("key", "key2", "key1")],
+        ])
+        _compare_operations(expected_operations, new_solutions)
+    end
+
+    @testset "find no shift with zero values" begin
+        solution = make_dummy_solution([
+            Dict(
+                "key" => 10,
+                "key1" => 10,
+                "key3" => 10,
+                "key2" => 0
+            ),
+            Dict(
+                "key" => 12,
+                "key1" => 12,
+                "key3" => 12,
+                "key2" => 0
+            )
+        ],["key"])
+        new_solutions = match_fields(solution)
+        @test length(new_solutions) == 2
+        expected_operations = Set([
+            [CopyParam("key", "key1")],
+            [CopyParam("key", "key3")],
         ])
         _compare_operations(expected_operations, new_solutions)
     end

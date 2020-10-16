@@ -161,6 +161,26 @@ function move_to_next_block(solution::Solution)::Solution
         solution.taskdata
     ]
 
+    taskdata = [merge(task_data, block_output) for (task_data, block_output) in zip(solution.taskdata, last_block_output)]
+
+    field_info = solution.field_info
+    for op in blocks[end].operations
+        for key in op.output_keys
+            if !haskey(field_info, key)
+                input_field_info = [field_info[k] for k in op.input_keys if haskey(field_info, k)]
+                i = argmin([length(info.derived_from) for info in input_field_info])
+                dependent_key = input_field_info[i].derived_from
+                for task in taskdata
+                    if haskey(task, key)
+                        field_info[key] = FieldInfo(task[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...),
+                                                    [(field_info[k].previous_fields for k in op.input_keys)..., [key]])
+                        break
+                    end
+                end
+            end
+        end
+    end
+
     if length(blocks) > 1
         if isempty(used_projected_fields)
             blocks[end - 1] = Block(vcat(blocks[end - 1].operations[1:end - 1], blocks[end].operations))
@@ -175,24 +195,6 @@ function move_to_next_block(solution::Solution)::Solution
 
     reverse!(new_block.operations)
     unused_fields = solution.unused_fields
-    taskdata = [merge(task_data, block_output) for (task_data, block_output) in zip(solution.taskdata, last_block_output)]
-
-    field_info = solution.field_info
-    for op in blocks[end].operations
-        for key in op.output_keys
-            if !haskey(field_info, key)
-                input_field_info = [field_info[k] for k in op.input_keys if haskey(field_info, k)]
-                i = argmin([length(info.derived_from) for info in input_field_info])
-                dependent_key = input_field_info[i].derived_from
-                for task in taskdata
-                    if haskey(task, key)
-                        field_info[key] = FieldInfo(task[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...),
-                                                    [(field_info[k].previous_fields for k in op.input_keys)..., [key]])
-                    end
-                end
-            end
-        end
-    end
 
     if !isempty(solution.unfilled_fields) && !isempty(new_block.operations)
         project_op = Project(new_block.operations, union(solution.unfilled_fields, solution.transformed_fields))
@@ -311,7 +313,8 @@ function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transf
                         end
                         push!(used_fields, k)
                         if haskey(field_info, k)
-                            field_info[k] = FieldInfo(field_info[k].type, field_info[k].derived_from, field_info[k].precursor_types,
+                            input_field_info = [field_info[k] for k in op.input_keys if haskey(field_info, k)]
+                            field_info[k] = FieldInfo(field_info[k].type, field_info[k].derived_from, unique([vcat([info.precursor_types for info in input_field_info]...)..., field_info[k].type]),
                                                       union([(field_info[pk].previous_fields for pk in op.input_keys)..., [k]]...))
                         end
                     end
@@ -357,7 +360,8 @@ function mark_used_fields(key, i, blocks, unfilled_fields, filled_fields, transf
                             push!(filled_fields, k)
                         end
                         if haskey(field_info, k)
-                            field_info[k] = FieldInfo(field_info[k].type, field_info[k].derived_from, field_info[k].precursor_types,
+                            input_field_info = [field_info[k] for k in op.input_keys if haskey(field_info, k)]
+                            field_info[k] = FieldInfo(field_info[k].type, field_info[k].derived_from, unique([vcat([info.precursor_types for info in input_field_info]...)..., field_info[k].type]),
                                                       union([(field_info[pk].previous_fields for pk in op.input_keys)..., [k]]...))
                         end
                     end
@@ -486,7 +490,9 @@ Base.show(io::IO, s::Solution) =
           "input transformed: ", s.input_transformed_fields, "\n\t[\n\t",
           s.blocks..., "\n\t]\n\t",
           "Dict(\n",
-          (vcat((["\t\t", keyval,",\n"] for keyval in s.field_info if haskey(s.taskdata[1], keyval[1]))...))...,
+          (vcat((["\t\t", keyval,",\n"] for keyval in s.field_info if haskey(s.taskdata[1], keyval[1]) &&
+                (in(keyval[1], s.unfilled_fields) || in(keyval[1], s.unused_fields) ||
+                in(keyval[1], s.input_transformed_fields) || in(keyval[1], s.used_fields)))...))...,
           "\t)\n\t",
           [
               filter(keyval -> in(keyval[1], s.unfilled_fields) || in(keyval[1], s.unused_fields),
