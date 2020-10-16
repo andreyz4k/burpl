@@ -34,10 +34,10 @@ function check_task_value(::RepeatObjectInfinite, value::AbstractVector{Object},
 end
 
 
-needed_input_keys(p::Abstractor, ::RepeatObjectInfinite) =
+needed_input_keys(p::Abstractor{RepeatObjectInfinite}) =
     p.to_abstract ? p.input_keys : p.input_keys[1:2:3]
 
-function to_abstract_value(p::Abstractor, ::RepeatObjectInfinite, source_value, grid_size)
+function to_abstract_value(p::Abstractor{RepeatObjectInfinite}, source_value, grid_size)
     objects = sort(source_value, by=obj -> obj.position)
     if length(objects) == 1
         return Dict(p.output_keys[1] => objects[1])
@@ -60,7 +60,7 @@ function to_abstract_value(p::Abstractor, ::RepeatObjectInfinite, source_value, 
     end
 end
 
-function from_abstract_value(p::Abstractor, ::RepeatObjectInfinite, first, step, grid_size)
+function from_abstract_value(p::Abstractor{RepeatObjectInfinite}, first, step, grid_size)
     out_value = [first]
     i = 1
     while !isnothing(step)

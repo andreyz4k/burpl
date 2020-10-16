@@ -372,6 +372,10 @@ _check_matcher(::Matcher) = true
 _check_matcher(value::AbstractDict) = any(_check_matcher(v) for v in values(value))
 _check_matcher(value::AbstractVector) = any(_check_matcher(v) for v in value)
 
+function get_source_key(operation, source_key)
+    source_key
+end
+
 function insert_operation(solution::Solution, operation::Operation; added_complexity::Float64=0.0, reversed_op=nothing)::Solution
     blocks = copy(solution.blocks)
     blocks[end], index = insert_operation(blocks, operation)
@@ -406,7 +410,7 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
         for key in new_input_fields
             for task in taskdata
                 if haskey(task, key)
-                    field_info[key] = FieldInfo(task[key], out_dependent_key, vcat([info.precursor_types for info in output_field_info]...), [Set()])
+                    field_info[key] = FieldInfo(task[key], get_source_key(operation, out_dependent_key), vcat([info.precursor_types for info in output_field_info]...), [Set()])
                     break
                 end
             end

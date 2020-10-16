@@ -13,9 +13,9 @@ SelectGroup(key, selector_key, to_abs) = Abstractor(SelectGroup(), key, selector
 
 function Abstractor(cls::SelectGroup, key::String, selector_key::String, to_abs::Bool)
     if to_abs
-        return Abstractor(cls, true, detail_keys(cls, key, selector_key), abs_keys(cls, key, selector_key), [])
+        return Abstractor(cls, true, detail_keys(cls, key, selector_key), abs_keys(cls, key, selector_key), String[])
     else
-        return Abstractor(cls, false, abs_keys(cls, key, selector_key), detail_keys(cls, key, selector_key), [])
+        return Abstractor(cls, false, vcat(abs_keys(cls, key, selector_key), detail_keys(cls, key, selector_key)[2:2]), detail_keys(cls, key, selector_key)[1:1], String[])
     end
 end
 
@@ -41,6 +41,7 @@ function init_create_check_data(::SelectGroup, key, solution)
         "existing_choices" => Set{String}(),
         "key" => key,
         "effective" => false,
+        "field_info" => solution.field_info,
     )
     matcher = Regex("$(replace(key, '|' => "\\|"))\\|selected_by\\|(.*)")
     sample_task = solution.taskdata[1]
@@ -58,7 +59,7 @@ function check_task_value(::SelectGroup, value::AbstractDict, data, task_data)
     if !haskey(data, "allowed_choices")
         data["allowed_choices"] = Set{String}()
         for (key, data_value) in task_data
-            if key != data["key"] && startswith(key, data["key"]) &&
+            if key != data["key"] && in(data["key"], data["field_info"][key].previous_fields) &&
                     !in(key, data["existing_choices"]) && haskey(value, data_value)
                 push!(data["allowed_choices"], key)
             end
@@ -80,11 +81,11 @@ function create_abstractors(cls::SelectGroup, data, key)
     end
 end
 
-function wrap_func_call_dict_value(p::Abstractor, cls::SelectGroup, func::Function, wrappers::AbstractVector{Function}, source_values...)
-    wrap_func_call_value(p, cls, func, wrappers, source_values...)
+function wrap_func_call_dict_value(p::Abstractor{SelectGroup}, func::Function, wrappers::AbstractVector{Function}, source_values...)
+    wrap_func_call_value(p, func, wrappers, source_values...)
 end
 
-function to_abstract_value(p::Abstractor, ::SelectGroup, source_value::AbstractDict, selected_key)
+function to_abstract_value(p::Abstractor{SelectGroup}, source_value::AbstractDict, selected_key)
     rejected = copy(source_value)
     delete!(rejected, selected_key)
     Dict(
@@ -93,8 +94,14 @@ function to_abstract_value(p::Abstractor, ::SelectGroup, source_value::AbstractD
     )
 end
 
-function from_abstract_value(p::Abstractor, ::SelectGroup, selected, rejected, selector_key)
+function from_abstract_value(p::Abstractor{SelectGroup}, selected, rejected, selector_key)
     out = copy(rejected)
     out[selector_key] = selected
     Dict(p.output_keys[1] => out)
+end
+
+import ..Solutions:get_source_key
+
+function get_source_key(operation::Abstractor{SelectGroup}, source_key)
+    operation.input_keys[1]
 end

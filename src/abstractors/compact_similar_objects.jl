@@ -12,13 +12,13 @@ function check_task_value(::CompactSimilarObjects, value::AbstractVector{Object}
 end
 
 
-to_abstract_value(p::Abstractor, ::CompactSimilarObjects, objects::AbstractVector{Object}) =
+to_abstract_value(p::Abstractor{CompactSimilarObjects}, objects::AbstractVector{Object}) =
      Dict(
         p.output_keys[1] => length(objects) > 0 ? objects[1].shape : nothing,
         p.output_keys[2] => [obj.position for obj in objects]
     )
 
-from_abstract_value(p::Abstractor, ::CompactSimilarObjects, common_shape, positions) =
+from_abstract_value(p::Abstractor{CompactSimilarObjects}, common_shape, positions) =
     Dict(
         p.output_keys[1] => [Object(common_shape, position) for position in positions]
     )

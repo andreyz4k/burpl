@@ -18,7 +18,7 @@ function get_new_solutions_for_input_key(solution, key)
         return []
     end
 
-    interesting_source = any(in(solution.field_info[k].derived_from, solution.field_info[key].previous_fields) for k in solution.unfilled_fields)
+    interesting_source = all(in(solution.field_info[k].derived_from, solution.field_info[key].previous_fields) for k in solution.unfilled_fields)
 
     for (priority, abstractor) in get_next_operations(solution, key)
         new_solution = insert_operation(solution, abstractor.to_abstract)
@@ -40,7 +40,7 @@ function get_new_solutions_for_input_key(solution, key)
         end
 
         for matched_solution in match_fields(new_solution)
-            if matched_solution != new_solution
+            if length(matched_solution.unfilled_fields) < length(solution.unfilled_fields)
                 priority /= 4
             end
             push!(output,

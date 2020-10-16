@@ -7,7 +7,7 @@ priority(::AlignedWithBorder) = 8
 
 check_task_value(::AlignedWithBorder, ::Object, data, aux_values) = true
 
-function to_abstract_value(p::Abstractor, ::AlignedWithBorder, source_value::Object, grid_size::Tuple{Int64,Int64})
+function to_abstract_value(p::Abstractor{AlignedWithBorder}, source_value::Object, grid_size::Tuple{Int64,Int64})
     x = 0
     if source_value.position[1] == 1
         x += 1

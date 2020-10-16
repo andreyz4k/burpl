@@ -11,7 +11,7 @@ abs_keys(::AbstractorClass) = []
 aux_keys(::AbstractorClass) = []
 priority(::AbstractorClass) = 8
 
-abs_keys(cls::AbstractorClass, key::String) = [key * "|" * a_key for a_key in abs_keys(cls)]
+abs_keys(cls::AbstractorClass, key::String) = String[key * "|" * a_key for a_key in abs_keys(cls)]
 detail_keys(::AbstractorClass, key::String) = [key]
 function aux_keys(cls::AbstractorClass, key::String, taskdata)::Array{String}
     result = []
@@ -29,12 +29,12 @@ function aux_keys(cls::AbstractorClass, key::String, taskdata)::Array{String}
 end
 
 
-struct Abstractor <: Operation
-    cls::AbstractorClass
+struct Abstractor{T <: AbstractorClass} <: Operation
+    cls::T
     to_abstract::Bool
-    input_keys::Array{String}
-    output_keys::Array{String}
-    aux_keys::Array{String}
+    input_keys::Vector{String}
+    output_keys::Vector{String}
+    aux_keys::Vector{String}
 end
 
 function Abstractor(cls::AbstractorClass, key::String, to_abs::Bool, found_aux_keys::AbstractVector{String}=String[])
@@ -54,13 +54,12 @@ function (p::Abstractor)(task_data)
     else
         func = from_abstract_value
     end
-    merge!(out_data, wrap_func_call_value_root(p, p.cls, func, input_values...))
+    merge!(out_data, wrap_func_call_value_root(p, func, input_values...))
     return out_data
 end
 
 import ..Operations:needed_input_keys
-needed_input_keys(p::Abstractor) = needed_input_keys(p, p.cls)
-needed_input_keys(p::Abstractor, ::AbstractorClass) = p.input_keys
+needed_input_keys(p::Abstractor) = p.input_keys
 
 Base.show(io::IO, p::Abstractor) = print(io,
         string(nameof(typeof(p.cls))),
@@ -85,15 +84,15 @@ call_wrappers() = [
     wrap_func_call_shape_value,
 ]
 
-function wrap_func_call_value_root(p::Abstractor, cls::AbstractorClass, func::Function, source_values...)
-    wrap_func_call_value(p, cls, func, call_wrappers(), source_values...)
+function wrap_func_call_value_root(p::Abstractor, func::Function, source_values...)
+    wrap_func_call_value(p, func, call_wrappers(), source_values...)
 end
 
-function wrap_func_call_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
+function wrap_func_call_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if isempty(wrappers)
-        return func(p, cls, source_values...)
+        return func(p, source_values...)
     end
-    wrappers[1](p, cls, func, wrappers[2:end], source_values...)
+    wrappers[1](p, func, wrappers[2:end], source_values...)
 end
 
 function iter_source_values(source_values)
@@ -110,17 +109,17 @@ function iter_source_values(source_values)
     result
 end
 
-function wrap_func_call_dict_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
+function wrap_func_call_dict_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, AbstractDict) for v in source_values)
         result = DefaultDict(() -> Dict())
         for (key, values) in iter_source_values(source_values)
-            for (out_key, out_value) in wrap_func_call_value(p, cls, func, wrappers, values...)
+            for (out_key, out_value) in wrap_func_call_value(p, func, wrappers, values...)
                 result[out_key][key] = out_value
             end
         end
         return result
     end
-    wrap_func_call_value(p, cls, func, wrappers, source_values...)
+    wrap_func_call_value(p, func, wrappers, source_values...)
 end
 
 
@@ -189,25 +188,25 @@ unfold_options(options::AbstractVector) =
 unfold_options(options::Dict) =
     Either([Option(unfold_options(vals), option_hash) for (option_hash, vals) in options])
 
-function wrap_func_call_either_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
+function wrap_func_call_either_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, Either) for v in source_values)
         outputs = Dict()
         for (vals, hashes, _) in iter_source_either_values(source_values)
-            for (key, value) in wrap_func_call_value(p, cls, func, wrappers, vals...)
+            for (key, value) in wrap_func_call_value(p, func, wrappers, vals...)
                 push_to_tree!(outputs, [key, hashes...], value)
             end
         end
         return Dict(key => unfold_options(options) for (key, options) in outputs)
     end
-    wrap_func_call_value(p, cls, func, wrappers, source_values...)
+    wrap_func_call_value(p, func, wrappers, source_values...)
 end
 
 
 using ..PatternMatching:ArrayPrefix
-function wrap_func_call_prefix_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
+function wrap_func_call_prefix_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, ArrayPrefix) for v in source_values)
         outputs = Dict()
-        for (key, value) in wrap_func_call_value(p, cls, func, wrappers, [isa(v, ArrayPrefix) ? v.value : v for v in source_values]...)
+        for (key, value) in wrap_func_call_value(p, func, wrappers, [isa(v, ArrayPrefix) ? v.value : v for v in source_values]...)
             if isa(value, AbstractVector)
                 outputs[key] = ArrayPrefix(value)
             else
@@ -216,16 +215,16 @@ function wrap_func_call_prefix_value(p::Abstractor, cls::AbstractorClass, func::
         end
         return outputs
     end
-    wrap_func_call_value(p, cls, func, wrappers, source_values...)
+    wrap_func_call_value(p, func, wrappers, source_values...)
 end
 
 
 using ..PatternMatching:ObjectShape
-function wrap_func_call_shape_value(p::Abstractor, cls::AbstractorClass, func::Function, wrappers::AbstractVector{Function}, source_values...)
+function wrap_func_call_shape_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, ObjectShape) || isa(v, AbstractVector{ObjectShape}) for v in source_values)
         outputs = Dict()
         unwrapped_values = [isa(v, ObjectShape) ? v.object : isa(v, AbstractVector{ObjectShape}) ? [i.object for i in v] : v for v in source_values]
-        for (key, value) in wrap_func_call_value(p, cls, func, wrappers, unwrapped_values...)
+        for (key, value) in wrap_func_call_value(p, func, wrappers, unwrapped_values...)
             if isa(value, Object)
                 outputs[key] = ObjectShape(value)
             elseif isa(value, AbstractVector{Object})
@@ -236,7 +235,7 @@ function wrap_func_call_shape_value(p::Abstractor, cls::AbstractorClass, func::F
         end
         return outputs
     end
-    wrap_func_call_value(p, cls, func, wrappers, source_values...)
+    wrap_func_call_value(p, func, wrappers, source_values...)
 end
 
 
@@ -297,7 +296,7 @@ include("solid_objects.jl")
 include("group_obj_by_color.jl")
 # include("compact_similar_objects.jl")
 # include("select_color.jl")
-include("sort_array.jl")
+# include("sort_array.jl")
 # include("split_list.jl")
 include("transpose.jl")
 include("repeat_object_infinite.jl")

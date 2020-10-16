@@ -12,19 +12,19 @@ check_task_value(::RemoveRedundantDict, value::AbstractDict, data, aux_values) =
     length(Set(values(value))) == 1
 
 
-function wrap_func_call_dict_value(p::Abstractor, cls::RemoveRedundantDict, func::Function, wrappers::AbstractVector{Function}, source_values...)
+function wrap_func_call_dict_value(p::Abstractor{RemoveRedundantDict}, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if func != from_abstract_value
-        wrap_func_call_value(p, cls, func, wrappers, source_values...)
+        wrap_func_call_value(p, func, wrappers, source_values...)
     else
-        invoke(wrap_func_call_dict_value, Tuple{Abstractor,AbstractorClass,Function,AbstractVector{Function},Vararg{Any}}, p, cls, func, wrappers, source_values...)
+        invoke(wrap_func_call_dict_value, Tuple{Abstractor,Function,AbstractVector{Function},Vararg{Any}}, p, func, wrappers, source_values...)
     end
 end
 
-to_abstract_value(p::Abstractor, ::RemoveRedundantDict, source_value::AbstractDict) =
+to_abstract_value(p::Abstractor{RemoveRedundantDict}, source_value::AbstractDict) =
     Dict(
         p.output_keys[1] => first(values(source_value)),
         p.output_keys[2] => sort(collect(keys(source_value)))
         )
 
-from_abstract_value(p::Abstractor, ::RemoveRedundantDict, value, keys) =
+from_abstract_value(p::Abstractor{RemoveRedundantDict}, value, keys) =
     Dict(p.output_keys[1] => Dict(key => value for key in keys))

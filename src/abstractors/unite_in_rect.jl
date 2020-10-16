@@ -20,7 +20,7 @@ function check_task_value(::UniteInRect, value::AbstractVector{Object}, data, au
     true
 end
 
-function to_abstract_value(p::Abstractor, ::UniteInRect, source_value::AbstractVector{Object})
+function to_abstract_value(p::Abstractor{UniteInRect}, source_value::AbstractVector{Object})
     out = Object[]
     merged = Set()
     for (i, obj) in enumerate(source_value)
@@ -47,5 +47,5 @@ function to_abstract_value(p::Abstractor, ::UniteInRect, source_value::AbstractV
     return Dict(p.output_keys[1] => out)
 end
 
-from_abstract_value(p::Abstractor, ::UniteInRect, source_value) =
+from_abstract_value(p::Abstractor{UniteInRect}, source_value) =
     Dict(p.output_keys[1] => source_value)

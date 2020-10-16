@@ -906,7 +906,7 @@ using .Solutions:FieldInfo
         @test filtered_ops(new_solution) == [
             Abstractor(SelectGroup(), true,
                        ["input|bgr_grid|grid|spatial_objects|grouped", "output|grid|bgr_grid|spatial_objects|shapes|selected_group"],
-                       ["output|grid|bgr_grid|spatial_objects|shapes", "output|grid|bgr_grid|spatial_objects|shapes|rejected"], [])
+                       ["output|grid|bgr_grid|spatial_objects|shapes", "output|grid|bgr_grid|spatial_objects|shapes|rejected"], String[])
         ]
     end
 end

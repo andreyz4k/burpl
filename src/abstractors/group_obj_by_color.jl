@@ -17,7 +17,7 @@ function check_task_value(::GroupObjectsByColor, value::AbstractVector{Object}, 
     return true
 end
 
-function to_abstract_value(p::Abstractor, ::GroupObjectsByColor, source_value)
+function to_abstract_value(p::Abstractor{GroupObjectsByColor}, source_value)
     results = DefaultDict(() -> Object[])
     for obj in source_value
         key = get_color(obj)
@@ -30,15 +30,15 @@ function to_abstract_value(p::Abstractor, ::GroupObjectsByColor, source_value)
 end
 
 
-function wrap_func_call_dict_value(p::Abstractor, cls::GroupObjectsByColor, func::Function, wrappers::AbstractVector{Function}, source_values...)
+function wrap_func_call_dict_value(p::Abstractor{GroupObjectsByColor}, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if func == from_abstract_value
-        wrap_func_call_value(p, cls, func, wrappers, source_values...)
+        wrap_func_call_value(p, func, wrappers, source_values...)
     else
-        invoke(wrap_func_call_dict_value, Tuple{Abstractor,AbstractorClass,Function,AbstractVector{Function},Vararg{Any}}, p, cls, func, wrappers, source_values...)
+        invoke(wrap_func_call_dict_value, Tuple{Abstractor,Function,AbstractVector{Function},Vararg{Any}}, p, func, wrappers, source_values...)
     end
 end
 
-function from_abstract_value(p::Abstractor, ::GroupObjectsByColor, data, keys)
+function from_abstract_value(p::Abstractor{GroupObjectsByColor}, data, keys)
     results = reduce(
         vcat,
         values(data),

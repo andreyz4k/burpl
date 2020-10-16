@@ -3,17 +3,17 @@
 struct Project <: Operation
     operations
     input_keys
-    aux_keys
     output_keys
+    aux_keys
     Project(operations, out_keys) =
-        new(copy(operations), _get_keys_for_items(operations)..., ["projected|" * key for key in out_keys])
+        new(copy(operations), _get_keys_for_items(operations, out_keys)...)
 end
 
 Base.show(io::IO, p::Project) = print(io, "Project(", (vcat(([op,", "] for op in p.operations)...))..., ")")
 
 Base.:(==)(a::Project, b::Project) = a.operations == b.operations
 
-function _get_keys_for_items(items)
+function _get_keys_for_items(items, out_keys)
     input_keys = []
     output_keys = []
     aux_keys = []
@@ -23,7 +23,7 @@ function _get_keys_for_items(items)
         append!(aux_keys, filter(k -> !in(k, output_keys), item.aux_keys))
         append!(output_keys, item.output_keys)
     end
-    input_keys, aux_keys
+    input_keys, ["projected|" * key for key in output_keys if in(key, out_keys)], aux_keys
 end
 
 function (p::Project)(observed_data)

@@ -34,7 +34,7 @@ function check_task_value(::UniteTouching, value::AbstractVector{Object}, data, 
     true
 end
 
-function to_abstract_value(p::Abstractor, ::UniteTouching, source_value::AbstractVector{Object})
+function to_abstract_value(p::Abstractor{UniteTouching}, source_value::AbstractVector{Object})
     out = Object[]
     merged = Set()
     for (i, obj) in enumerate(source_value)
@@ -61,6 +61,6 @@ function to_abstract_value(p::Abstractor, ::UniteTouching, source_value::Abstrac
     return Dict(p.output_keys[1] => out)
 end
 
-function from_abstract_value(p::Abstractor, ::UniteTouching, source_value)
+function from_abstract_value(p::Abstractor{UniteTouching}, source_value)
     return Dict(p.output_keys[1] => source_value)
 end

@@ -25,13 +25,13 @@ get_aux_values_for_task(::GridSize, task_data, key, solution) =
                         !in(kv[1], solution.filled_fields),
                   task_data))
 
-needed_input_keys(p::Abstractor, ::GridSize) =
+needed_input_keys(p::Abstractor{GridSize}) =
     p.to_abstract ? p.input_keys : p.input_keys[2:2]
 
-to_abstract_value(p::Abstractor, ::GridSize, source_value::AbstractArray{Int,2}) =
+to_abstract_value(p::Abstractor{GridSize}, source_value::AbstractArray{Int,2}) =
     Dict(p.output_keys[1] => source_value, p.output_keys[2] => size(source_value))
 
-function from_abstract_value(p::Abstractor, ::GridSize, grid, grid_size)
+function from_abstract_value(p::Abstractor{GridSize}, grid, grid_size)
     new_grid = fill(0, grid_size)
     if !isnothing(grid)
         intersection = 1:min(grid_size[1], size(grid)[1]), 1:min(grid_size[2], size(grid)[2])
