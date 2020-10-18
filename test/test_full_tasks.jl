@@ -7,7 +7,7 @@ TASKS = [
 
 using Randy:get_solution,test_solution
 
-@testset "Full tasks" for fname in TASKS
+@testset "Full task $fname" for fname in TASKS
     @testset "run task" begin
         solution = get_solution(fname)
         @test test_solution(solution, fname) == (0, 0)

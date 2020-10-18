@@ -1,6 +1,8 @@
 
-using .Solutions:Solution,Block,FieldInfo
+using .Solutions:Solution,Block,FieldInfo,insert_operation
 using .Operations:Operation,Project
+using .DataTransformers:match_fields
+using .Abstractors:create
 
 make_sample_taskdata(len) =
     fill(Dict("input" => Array{Int}(undef, 0, 0), "output" => Array{Int}(undef, 0, 0)), len)
@@ -40,3 +42,17 @@ filtered_taskdata(solution) =
 
 filtered_ops(solution) =
     filter(op -> !isa(op, FakeOperation) && !isa(op, Project), vcat((block.operations for block in solution.blocks)...))
+
+function create_solution(taskdata, operations)
+    solution = Solution(taskdata)
+    for (op_class, key, to_abs) in operations
+        abstractor = create(op_class, solution, key)[1][2]
+        if to_abs
+            new_solution = insert_operation(solution, abstractor.to_abstract)
+        else
+            new_solution = insert_operation(solution, abstractor.from_abstract, reversed_op=abstractor.to_abstract)
+        end
+        solution = match_fields(new_solution)[1]
+    end
+    solution
+end
