@@ -22,6 +22,9 @@ get_complexity(value::Object)::Float64 = get_complexity(value.shape) + get_compl
 
 function get_complexity(value::AbstractDict)::Float64
     denominator = 0
+    if isempty(value)
+        return 2
+    end
     for v in values(value)
         if isa(v, Array) || isa(v, Set) || isa(v, Tuple)
             denominator += length(v)

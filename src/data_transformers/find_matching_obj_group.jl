@@ -59,7 +59,9 @@ _check_group_type(::Type{Dict{K,V}}, expected::Type) where {K,V} = V == expected
 function _get_matching_transformers(taskdata::Vector{Dict{String,Any}}, field_info, invalid_sources::AbstractSet{String}, key::String)
     result = []
     for input_key in keys(taskdata[1])
-        if in(input_key, invalid_sources) || !_check_group_type(field_info[input_key].type, field_info[key].type)
+        if in(input_key, invalid_sources) ||
+                !_check_group_type(field_info[input_key].type, field_info[key].type) ||
+                all(length(task[input_key]) <= 1 for task in taskdata)
             continue
         end
         good = true

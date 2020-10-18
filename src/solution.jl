@@ -171,7 +171,7 @@ function move_to_next_block(solution::Solution)::Solution
                 i = argmin([length(info.derived_from) for info in input_field_info])
                 dependent_key = input_field_info[i].derived_from
                 for task in taskdata
-                    if haskey(task, key)
+                    if haskey(task, key) && ((!isa(task[key], Dict) && !isa(task[key], Array)) || !isempty(task[key]))
                         field_info[key] = FieldInfo(task[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...),
                                                     [(field_info[k].previous_fields for k in op.input_keys)..., [key]])
                         break
@@ -217,8 +217,11 @@ function move_to_next_block(solution::Solution)::Solution
         unused_fields = filter(key -> !startswith(key, "projected|"), solution.unused_fields)
         field_info = filter(keyval -> !startswith(keyval[1], "|projected"), field_info)
 
-        for (observed_task, output) in zip(taskdata, projected_output)
-            for key in project_op.output_keys
+        for key in project_op.output_keys
+            if any(_check_matcher(get(task, key, nothing)) for task in projected_output)
+                continue
+            end
+            for (observed_task, output) in zip(taskdata, projected_output)
                 if haskey(output, key)
                     observed_task[key] = output[key]
                     push!(unused_fields, key)

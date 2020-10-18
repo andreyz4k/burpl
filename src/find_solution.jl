@@ -19,28 +19,16 @@ function get_new_solutions_for_input_key(solution, key)
     end
 
     interesting_source = all(in(solution.field_info[k].derived_from, solution.field_info[key].previous_fields) for k in solution.unfilled_fields)
-    # println(key, " ", [solution.field_info[k].derived_from for k in solution.unfilled_fields], " ", interesting_source)
-    # println(solution.field_info[key])
 
-    # required_types = union([vcat([[t, Dict{Int64,t}] for t in solution.field_info[k].precursor_types]...) for k in solution.unfilled_fields]...)
-    # filled_types = isempty(solution.filled_fields) ? [] : union([vcat([[t, Dict{Int64,t}] for t in solution.field_info[k].precursor_types]...) for k in solution.filled_fields]...)
-
-    # println(required_types)
-    # println(filled_types)
+    required_types = union([vcat([[t, Dict{Int64,t}] for t in solution.field_info[k].precursor_types]...) for k in solution.unfilled_fields]...)
 
     for (priority, abstractor) in get_next_operations(solution, key)
         new_solution = insert_operation(solution, abstractor.to_abstract)
 
-        # created_type = new_solution.field_info[abstractor.to_abstract.output_keys[1]].type
-        # if !in(created_type, required_types)
-        #     if in(created_type, filled_types)
-        #         priority *= 1.2
-        #     else
-        #         println(abstractor.to_abstract)
-        #         println([new_solution.field_info[k] for k in abstractor.to_abstract.output_keys])
-        #         priority *= 4
-        #     end
-        # end
+        if !any(in(new_solution.field_info[k].type, required_types)
+                for k in abstractor.to_abstract.output_keys)
+            priority *= 4
+        end
 
         if !interesting_source
             priority *= 8
