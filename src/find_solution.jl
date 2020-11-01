@@ -25,8 +25,9 @@ function get_new_solutions_for_input_key(solution, key)
     for (priority, abstractor) in get_next_operations(solution, key)
         new_solution = insert_operation(solution, abstractor.to_abstract)
 
-        if !any(in(new_solution.field_info[k].type, required_types)
-                for k in abstractor.to_abstract.output_keys)
+        if any(haskey(new_solution.field_info, k) for k in abstractor.to_abstract.output_keys) && 
+            !any(in(new_solution.field_info[k].type, required_types)
+                 for k in abstractor.to_abstract.output_keys if haskey(new_solution.field_info, k))
             priority *= 4
         end
 
@@ -185,7 +186,7 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
             new_priority = min(new_priority, get(queue, (new_solution, i - 1), new_priority))
             queue[(new_solution, i - 1)] = new_priority
         end
-        if real_visited > 2000
+        if real_visited > 500
             break
         end
     end

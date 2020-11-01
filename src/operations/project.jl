@@ -29,7 +29,7 @@ end
 function (p::Project)(observed_data)
     processed_data = observed_data
     for operation in p.operations
-        if all(haskey(processed_data, key) for key in needed_input_keys(operation))
+        if !isa(operation, WrapMatcher) && all(haskey(processed_data, key) for key in needed_input_keys(operation))
             processed_data = operation(processed_data)
         end
     end

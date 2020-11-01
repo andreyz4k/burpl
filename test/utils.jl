@@ -25,7 +25,7 @@ function make_dummy_solution(data, unfilled=[])
                     task)
               for task in data]
     Solution(taskdata,
-             make_field_info(taskdata), [Block([FakeOperation(unfilled, ["output"], [])])], Set(unfilled), Set(), Set(), unused, Set(), Set(), 0.0)
+             make_field_info(taskdata), [Block([FakeOperation(unfilled, ["output"], [])])], Set(unfilled), Set(), Set(["output"]), unused, Set(), Set(), 0.0)
 end
 
 function _compare_operations(expected, solutions)

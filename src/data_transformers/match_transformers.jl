@@ -22,9 +22,9 @@ end
 
 using ..Solutions:Solution,insert_operation
 
-function find_matched_fields(key, solution::Solution, get_transformers_func)
+function find_matched_fields(key, solution::Solution)
     new_solutions = []
-    transformers = get_transformers_func(solution.taskdata, solution.field_info, union(solution.unfilled_fields, solution.transformed_fields), key)
+    transformers = get_match_transformers(solution.taskdata, solution.field_info, union(solution.unfilled_fields, solution.transformed_fields), key)
     for transformer in transformers
         new_solution = insert_operation(solution, transformer,
                                 added_complexity=transformer.complexity)
@@ -35,16 +35,21 @@ end
 
 function match_fields(solution::Solution)
     for key in solution.unfilled_fields
-        new_solutions = find_matched_fields(key, solution, get_match_transformers)
-        if length(new_solutions) != 1
-            append!(new_solutions, find_matching_obj_group(key, solution))
-        end
-        if !isempty(new_solutions)
-            return reduce(
+        try
+            new_solutions = find_matched_fields(key, solution)
+            if length(new_solutions) != 1
+                append!(new_solutions, find_matching_obj_group(key, solution))
+            end
+            if !isempty(new_solutions)
+                return reduce(
                 vcat,
                 (match_fields(new_solution) for new_solution in new_solutions),
                 init=[]
             )
+            end
+        catch
+            println(solution)
+            rethrow()
         end
     end
     return [solution]
