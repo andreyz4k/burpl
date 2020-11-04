@@ -76,6 +76,9 @@ function FieldInfo(value, derived_from, precursor_types, previous_fields)
     return FieldInfo(type, derived_from, unique([precursor_types..., type]), union(previous_fields...))
 end
 
+_is_valid_value(val) = true
+_is_valid_value(val::Union{Array,Dict}) = !isempty(val)
+
 struct Solution
     taskdata::Array{Dict{String,Any}}
     field_info::Dict{String,FieldInfo}
@@ -175,7 +178,7 @@ function move_to_next_block(solution::Solution)::Solution
                 i = argmin([length(info.derived_from) for info in input_field_info])
                 dependent_key = input_field_info[i].derived_from
                 for task in taskdata
-                    if haskey(task, key) && ((!isa(task[key], Dict) && !isa(task[key], Array)) || !isempty(task[key]))
+                    if haskey(task, key) && _is_valid_value(task[key])
                         field_info[key] = FieldInfo(task[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...),
                                                     [(field_info[k].previous_fields for k in op.input_keys)..., [key]])
                         break
@@ -226,7 +229,7 @@ function move_to_next_block(solution::Solution)::Solution
                 if haskey(output, key)
                     observed_task[key] = output[key]
                     push!(unused_fields, key)
-                    if !haskey(field_info, key)
+                    if !haskey(field_info, key) && _is_valid_value(output[key])
                         field_info[key] = FieldInfo(output[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...),
                                                     [(field_info[k].previous_fields for k in project_op.input_keys)..., [key]])
                     end
@@ -427,7 +430,7 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
         end
         for key in new_input_fields
             for task in taskdata
-                if haskey(task, key)
+                if haskey(task, key) && _is_valid_value(task[key])
                     field_info[key] = FieldInfo(task[key], get_source_key(operation, out_dependent_key), vcat([info.precursor_types for info in output_field_info]...), [Set()])
                     break
                 end
@@ -459,7 +462,7 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
         else
             push!(unused_fields, key)
             for task in taskdata
-                if haskey(task, key)
+                if haskey(task, key) && _is_valid_value(task[key])
                     field_info[key] = FieldInfo(task[key], inp_dependent_key, vcat([info.precursor_types for info in input_field_info]...),
                                                 [(field_info[k].previous_fields for k in operation.input_keys)..., [key]])
                     break
