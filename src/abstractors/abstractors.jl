@@ -113,7 +113,7 @@ function wrap_func_call_dict_value(p::Abstractor, func::Function, wrappers::Abst
     if any(isa(v, AbstractDict) for v in source_values)
         result = DefaultDict(() -> Dict())
         for (key, values) in iter_source_values(source_values)
-            for (out_key, out_value) in wrap_func_call_value(p, func, wrappers, values...)
+            for (out_key, out_value) in wrap_func_call_value_root(p, func, values...)
                 result[out_key][key] = out_value
             end
         end
@@ -192,7 +192,7 @@ function wrap_func_call_either_value(p::Abstractor, func::Function, wrappers::Ab
     if any(isa(v, Either) for v in source_values)
         outputs = Dict()
         for (vals, hashes, _) in iter_source_either_values(source_values)
-            for (key, value) in wrap_func_call_value(p, func, wrappers, vals...)
+            for (key, value) in wrap_func_call_value_root(p, func, vals...)
                 push_to_tree!(outputs, [key, hashes...], value)
             end
         end
@@ -206,7 +206,7 @@ using ..PatternMatching:ArrayPrefix
 function wrap_func_call_prefix_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, ArrayPrefix) for v in source_values)
         outputs = Dict()
-        for (key, value) in wrap_func_call_value(p, func, wrappers, [isa(v, ArrayPrefix) ? v.value : v for v in source_values]...)
+        for (key, value) in wrap_func_call_value_root(p, func, [isa(v, ArrayPrefix) ? v.value : v for v in source_values]...)
             if isa(value, AbstractVector)
                 outputs[key] = ArrayPrefix(value)
             else
@@ -224,7 +224,7 @@ function wrap_func_call_shape_value(p::Abstractor, func::Function, wrappers::Abs
     if any(isa(v, ObjectShape) || isa(v, AbstractVector{ObjectShape}) for v in source_values)
         outputs = Dict()
         unwrapped_values = [isa(v, ObjectShape) ? v.object : isa(v, AbstractVector{ObjectShape}) ? [i.object for i in v] : v for v in source_values]
-        for (key, value) in wrap_func_call_value(p, func, wrappers, unwrapped_values...)
+        for (key, value) in wrap_func_call_value_root(p, func, unwrapped_values...)
             if isa(value, Object)
                 outputs[key] = ObjectShape(value)
             elseif isa(value, AbstractVector{Object})
