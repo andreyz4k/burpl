@@ -272,10 +272,10 @@ wrap_check_task_value(cls::AbstractorClass, value::AbstractDict, data, aux_value
 
 check_task_value(::AbstractorClass, value, data, aux_values) = false
 
-using ..PatternMatching:Matcher,unpack_value
+using ..PatternMatching:Matcher,unwrap_matcher
 
 wrap_check_task_value(cls::AbstractorClass, value::Matcher, data, aux_values) =
-    all(wrap_check_task_value(cls, v, data, aux_values) for v in unpack_value(value))
+   all(wrap_check_task_value(cls, v, data, aux_values) for v in unwrap_matcher(value))
 
 get_aux_values_for_task(cls::AbstractorClass, task_data, key, solution) =
     [task_data[k] for k in aux_keys(cls, key, task_data)]

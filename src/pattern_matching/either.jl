@@ -76,6 +76,8 @@ match(val1::Matcher, val2::Either) =
 
 unpack_value(value::Either) = vcat([unpack_value(option.value) for option in value.options]...)
 
+unwrap_matcher(value::Either) = [option.value for option in value.options]
+
 update_value(data::Dict, path_keys::Array, value::Either, current_value::Either) =
     invoke(update_value, Tuple{Dict,Array,Any,Any}, data, path_keys, value, current_value)
 

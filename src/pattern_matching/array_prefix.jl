@@ -36,4 +36,6 @@ match(val1::Either, val2::ArrayPrefix) =
 
 match(::Matcher, ::ArrayPrefix) = nothing
 
-unpack_value(p::ArrayPrefix) = [p.value]
+unpack_value(p::ArrayPrefix) = unpack_value(p.value)
+
+unwrap_matcher(p::ArrayPrefix) = [p.value]

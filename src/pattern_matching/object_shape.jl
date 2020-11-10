@@ -31,5 +31,6 @@ match(val1::Either, val2::ObjectShape) =
 
 match(::Matcher, ::ObjectShape) = nothing
 
-unpack_value(p::ObjectShape) = [p.object]
-unpack_value(p::AbstractVector{ObjectShape}) = [[v.object for v in p]]
+unpack_value(p::ObjectShape) = unpack_value(p.object)
+
+unwrap_matcher(p::ObjectShape) = [p.object]

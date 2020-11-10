@@ -61,10 +61,10 @@ end
 
 Base.show(io::IO, f::FieldInfo) = print(io, "FieldInfo(", f.type, ", \"", f.derived_from, "\", ", f.precursor_types, ", ", f.previous_fields, ")")
 
-using ..PatternMatching:Matcher,unpack_value
+using ..PatternMatching:Matcher,unwrap_matcher
 
 _get_type(::T) where T = T
-_get_type(val::Matcher) = _get_type(unpack_value(val)[1])
+_get_type(val::Matcher) = _get_type(unwrap_matcher(val)[1])
 function _get_type(val::Dict)
     key, value = first(val)
     Dict{_get_type(key),_get_type(value)}
