@@ -8,10 +8,10 @@ get_complexity(v::Any)::Float64 = length(repr(v))
 get_complexity(::Int)::Float64 = 1
 
 get_complexity(value::Tuple)::Float64 =
-    3 + sum(get_complexity(v) for v in value) * (0.5 + 0.5 * 0.95^(sum(value .!= -1) - 1))
+    3 + sum(get_complexity(v) for v in value) * (0.5 + 0.5 * 0.95^(length(value) - 1))
 
 get_complexity(value::AbstractVector)::Float64 =
-    5 + sum(Float64[get_complexity(v) for v in value]) * (0.5 + 0.5 * 0.95^(sum(value .!= -1) - 1))
+    5 + sum(Float64[get_complexity(v) for v in value]) * (0.5 + 0.5 * 0.95^(length(value) - 1))
 
 get_complexity(value::AbstractArray{Int,2})::Float64 =
     5 + sum(value .!= -1) * 4 * (0.5 + 0.5 * 0.95^(sum(value .!= -1) - 1))

@@ -35,7 +35,7 @@ function _get_matching_transformers(taskdata::Vector{Dict{String,Any}}, field_in
     for input_key in keys(taskdata[1])
         if in(input_key, invalid_sources) ||
                 !_check_group_type(field_info[input_key].type, field_info[key].type) ||
-                all(length(task[input_key]) <= 1 for task in taskdata)
+                all(haskey(task, input_key) && length(task[input_key]) <= 1 for task in taskdata)
             continue
         end
         good = true
