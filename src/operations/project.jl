@@ -20,7 +20,9 @@ function _get_keys_for_items(items, out_keys)
     for item in items
         new_inp_keys = filter(k -> !in(k, output_keys), item.input_keys)
         append!(input_keys, new_inp_keys)
-        append!(aux_keys, filter(k -> !in(k, output_keys), item.aux_keys))
+        if hasproperty(item, :aux_keys)
+            append!(aux_keys, filter(k -> !in(k, output_keys), item.aux_keys))
+        end
         append!(output_keys, item.output_keys)
     end
     input_keys, ["projected|" * key for key in output_keys if in(key, out_keys)], aux_keys

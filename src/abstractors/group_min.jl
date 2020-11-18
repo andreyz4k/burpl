@@ -8,7 +8,7 @@ wrap_check_task_value(cls::GroupMin, value::AbstractDict, data, aux_values) =
     check_task_value(cls, value, data, aux_values)
 
 check_task_value(::GroupMin, value::AbstractDict, data, aux_values) =
-    all(isa(v, Int64) for v in values(value))
+    !isempty(value) && all(isa(v, Int64) for v in values(value))
 
 wrap_func_call_dict_value(p::Abstractor{GroupMin}, func::Function, wrappers::AbstractVector{Function}, source_values...) =
     wrap_func_call_value(p, func, wrappers, source_values...)
