@@ -3,7 +3,7 @@
 export DataTransformers
 module DataTransformers
 using ..Complexity:get_complexity
-using ..PatternMatching:update_value,unpack_value,common_value,check_type,apply_func
+using ..PatternMatching:update_value,unpack_value,common_value,check_type,apply_func,check_match
 
 include("find_const.jl")
 include("find_dependent_key.jl")

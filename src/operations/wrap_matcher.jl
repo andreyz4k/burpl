@@ -1,5 +1,5 @@
 
-using ..PatternMatching:Matcher
+using ..PatternMatching:Matcher,Either
 
 struct WrapMatcher <: Operation
     operations
@@ -13,7 +13,7 @@ Base.show(io::IO, wr::WrapMatcher) = print(io, "WrapMatcher(", wr.operations[1],
 Base.:(==)(a::WrapMatcher, b::WrapMatcher) = a.operations == b.operations
 
 _check_matcher(::Any) = false
-_check_matcher(::Matcher) = true
+_check_matcher(::Either) = true
 _check_matcher(value::AbstractDict) = any(_check_matcher(v) for v in values(value))
 _check_matcher(value::AbstractVector) = any(_check_matcher(v) for v in value)
 

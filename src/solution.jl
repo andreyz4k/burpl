@@ -388,7 +388,7 @@ function get_source_key(operation, source_key)
 end
 
 
-function insert_operation(solution::Solution, operation::Operation; added_complexity::Float64=0.0, reversed_op=nothing)::Solution
+function insert_operation(solution::Solution, operation::Operation; added_complexity::Float64=0.0, reversed_op=nothing, no_wrap=false)::Solution
     op = isnothing(reversed_op) ? operation : reversed_op
 
     taskdata = [
@@ -397,7 +397,7 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
         in solution.taskdata
     ]
 
-    if isnothing(reversed_op)
+    if isnothing(reversed_op) && !no_wrap
         taskdata, operation = wrap_operation(taskdata, operation)
     end
 

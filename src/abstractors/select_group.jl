@@ -85,13 +85,13 @@ function wrap_func_call_dict_value(p::Abstractor{SelectGroup}, func::Function, w
     wrap_func_call_value(p, func, wrappers, source_values...)
 end
 
+using ..PatternMatching:update_value
+
 function to_abstract_value(p::Abstractor{SelectGroup}, source_value::AbstractDict, selected_key)
     rejected = copy(source_value)
     delete!(rejected, selected_key)
-    Dict(
-        p.output_keys[1] => source_value[selected_key],
-        p.output_keys[2] => rejected
-    )
+    out = update_value(Dict(), p.output_keys[1], source_value[selected_key])
+    update_value(out, p.output_keys[2], rejected)
 end
 
 function from_abstract_value(p::Abstractor{SelectGroup}, selected, rejected, selector_key)

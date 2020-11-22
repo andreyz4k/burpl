@@ -18,7 +18,7 @@ function find_dependent_key(taskdata::Vector{Dict{String,Any}}, field_info, inva
             end
             input_value = task_data[input_key]
             out_value = task_data[key]
-            if isnothing(common_value(input_value, out_value))
+            if !check_match(input_value, out_value)
                 good = false
                 break
             end

@@ -1,7 +1,7 @@
 
 using .Abstractors:GridSize,BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObjectsByColor,
     RepeatObjectInfinite,DotProductClass,UnwrapSingleList,AlignedWithBorder,DistanceBetweenObjects,RemoveRedundantDict,
-    GetPosition,GroupMin,MinPadding
+    GetPosition,GroupMin,MinPadding,UniteTouching,GroupMax,CompactSimilarObjects
 
 @testset "Check ideal solutions" begin
     @testset "ff28f65a" begin
@@ -60,6 +60,27 @@ using .Abstractors:GridSize,BackgroundColor,Transpose,SolidObjects,CountObjects,
             (GetPosition(), "output|grid|bgr_grid|spatial_objects|shapes", true),
             (MinPadding(), "output|grid|bgr_grid|spatial_objects|shapes|positions", true),
             (GridSize(), "output|grid", true),
+        ]
+        solution = create_solution(taskdata["train"], operations)
+        @test Randy.test_solution(solution, fname) == (0, 0)
+    end
+
+    @testset "39a8645d" begin
+        fname = "../data/training/39a8645d.json"
+        taskdata = Randy.get_taskdata(fname) 
+        operations = [
+            (GridSize(), "output", false),
+            (BackgroundColor(), "output|grid", false),
+            (BackgroundColor(), "input", true),
+            (SolidObjects(), "output|grid|bgr_grid", false),
+            (SolidObjects(), "input|bgr_grid", true),
+            (GroupObjectsByColor(), "input|bgr_grid|spatial_objects", true),
+            (UniteTouching(), "input|bgr_grid|spatial_objects|grouped", true),
+            (DotProductClass(), "input|bgr_grid|spatial_objects|grouped|united_touch", true),
+            (GroupMax(), "input|bgr_grid|spatial_objects|grouped|united_touch|shapes|count", true),
+            (UniteTouching(), "output|grid|bgr_grid|spatial_objects", false),
+            (GetPosition(), "output|grid|bgr_grid|spatial_objects|united_touch", false),
+            (UnwrapSingleList(), "output|grid|bgr_grid|spatial_objects|united_touch|shapes", false),
         ]
         solution = create_solution(taskdata["train"], operations)
         @test Randy.test_solution(solution, fname) == (0, 0)

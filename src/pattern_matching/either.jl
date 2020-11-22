@@ -74,6 +74,14 @@ end
 match(val1::Matcher, val2::Either) =
     invoke(match, Tuple{Any,Either}, val1, val2)
 
+
+_check_match(val1, val2::Either) =
+    any(check_match(val1, option.value) for option in val2.options)
+
+_check_match(val1::Matcher, val2::Either) =
+    invoke(_check_match, Tuple{Any,Either}, val1, val2)
+    
+
 unpack_value(value::Either) = vcat([unpack_value(option.value) for option in value.options]...)
 
 unwrap_matcher(value::Either) = [option.value for option in value.options]

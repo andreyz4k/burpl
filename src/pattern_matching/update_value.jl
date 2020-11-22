@@ -10,7 +10,7 @@ function fetch_value(data, keys)
 end
 
 function update_value(data::Dict, key::String, value)
-    return update_value(data, [key], value)
+    return update_value(data, [key], unpack_value(value)[1])
 end
 
 function update_value(data::Dict, path_keys::Array, value)

@@ -17,7 +17,7 @@ end
 function check_matching_group(input_value, output_value, candidates)
     options = []
     for (key, value) in input_value
-        if !isnothing(common_value(value, output_value))
+        if check_match(value, output_value)
             push!(options, key)
         end
     end

@@ -3,7 +3,8 @@
 struct DotProductClass <: AbstractorClass end
 
 const ALLOWED_DOT_PRODUCTS = [
-    [SplitObject(),RepeatObjectInfinite()]
+    [SplitObject(),RepeatObjectInfinite()],
+    [GetPosition(), CompactSimilarObjects()],
 ]
 
 struct DotProduct <: Operation
@@ -20,7 +21,7 @@ function (p::DotProduct)(task_data)
     inner_keys = []
     for abstractor in p.abstractors[1:end - 1]
         task_data = abstractor(task_data)
-        append!(inner_keys, abstractor.output_keys)
+        append!(inner_keys, filter(k -> !in(k, p.output_keys), abstractor.output_keys))
     end
     task_data = p.abstractors[end](task_data)
     for key in inner_keys
@@ -49,7 +50,7 @@ function get_abstractor_options(abs_classes, solution, key, to_abs)
     res = []
     for (priority, abstractor) in available_abstractors
         if to_abs
-            new_solution = insert_operation(solution, abstractor.to_abstract)
+            new_solution = insert_operation(solution, abstractor.to_abstract, no_wrap=true)
         else
             new_solution = insert_operation(solution, abstractor.from_abstract, reversed_op=abstractor.to_abstract)
         end

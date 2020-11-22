@@ -31,6 +31,19 @@ match(val1::Either, val2::ObjectShape) =
 
 match(::Matcher, ::ObjectShape) = nothing
 
+
+_check_match(::Any, ::ObjectShape) = false
+
+_check_match(val1::Object, val2::ObjectShape) =
+    val2.object.shape == val1.shape
+
+_check_match(val1::ObjectShape, val2) = check_match(val1.object, val2)
+_check_match(val1::ObjectShape, val2::ObjectShape) = check_match(val1.object, val2)
+_check_match(val1::ObjectShape, val2::Either) = check_match(val1.object, val2)
+
+
 unpack_value(p::ObjectShape) = unpack_value(p.object)
 
 unwrap_matcher(p::ObjectShape) = [p.object]
+
+apply_func(value::ObjectShape, func, param) = apply_func(value.object, func, param)

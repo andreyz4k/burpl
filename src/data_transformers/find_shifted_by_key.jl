@@ -5,7 +5,7 @@ _init_shift_keys(_, _, task_data, invalid_sources) =
     [key for (key, value) in task_data if !in(key, invalid_sources) && isa(value, Union{Int64,Tuple{Int64,Int64}})]
 
 _shifted_key_filter(shift_key, input_value, output_value, task_data) = haskey(task_data, shift_key) &&
-                         !isnothing(common_value(apply_func(input_value, (x, y) -> x .+ y, task_data[shift_key]), output_value))
+                         check_match(apply_func(input_value, (x, y) -> x .+ y, task_data[shift_key]), output_value)
 
 _check_effective_shift_key(shift_key, taskdata) = any(task_data[shift_key] != 0 for task_data in taskdata)
 

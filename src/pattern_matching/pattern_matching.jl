@@ -38,6 +38,24 @@ function match(val1::AbstractVector, val2::AbstractVector)
     result
 end
 
+
+check_match(value1, value2) = value1 == value2 ? true : _check_match(value1, value2)
+
+_check_match(val1, val2) = false
+function _check_match(val1::AbstractDict, val2::AbstractDict)
+    if !issetequal(keys(val1), keys(val2))
+        return false
+    end
+    return all(check_match(val1[key], val2[key]) for key in keys(val1))
+end
+
+function _check_match(val1::AbstractVector, val2::AbstractVector)
+    if length(val1) != length(val2)
+        return false
+    end
+    return all(check_match(v1, v2) for (v1, v2) in zip(val1, val2))
+end
+
 apply_func(value, func, param) = func(value, param)
 apply_func(value::Vector, func, param) = [apply_func(v, func, param) for v in value]
 apply_func(value::Dict, func, param) = Dict(key => apply_func(v, func, param) for (key, v) in value)

@@ -36,6 +36,19 @@ match(val1::Either, val2::ArrayPrefix) =
 
 match(::Matcher, ::ArrayPrefix) = nothing
 
+
+_check_match(::Any, ::ArrayPrefix) = false
+
+_check_match(val1::ArrayPrefix, val2) = check_match(val1.value, val2)
+_check_match(val1::ArrayPrefix, val2::ArrayPrefix) = check_match(val1.value, val2)
+_check_match(val1::ArrayPrefix, val2::Either) = check_match(val1.value, val2)
+
+_check_match(val1::T, val2::ArrayPrefix{T}) where T <: AbstractVector = 
+    length(val1) >= length(val2.value) && check_match(val1[1:length(val2.value)], val2.value)
+
+
 unpack_value(p::ArrayPrefix) = unpack_value(p.value)
 
 unwrap_matcher(p::ArrayPrefix) = [p.value]
+
+apply_func(value::ArrayPrefix, func, param) = apply_func(value.value, func, param)
