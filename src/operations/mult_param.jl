@@ -13,7 +13,7 @@ Base.:(==)(a::MultParam, b::MultParam) = a.output_keys == b.output_keys && a.inp
 Base.hash(op::MultParam, h::UInt64) = hash(op.output_keys, h) + hash(op.input_keys, h) + hash(op.factor, h)
 
 function (op::MultParam)(task_data)
-    output_value = mult_value(task_data[op.input_keys[1]], op.factor)
+    output_value = apply_func(task_data[op.input_keys[1]], (a, b) -> a .* b, op.factor)
     data = update_value(task_data, op.output_keys[1], output_value)
     update_value(data, op.output_keys[2], op.factor)
 end

@@ -10,7 +10,7 @@ abstract type Operation end
 get_sorting_keys(operation::Operation) = operation.output_keys
 needed_input_keys(operation::Operation) = operation.input_keys
 
-using ..PatternMatching:update_value
+using ..PatternMatching:update_value,apply_func
 
 include("set_const.jl")
 include("copy_param.jl")
