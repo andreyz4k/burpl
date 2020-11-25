@@ -32,7 +32,7 @@ _check_group_type(::Type{Dict{K,V}}, expected::Type) where {K,V} = V == expected
 
 function _get_matching_transformers(taskdata::Vector{Dict{String,Any}}, field_info, invalid_sources::AbstractSet{String}, key::String)
     result = []
-    if endswith(key, "|selected_group")
+    if endswith(key, "|selected_group") || any(!haskey(task_data, key) for task_data in taskdata)
         return []
     end
     for input_key in keys(taskdata[1])
@@ -48,9 +48,6 @@ function _get_matching_transformers(taskdata::Vector{Dict{String,Any}}, field_in
             if !haskey(task_data, input_key)
                 good = false
                 break
-            end
-            if !haskey(task_data, key)
-                continue
             end
             input_value = task_data[input_key]
             out_value = task_data[key]
