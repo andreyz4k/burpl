@@ -1,7 +1,7 @@
 
 using .Abstractors:GridSize,BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObjectsByColor,
     RepeatObjectInfinite,DotProductClass,UnwrapSingleList,AlignedWithBorder,DistanceBetweenObjects,RemoveRedundantDict,
-    GetPosition,GroupMin,MinPadding,UniteTouching,GroupMax,CompactSimilarObjects
+    GetPosition,GroupMin,MinPadding,UniteTouching,GroupMax,CompactSimilarObjects,GetSize,SeparateAxis
 
 @testset "Check ideal solutions" begin
     @testset "ff28f65a" begin
@@ -81,6 +81,24 @@ using .Abstractors:GridSize,BackgroundColor,Transpose,SolidObjects,CountObjects,
             (UniteTouching(), "output|grid|bgr_grid|spatial_objects", false),
             (GetPosition(), "output|grid|bgr_grid|spatial_objects|united_touch", false),
             (UnwrapSingleList(), "output|grid|bgr_grid|spatial_objects|united_touch|shapes", false),
+        ]
+        solution = create_solution(taskdata["train"], operations)
+        @test Randy.test_solution(solution, fname) == (0, 0)
+    end
+
+    @testset "5521c0d9" begin
+        fname = "../data/training/5521c0d9.json"
+        taskdata = Randy.get_taskdata(fname) 
+        operations = [
+            (GridSize(), "output", false),
+            (BackgroundColor(), "output|grid", false),
+            (BackgroundColor(), "input", true),
+            (SolidObjects(), "output|grid|bgr_grid", false),
+            (SolidObjects(), "input|bgr_grid", true),
+            (GetPosition(), "output|grid|bgr_grid|spatial_objects", false),
+            (GetPosition(), "input|bgr_grid|spatial_objects", true),
+            (GetSize(), "input|bgr_grid|spatial_objects", true),
+            (SeparateAxis(), "input|bgr_grid|spatial_objects|obj_size", true),
         ]
         solution = create_solution(taskdata["train"], operations)
         @test Randy.test_solution(solution, fname) == (0, 0)

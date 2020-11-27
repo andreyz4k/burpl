@@ -58,6 +58,7 @@ end
 
 apply_func(value, func, param) = func(value, param)
 apply_func(value::Vector, func, param) = [apply_func(v, func, param) for v in value]
+apply_func(value::T, func, param::T) where T <: Vector = [apply_func(v, func, p) for (v, p) in zip(value, param)]
 apply_func(value::Dict, func, param) = Dict(key => apply_func(v, func, param) for (key, v) in value)
 
 

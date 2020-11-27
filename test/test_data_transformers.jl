@@ -1,7 +1,7 @@
 
 using .PatternMatching:Either,Option,ObjectShape
 using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key,
-MultParam,MultByParam,IncParam,IncByParam,MapValues,match_fields
+MultParam,MultByParam,IncParam,IncByParam,MapValues,match_fields,DecByParam
 using .ObjectPrior:Object
 using .Abstractors:SelectGroup,Abstractor
 using .Solutions:FieldInfo
@@ -965,5 +965,31 @@ using .Solutions:FieldInfo
                        ["input|bgr_grid|grid|spatial_objects|grouped", "output|grid|bgr_grid|spatial_objects|shapes|selected_group"],
                        ["output|grid|bgr_grid|spatial_objects|shapes", "output|grid|bgr_grid|spatial_objects|shapes|rejected"], String[])
         ]
+    end
+
+    @testset "match dec by param" begin
+        solution = make_dummy_solution([
+            Dict(
+                "input|bgr_grid|spatial_objects|positions" => [(2, 12), (5, 14), (10, 12)],
+                "input|bgr_grid|spatial_objects|obj_size|coord2" => [(0, 4), (0, 2), (0, 4)],
+                "output|grid|bgr_grid|spatial_objects|positions" => [(2, 8), (5, 12), (10, 8)],
+            ),
+            Dict(
+                "input|bgr_grid|spatial_objects|positions" => [(2, 10), (8, 14), (12, 11)],
+                "input|bgr_grid|spatial_objects|obj_size|coord2" => [(0, 6), (0, 2), (0, 5)],
+                "output|grid|bgr_grid|spatial_objects|positions" => [(2, 4), (8, 12), (12, 6)],
+            ),
+            Dict(
+                "input|bgr_grid|spatial_objects|positions" => [(2, 15), (8, 12), (12, 13)],
+                "input|bgr_grid|spatial_objects|obj_size|coord2" => [(0, 1), (0, 4), (0, 3)],
+                "output|grid|bgr_grid|spatial_objects|positions" => [(2, 14), (8, 8), (12, 10)],
+            )
+        ],["output|grid|bgr_grid|spatial_objects|positions"])
+        new_solutions = match_fields(solution)
+        @test length(new_solutions) == 1
+        expected_operations = Set([
+            [DecByParam("output|grid|bgr_grid|spatial_objects|positions", "input|bgr_grid|spatial_objects|positions", "input|bgr_grid|spatial_objects|obj_size|coord2")],
+        ])
+        _compare_operations(expected_operations, new_solutions)
     end
 end
