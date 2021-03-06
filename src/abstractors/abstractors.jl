@@ -290,7 +290,7 @@ end
 
 
 include("noop.jl")
-include("grid_size.jl")
+# include("grid_size.jl")
 include("background_color.jl")
 include("solid_objects.jl")
 include("group_obj_by_color.jl")
@@ -308,6 +308,7 @@ include("count_objects.jl")
 include("select_group.jl")
 include("get_position.jl")
 include("separate_axis.jl")
+include("symmetry.jl")
 
 include("compute_functions.jl")
 

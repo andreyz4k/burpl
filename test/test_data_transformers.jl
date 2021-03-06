@@ -200,9 +200,13 @@ using .Solutions:FieldInfo
             )
         ], ["key1", "key2"])
         new_solutions = match_fields(solution)
-        @test length(new_solutions) == 2
-        @test Set(filtered_ops(new_solutions[1])) ==
-                         Set([SetConst("key1", 1), SetConst("key2", 2)])
+        @test length(new_solutions) == 3
+        expected_operations = Set([
+            [SetConst("key1", 1), SetConst("key2", 2)],
+            [SetConst("key2", 4)],
+            [SetConst("key2", 2), IncParam("key1", "key2", -1)]
+        ])
+        
         @test filtered_taskdata(new_solutions[1]) == [
             Dict(
                 "key1" => 1,
@@ -213,8 +217,19 @@ using .Solutions:FieldInfo
                 "key2" => 2
             )
         ]
-        @test filtered_ops(new_solutions[2]) == [SetConst("key2", 4)]
         @test filtered_taskdata(new_solutions[2]) == [
+            Dict(
+                "key2" => 2,
+                "key1" => 1,
+                "key1|inc_shift" => -1
+            ),
+            Dict(
+                "key2" => 2, 
+                "key1" => 1, 
+                "key1|inc_shift" => -1
+            )
+        ]
+        @test filtered_taskdata(new_solutions[3]) == [
             Dict(
                 "key1" => 3,
                 "key2" => 4
@@ -677,12 +692,12 @@ using .Solutions:FieldInfo
     @testset "find multiply" begin
         solution = make_dummy_solution([
             Dict(
-                "key" => 10,
+                "key" => 15,
                 "key1" => 5,
                 "key2" => 2
             ),
             Dict(
-                "key" => 12,
+                "key" => 18,
                 "key1" => 6,
                 "key2" => 2
             )
@@ -690,7 +705,7 @@ using .Solutions:FieldInfo
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 1
         expected_operations = Set([
-            [MultParam("key", "key1", 2)],
+            [MultParam("key", "key1", 3)],
         ])
         _compare_operations(expected_operations, new_solutions)
 

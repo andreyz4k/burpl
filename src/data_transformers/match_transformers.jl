@@ -11,9 +11,6 @@ function get_match_transformers(taskdata::Array{Dict{String,Any}}, field_info,  
         find_neg_shifted_by_key,
     ]
     for func in find_matches_funcs
-        if length(result) == 1
-            break
-        end
         append!(result, func(taskdata, field_info, invalid_sources, key))
     end
     return result

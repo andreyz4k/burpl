@@ -106,6 +106,9 @@ end
 select_hash(data::Dict, option_hash) =
     Dict{Any,Any}(key => select_hash(value, option_hash) for (key, value) in data)
 
+select_hash(data::Vector, option_hash) =
+    [select_hash(value, option_hash) for value in data]
+
 function select_hash(data::Either, option_hash)
     new_options = Option[]
     for option in data.options

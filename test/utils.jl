@@ -1,5 +1,5 @@
 
-using .Solutions:Solution,Block,FieldInfo,insert_operation
+using .Solutions:Solution,Block,FieldInfo,insert_operation,get_unmatched_complexity_score
 using .Operations:Operation,Project
 using .DataTransformers:match_fields
 using .Abstractors:create
@@ -52,7 +52,7 @@ function create_solution(taskdata, operations)
         else
             new_solution = insert_operation(solution, abstractor.from_abstract, reversed_op=abstractor.to_abstract)
         end
-        solution = match_fields(new_solution)[1]
+        solution = sort(match_fields(new_solution), by=sol -> get_unmatched_complexity_score(sol))[1]
     end
     solution
 end

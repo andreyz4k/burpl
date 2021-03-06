@@ -12,6 +12,7 @@ TASKS = [
     "../data/training/b1948b0a.json",
     "../data/training/d0f5fe59.json",
     "../data/training/d13f3404.json",
+    "../data/training/ea786f4a.json",
     "../data/training/ff28f65a.json",
 ]
 
