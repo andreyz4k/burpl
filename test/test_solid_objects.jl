@@ -54,6 +54,7 @@ using .ObjectPrior:Object
                 Option(Object[Object([2 2; 2 2], (2, 2))], 6951943934144298334),
                 Option(Object[Object([0 0 0; 0 -1 -1; 0 -1 -1], (1, 1))], 73827427852322294)
             ]),
+            "input|bgr_grid|grid_size" => (3, 3),
             "input|bgr_grid" => Either([
                 Option([-1 -1 -1; -1 2 2; -1 2 2], 6951943934144298334),
                 Option([0 0 0; 0 -1 -1; 0 -1 -1], 73827427852322294)
