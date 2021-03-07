@@ -20,6 +20,9 @@ function wrap_func_call_dict_value(p::Abstractor{RemoveRedundantDict}, func::Fun
     end
 end
 
+wrap_func_call_vect_value(p::Abstractor{RemoveRedundantDict}, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, func, wrappers, source_values...)
+
 to_abstract_value(p::Abstractor{RemoveRedundantDict}, source_value::AbstractDict) =
     Dict(
         p.output_keys[1] => first(values(source_value)),

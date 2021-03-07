@@ -17,6 +17,9 @@ function check_task_value(::GroupObjectsByColor, value::AbstractVector{Object}, 
     return true
 end
 
+wrap_func_call_vect_value(p::Abstractor{GroupObjectsByColor}, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, func, wrappers, source_values...)
+    
 function to_abstract_value(p::Abstractor{GroupObjectsByColor}, source_value)
     results = DefaultDict(() -> Object[])
     for obj in source_value

@@ -17,6 +17,9 @@ function check_task_value(::SortArray, value::AbstractVector{T}, data, aux_value
     return true
 end
 
+wrap_func_call_vect_value(p::Abstractor{SortArray}, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, func, wrappers, source_values...)
+    
 to_abstract_value(p::Abstractor{SortArray}, source_value) =
     Dict(p.output_keys[1] => sort(source_value))
 

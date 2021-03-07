@@ -20,6 +20,9 @@ function check_task_value(::UniteInRect, value::AbstractVector{Object}, data, au
     true
 end
 
+wrap_func_call_vect_value(p::Abstractor{UniteInRect}, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, func, wrappers, source_values...)
+
 function to_abstract_value(p::Abstractor{UniteInRect}, source_value::AbstractVector{Object})
     out = Object[]
     merged = Set()

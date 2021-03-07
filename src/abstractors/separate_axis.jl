@@ -5,6 +5,9 @@ abs_keys(::SeparateAxis) = ["coord1", "coord2"]
 check_task_value(::SeparateAxis, value::Tuple{Int,Int}, data, aux_values) = true
 check_task_value(::SeparateAxis, value::AbstractVector{Tuple{Int,Int}}, data, aux_values) = true
 
+wrap_func_call_vect_value(p::Abstractor{SeparateAxis}, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, func, wrappers, source_values...)
+
 to_abstract_value(p::Abstractor{SeparateAxis}, source_value::Tuple{Int,Int}) =
     Dict(
         p.output_keys[1] => (source_value[1], 0),

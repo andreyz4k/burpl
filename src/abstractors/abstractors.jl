@@ -79,6 +79,7 @@ using DataStructures:DefaultDict
 
 call_wrappers() = [
     wrap_func_call_dict_value,
+    # wrap_func_call_vect_value,
     wrap_func_call_either_value,
     wrap_func_call_prefix_value,
     wrap_func_call_shape_value,
@@ -95,7 +96,7 @@ function wrap_func_call_value(p::Abstractor, func::Function, wrappers::AbstractV
     wrappers[1](p, func, wrappers[2:end], source_values...)
 end
 
-function iter_source_values(source_values)
+function iter_source_dict_values(source_values)
     result = []
     for source_value in source_values
         if isa(source_value, Dict)
@@ -112,9 +113,36 @@ end
 function wrap_func_call_dict_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, AbstractDict) for v in source_values)
         result = DefaultDict(() -> Dict())
-        for (key, values) in iter_source_values(source_values)
+        for (key, values) in iter_source_dict_values(source_values)
             for (out_key, out_value) in wrap_func_call_value_root(p, func, values...)
                 result[out_key][key] = out_value
+            end
+        end
+        return result
+    end
+    wrap_func_call_value(p, func, wrappers, source_values...)
+end
+
+
+function iter_source_values(source_values)
+    iters = []
+    for source_value in source_values
+        if !isa(source_value, AbstractVector)
+            push!(iters, repeat(source_value))
+        else
+            push!(iters, source_value)
+        end
+    end
+    zip(iters...)
+end
+
+
+function wrap_func_call_vect_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
+    if any(isa(v, AbstractVector) for v in source_values)
+        result = DefaultDict(() -> [])
+        for values in iter_source_values(source_values)
+            for (out_key, out_value) in wrap_func_call_value_root(p, func, values...)
+                push!(result[out_key], out_value)
             end
         end
         return result

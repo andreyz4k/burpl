@@ -9,6 +9,9 @@ abs_keys(::CompactSimilarObjects) = ["common_val", "count"]
 
 init_create_check_data(::CompactSimilarObjects, key, solution) = Dict("effective" => false)
 
+wrap_func_call_vect_value(p::Abstractor{CompactSimilarObjects}, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, func, wrappers, source_values...)
+    
 function check_task_value(::CompactSimilarObjects, value::AbstractVector, data, aux_values)
     data["effective"] |= length(value) > 1
     (length(value) > 0) ? all(!isnothing(common_value(item, value[1])) for item in view(value, 2:length(value))) : true

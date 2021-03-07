@@ -18,6 +18,9 @@ function wrap_func_call_prefix_value(p::Abstractor{CountObjects}, func::Function
     end
 end
 
+wrap_func_call_vect_value(p::Abstractor{CountObjects}, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, func, wrappers, source_values...)
+    
 to_abstract_value(p::Abstractor{CountObjects}, source_value::AbstractVector) =
     Dict(
         p.output_keys[2] => ArrayPrefix(source_value),

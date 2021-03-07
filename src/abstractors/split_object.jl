@@ -12,6 +12,9 @@ function check_task_value(::SplitObject, value::Object, data, aux_values)
     true
 end
 
+wrap_func_call_vect_value(p::Abstractor{SplitObject}, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, func, wrappers, source_values...)
+
 function to_abstract_value(p::Abstractor{SplitObject}, object::Object)
     res = Object[]
     for i in 1:size(object.shape)[1], j in 1:size(object.shape)[2]

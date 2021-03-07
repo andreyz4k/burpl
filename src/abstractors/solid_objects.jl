@@ -14,6 +14,9 @@ function check_task_value(::SolidObjects, value::AbstractArray{Int,2}, data, aux
     true
 end
 
+wrap_func_call_vect_value(p::Abstractor{SolidObjects}, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, func, wrappers, source_values...)
+
 
 needed_input_keys(p::Abstractor{SolidObjects}) =
     p.to_abstract ? p.input_keys : p.input_keys[1:1]
@@ -27,7 +30,7 @@ to_abstract_value(p::Abstractor{SolidObjects}, source_value::AbstractArray{Int,2
 
 function from_abstract_value(p::Abstractor{SolidObjects}, objects, grid_size)
     if isnothing(grid_size)
-    grid_size = reduce((a, b) -> max.(a, b), (obj.position .+ size(obj.shape) .- (1, 1) for obj in objects), init=(0, 0))
+        grid_size = reduce((a, b) -> max.(a, b), (obj.position .+ size(obj.shape) .- (1, 1) for obj in objects), init=(0, 0))
     end
     
     grid = fill(-1, grid_size...)

@@ -37,6 +37,9 @@ end
 needed_input_keys(p::Abstractor{RepeatObjectInfinite}) =
     p.to_abstract ? p.input_keys : p.input_keys[1:2:3]
 
+wrap_func_call_vect_value(p::Abstractor{RepeatObjectInfinite}, func::Function, wrappers::AbstractVector{Function}, source_values...) =
+    wrap_func_call_value(p, func, wrappers, source_values...)
+
 function to_abstract_value(p::Abstractor{RepeatObjectInfinite}, source_value, grid_size)
     objects = sort(source_value, by=obj -> obj.position)
     if length(objects) == 1
