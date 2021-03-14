@@ -3,7 +3,7 @@ import .ObjectPrior:Object
 
 @testset "Group objects by color" begin
     @testset "group objects" begin
-        source_data = Dict{String,Any}(
+        source_data = make_taskdata(Dict{String,Any}(
             "key" => [
                 Object([1], (1, 1)),
                 Object([1 1], (2, 4)),
@@ -11,7 +11,7 @@ import .ObjectPrior:Object
                 Object([3], (9, 1)),
                 Object([2], (1, 3)),
             ]
-        )
+        ))
         grouper = GroupObjectsByColor("key", true)
         out_data = grouper(source_data)
         @test out_data == Dict(
@@ -37,7 +37,7 @@ import .ObjectPrior:Object
             ),
             "key|group_keys" => [1, 2, 3]
         )
-        delete!(out_data, "key")
+        out_data = delete(out_data, "key")
         ungrouper = GroupObjectsByColor("key", false)
         @test issetequal(ungrouper(out_data)["key"], source_data["key"])
     end

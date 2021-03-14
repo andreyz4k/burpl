@@ -42,12 +42,12 @@ using .ObjectPrior:Object
 
     @testset "process either" begin
         abs = SolidObjects("input|bgr_grid", true)
-        data = Dict{String,Any}(
+        data = make_taskdata(Dict{String,Any}(
             "input|bgr_grid" => Either([
                 Option([-1 -1 -1; -1 2 2; -1 2 2], 6951943934144298334),
                 Option([0 0 0; 0 -1 -1; 0 -1 -1], 73827427852322294)
             ])
-        )
+        ))
         out_data = abs(data)
         @test out_data == Dict(
             "input|bgr_grid|spatial_objects" => Either([

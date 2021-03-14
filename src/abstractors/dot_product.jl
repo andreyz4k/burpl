@@ -16,6 +16,7 @@ struct DotProduct <: Operation
     DotProduct(abstractors) = new(abstractors, _get_keys_for_items(abstractors)...)
 end
 
+using ..Taskdata:delete
 
 function (p::DotProduct)(task_data)
     inner_keys = []
@@ -24,10 +25,7 @@ function (p::DotProduct)(task_data)
         append!(inner_keys, filter(k -> !in(k, p.output_keys), abstractor.output_keys))
     end
     task_data = p.abstractors[end](task_data)
-    for key in inner_keys
-        delete!(task_data, key)
-    end
-    task_data
+    return delete(task_data, inner_keys...)
 end
 
 needed_input_keys(p::DotProduct) = p.needed_input_keys

@@ -32,9 +32,10 @@ function main()
             # arg_type = string
             # default = "data/training/ff28f65a.json"
             # default = "data/training/0a938d79.json"
-            # default = "data/training/0b148d64.json"
-            default = "data/training/007bbfb7.json"
-            # default = "data/training/0dfd9992.json"
+            default = "data/training/0b148d64.json"
+            # default = "data/training/39a8645d.json"
+            # default = "data/training/6e02f1e3.json"
+            # default = "data/training/72ca375d.json"
         "--debug"
             action = :store_true
     end

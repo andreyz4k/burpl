@@ -1,7 +1,7 @@
 
 using ..Operations:CopyParam
 
-function find_dependent_key(taskdata::Vector{Dict{String,Any}}, field_info, invalid_sources::AbstractSet{String}, key::String)
+function find_dependent_key(taskdata::Vector{TaskData}, field_info, invalid_sources::AbstractSet{String}, key::String)
     result = []
     for input_key in keys(taskdata[1])
         if in(input_key, invalid_sources) || field_info[key].type != field_info[input_key].type

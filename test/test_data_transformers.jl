@@ -8,64 +8,64 @@ using .Solutions:FieldInfo
 
 @testset "Data transformers" begin
     @testset "find const" begin
-        taskdata = [
+        taskdata = make_taskdata([
                 Dict{String,Any}(
                     "background" => 1
                 ),
                 Dict{String,Any}(
                     "background" => 1
                 )
-            ]
+            ])
 
         @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") == [SetConst("background", 1)]
 
-        taskdata = [
+        taskdata = make_taskdata([
                 Dict{String,Any}(
                     "background" => 1
                 ),
                 Dict{String,Any}(
                     "background" => Either([1, 2])
                 )
-            ]
+            ])
 
         @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") == [SetConst("background", 1)]
 
-        taskdata = [
+        taskdata = make_taskdata([
                 Dict{String,Any}(
                     "background" => Either([1, 2])
                 ),
                 Dict{String,Any}(
                     "background" => 1
                 ),
-            ]
+            ])
 
         @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") == [SetConst("background", 1)]
 
-        taskdata = [
+        taskdata = make_taskdata([
                 Dict{String,Any}(
                     "background" => Either([1, 2])
                 ),
                 Dict{String,Any}(
                     "background" => Either([1, 3])
                 ),
-            ]
+            ])
 
         @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") == [SetConst("background", 1)]
 
-        taskdata = [
+        taskdata = make_taskdata([
                 Dict{String,Any}(
                     "background" => Either([1, 2])
                 ),
                 Dict{String,Any}(
                     "background" => Either([1, 2])
                 ),
-            ]
+            ])
 
         @test issetequal(find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background"), [SetConst("background", 1), SetConst("background", 2)])
     end
 
     @testset "match dicts" begin
-        taskdata = [
+        taskdata = make_taskdata([
             Dict{String,Any}(
                 "key" => Dict(
                     1 => 1,
@@ -78,10 +78,10 @@ using .Solutions:FieldInfo
                     2 => 2
                 )
             )
-        ]
+        ])
         @test find_const(taskdata, Dict("key" => FieldInfo(1, "input", [], [Set()])), [], "key") == [SetConst("key", Dict(2 => 2, 1 => 1))]
 
-        taskdata = [
+        taskdata = make_taskdata([
             Dict{String,Any}(
                 "key" => Dict(
                     1 => 1,
@@ -94,7 +94,7 @@ using .Solutions:FieldInfo
                     2 => 2
                 )
             )
-        ]
+        ])
         @test find_const(taskdata, Dict("key" => FieldInfo(1, "input", [], [Set()])), [], "key") == [SetConst("key", Dict(
             1 => 1,
             2 => 2
@@ -676,7 +676,7 @@ using .Solutions:FieldInfo
     end
 
     @testset "match nothing" begin
-        taskdata = [
+        taskdata = make_taskdata([
             Dict{String,Any}(
                 "key_none" => nothing,
                 "key" => 1
@@ -685,7 +685,7 @@ using .Solutions:FieldInfo
                 "key_none" => nothing,
                 "key" => 2
             )
-        ]
+        ])
         @test find_dependent_key(taskdata, Dict("key" => FieldInfo(1, "input", [], [Set()]), "key_none" => FieldInfo(nothing, "input", [], [Set()])), Set(["key"]), "key") == []
     end
 
@@ -779,7 +779,7 @@ using .Solutions:FieldInfo
     end
 
     @testset "find shifted tuple list" begin
-        solution = make_dummy_solution([
+    solution = make_dummy_solution([
             Dict(
                 "input|bgr_grid|grid|spatial_objects|grouped|positions|selected_by|output|grid|bgr_grid|spatial_objects|shapes|selected_group" => [(1, 13), (1, 12), (7, 17), (9, 17)],
                 "input|bgr_grid|grid_size" => (21, 21),
@@ -809,7 +809,7 @@ using .Solutions:FieldInfo
         #     [IncByParam("key", "key2", "key1")],
         # ])
         # _compare_operations(expected_operations, new_solutions)
-    end
+end
 
     @testset "find shift by key" begin
         solution = make_dummy_solution([

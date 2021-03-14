@@ -20,7 +20,9 @@ unpack_value(p::AuxValue) = unpack_value(p.value)
 
 unwrap_matcher(p::AuxValue) = [p.value]
 
-select_hash(data::AuxValue, option_hash) =
-    AuxValue(select_hash(data.value, option_hash))
+function _select_hash(data::AuxValue, option_hash)
+    selected, effective = _select_hash(data.value, option_hash)
+    AuxValue(selected), effective
+end
 
 apply_func(value::AuxValue, func, param) = apply_func(value.value, func, param)

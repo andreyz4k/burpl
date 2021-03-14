@@ -23,9 +23,9 @@ using .ObjectPrior:Object
     end
 
     @testset "to abstract" begin
-        value = Dict{String,Any}(
+        value = make_taskdata(Dict{String,Any}(
             "key" => Object([1; 1; 1; 1; 1; 1; 1], (1, 6)),
-        )
+        ))
         splitter = SplitObject("key", true)
         out_data = splitter(value)
         @test out_data == Dict(
@@ -40,12 +40,12 @@ using .ObjectPrior:Object
                 Object([1], (7, 6)),
             ]
         )
-        delete!(out_data, "key")
+        out_data = delete(out_data, "key")
         splitter = SplitObject("key", false)
         reversed_data = splitter(out_data)
         @test reversed_data["key"] == value["key"]
 
-        value = Dict{String,Any}(
+        value = make_taskdata(Dict{String,Any}(
             "key" => Either([
                 Option(
                     Object([1; 1; 1; 1; 1; 1; 1], (1, 6)),
@@ -56,7 +56,7 @@ using .ObjectPrior:Object
                     -8964597388769226366
                 )
             ])
-        )
+        ))
         splitter = SplitObject("key", true)
         out_data = splitter(value)
         @test out_data == Dict(
