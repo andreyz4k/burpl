@@ -4,7 +4,7 @@ using .Abstractors:UniteTouching
 
 @testset "Unite touching" begin
     @testset "unite groups" begin
-        task_data = Dict(
+        task_data = make_taskdata(Dict(
             "input|spatial_objects|grouped" => Dict{Any,Any}(
                 2 => [
                     Object([2], (1, 13)),
@@ -27,7 +27,7 @@ using .Abstractors:UniteTouching
                     Object([8], (21, 14))
                 ]
             ),
-        )
+        ))
         abstractor = UniteTouching("input|spatial_objects|grouped", true)
         @test abstractor(task_data) == Dict(
             "input|spatial_objects|grouped" => Dict{Any,Any}(
@@ -63,7 +63,7 @@ using .Abstractors:UniteTouching
                 ]
             )
         )
-        task_data = Dict(
+        task_data = make_taskdata(Dict(
             "input|spatial_objects|grouped" => Dict{Any,Any}(
                 2 => [
                     Object([2 2 -1 -1 -1 -1; -1 2 -1 -1 -1 -1; 2 2 2 2 -1 -1; 2 2 2 -1 2 -1; 2 -1 -1 2 2 2; 2 2 2 2 2 -1; -1 2 -1 -1 2 2], (1, 1)),
@@ -88,7 +88,7 @@ using .Abstractors:UniteTouching
                     Object([3], (18, 18))
                 ]
             )
-        )
+        ))
         @test abstractor(task_data) == Dict(
             "input|spatial_objects|grouped" => Dict{Any,Any}(
                 2 => [
@@ -175,7 +175,7 @@ using .Abstractors:UniteTouching
                 ]
             )
         )
-        task_data = Dict(
+        task_data = make_taskdata(Dict(
             "input|spatial_objects|grouped" => Dict{Any,Any}(
                 4 => [
                     Object([4 4 4 -1 4 -1 -1 -1 4; -1 4 -1 4 4 4 4 4 4; -1 4 4 4 4 4 4 -1 -1; 4 4 -1 4 -1 4 4 -1 -1; -1 -1 -1 4 4 4 -1 -1 -1; -1 -1 -1 -1 4 -1 -1 -1 -1], (1, 11)),
@@ -198,7 +198,7 @@ using .Abstractors:UniteTouching
                     Object([1], (17, 18))
                 ]
             )
-        )
+        ))
         @test abstractor(task_data) == Dict(
             "input|spatial_objects|grouped" => Dict{Any,Any}(
                 4 => [

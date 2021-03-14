@@ -2,6 +2,7 @@ module Randy
 
 include("object_prior.jl")
 include("complexity.jl")
+include("taskdata/taskdata.jl")
 include("pattern_matching/pattern_matching.jl")
 include("operations/operation.jl")
 include("solution.jl")

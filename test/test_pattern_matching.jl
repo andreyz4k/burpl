@@ -47,7 +47,7 @@ using .Abstractors:iter_source_either_values
     @testset "fix value" begin
         keys = ["spatial_objects|grouped|0|first|splitted|first", 1]
         value = Object([1], (0, 5))
-        task_data = Dict(
+        task_data = make_taskdata(Dict(
             "spatial_objects|grouped|0|step" => Dict(
                 1 => Either([
                     Option((0, 6), -1731569779980110441),
@@ -87,10 +87,10 @@ using .Abstractors:iter_source_either_values
                     Option((1, 0), 8357411015276601514)
                 ])
             )
-        )
+        ))
         new_task_data = update_value(task_data, keys, value)
 
-        @test new_task_data == Dict(
+        @test Dict(new_task_data) == Dict(
             "spatial_objects|grouped|0|step" => Dict(
                 1 => (0, 6),
                 3 => (0, 6)
@@ -111,7 +111,7 @@ using .Abstractors:iter_source_either_values
             )
         )
 
-        task_data = Dict(
+        task_data = make_taskdata(Dict(
             "spatial_objects|grouped|0|step" => Dict{Any,Any}(
                 1 => Either([
                     Option((0, 6), -1731569779980110441),
@@ -151,9 +151,9 @@ using .Abstractors:iter_source_either_values
                     Option((1, 0), 8357411015276601514)
                 ])
             )
-        )
+        ))
         new_task_data = update_value(task_data, keys, value)
-        @test new_task_data == Dict(
+        @test Dict(new_task_data) == Dict(
             "spatial_objects|grouped|0|step" => Dict(
                 1 => (0, 6),
                 3 => (0, 6)

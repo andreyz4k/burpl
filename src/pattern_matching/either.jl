@@ -32,7 +32,7 @@ Either(options::AbstractVector) = Either([isa(op, Option) ? op : Option(op) for 
 Base.:(==)(a::Either, b::Either) = issetequal(a.options, b.options)
 Base.hash(e::Either, h::UInt64) = hash(e.options, h)
 Base.show(io::IO, e::Either{T}) where {T} = print(io, "Either{", T, "}([", vcat([[op, ", "] for op in e.options]...)[1:end - 1]..., "])")
-
+    
 function make_either(keys, options)
     if length(options) == 1
         for option in options
@@ -66,7 +66,7 @@ function match(val1, val2::Either)
     if isempty(valid_options)
         return nothing
     else
-        return Either(unique(valid_options))
+    return Either(unique(valid_options))
     end
 end
 
@@ -86,16 +86,18 @@ unpack_value(value::Either) = vcat([unpack_value(option.value) for option in val
 
 unwrap_matcher(value::Either) = [option.value for option in value.options]
 
-update_value(data::Dict, path_keys::Array, value::Either, current_value::Either) =
-    invoke(update_value, Tuple{Dict,Array,Any,Any}, data, path_keys, value, current_value)
+using ..Taskdata:TaskData
 
-function update_value(data::Dict, path_keys::Array, value, current_value::Either)
+update_value(data::TaskData, path_keys::Array, value::Either, current_value::Either)::TaskData =
+    invoke(update_value, Tuple{TaskData,Array,Any,Any}, data, path_keys, value, current_value)
+
+function update_value(data::TaskData, path_keys::Array, value, current_value::Either)::TaskData
     for option in current_value.options
         if !isnothing(common_value(value, option.value))
             if !isnothing(option.option_hash)
                 data = select_hash(data, option.option_hash)
             else
-                data = invoke(update_value, Tuple{Dict,Array,Any,Any}, data, path_keys, option.value, current_value)
+                data = invoke(update_value, Tuple{TaskData,Array,Any,Any}, data, path_keys, option.value, current_value)
             end
             return update_value(data, path_keys, value)
         end
@@ -103,21 +105,51 @@ function update_value(data::Dict, path_keys::Array, value, current_value::Either
 end
 
 
-select_hash(data::Dict, option_hash) =
-    Dict{Any,Any}(key => select_hash(value, option_hash) for (key, value) in data)
-
-select_hash(data::Vector, option_hash) =
-    [select_hash(value, option_hash) for value in data]
-
-function select_hash(data::Either, option_hash)
-    new_options = Option[]
-    for option in data.options
-        if option.option_hash == option_hash
-            return option.value
+function select_hash(data::TaskData, option_hash)::TaskData
+    updated = Dict()
+    for (key, value) in data
+        selected, effective = _select_hash(value, option_hash)
+        if effective
+            updated[key] = selected
         end
-        push!(new_options, Option(select_hash(option.value, option_hash), option.option_hash))
     end
-    return Either(new_options)
+    merge(data, updated)
 end
 
-select_hash(data, option_hash) = data
+function _select_hash(data::Dict, option_hash)::Tuple{Dict,Bool}
+    effective = false
+    result = Dict()
+    for (key, value) in data
+        selected, eff = _select_hash(value, option_hash)
+        result[key] = selected
+        effective |= eff
+    end
+    return result, effective
+end
+
+function _select_hash(data::Vector, option_hash)::Tuple{Vector,Bool}
+    effective = false
+    result = []
+    for value in data
+        selected, eff = _select_hash(value, option_hash)
+        push!(result, selected)
+        effective |= eff
+    end
+    return result, effective
+end
+
+function _select_hash(data::Either, option_hash)
+    new_options = Option[]
+    effective = false
+    for option in data.options
+        if option.option_hash == option_hash
+            return option.value, true
+        end
+        selected, eff = _select_hash(option.value, option_hash)
+        effective |= eff
+        push!(new_options, Option(selected, option.option_hash))
+    end
+    return Either(new_options), effective
+end
+
+_select_hash(data, option_hash) = data, false

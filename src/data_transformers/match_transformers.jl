@@ -1,5 +1,5 @@
 
-function get_match_transformers(taskdata::Array{Dict{String,Any}}, field_info,  invalid_sources, key)
+function get_match_transformers(taskdata::Array{TaskData}, field_info,  invalid_sources, key)
     result = []
     find_matches_funcs = [
         find_const,
@@ -46,6 +46,7 @@ function match_fields(solution::Solution)
             end
         catch
             println(solution)
+            println(solution.taskdata)
             rethrow()
         end
     end
@@ -53,7 +54,7 @@ function match_fields(solution::Solution)
 end
 
 
-function find_matching_for_key(taskdata::Vector{Dict{String,Any}}, field_info, invalid_sources::AbstractSet{String}, key::String,
+function find_matching_for_key(taskdata::Vector{TaskData}, field_info, invalid_sources::AbstractSet{String}, key::String,
                                init_func, filter_func, transformer_class, candidate_checker)
     result = []
     if !check_type(field_info[key].type, Union{Int64,Tuple{Int64,Int64}})

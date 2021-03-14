@@ -5,12 +5,12 @@ using .PatternMatching:ObjectShape,common_value
 
 @testset "Compact similar objects" begin
     @testset "reshape objects" begin
-        source_data = Dict{String,Any}(
+        source_data = make_taskdata(Dict{String,Any}(
             "key" => [
                 ObjectShape(Object([1], (1, 1))),
                 ObjectShape(Object([1], (2, 3))),
             ]
-        )
+        ))
         reshaper = CompactSimilarObjects("key", true)
         out_data = reshaper(source_data)
         @test out_data == Dict(
@@ -21,7 +21,7 @@ using .PatternMatching:ObjectShape,common_value
             "key|common_val" => ObjectShape(Object([1], (1, 1))),
             "key|count" => 2
         )
-        delete!(out_data, "key")
+        out_data = delete(out_data, "key")
         reshaper = CompactSimilarObjects("key", false)
         reversed_data = reshaper(out_data)
         @test !isnothing(common_value(reversed_data["key"], source_data["key"]))

@@ -39,7 +39,7 @@ function (p::Project)(observed_data)
     for key in p.output_keys
         stripped_key = replace(key, "projected|" => "")
         if haskey(processed_data, stripped_key)
-            out_data[key] = processed_data[stripped_key]
+            out_data = merge(out_data, [key => processed_data[stripped_key]])
         end
     end
 

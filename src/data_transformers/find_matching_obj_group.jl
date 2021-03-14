@@ -30,7 +30,7 @@ using ..Abstractors:Abstractor,SelectGroup
 _check_group_type(::Type, ::Type) = false
 _check_group_type(::Type{Dict{K,V}}, expected::Type) where {K,V} = V == expected
 
-function _get_matching_transformers(taskdata::Vector{Dict{String,Any}}, field_info, invalid_sources::AbstractSet{String}, key::String)
+function _get_matching_transformers(taskdata::Vector{TaskData}, field_info, invalid_sources::AbstractSet{String}, key::String)
     result = []
     if endswith(key, "|selected_group") || any(!haskey(task_data, key) for task_data in taskdata)
         return []

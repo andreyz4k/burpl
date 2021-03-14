@@ -21,7 +21,7 @@ end
 
 function create(cls::SelectGroup, solution, key)::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{Abstractor,Abstractor}}},1}
     data = init_create_check_data(cls, key, solution)
-
+    
     if !all(haskey(task_data, key) && check_task_value(
                 cls, task_data[key], data,
                 task_data)
@@ -51,7 +51,7 @@ function init_create_check_data(::SelectGroup, key, solution)
             push!(data["existing_choices"], m.captures[1])
         end
     end
-    data
+data
 end
 
 function check_task_value(::SelectGroup, value::AbstractDict, data, task_data)
@@ -86,11 +86,13 @@ function wrap_func_call_dict_value(p::Abstractor{SelectGroup}, func::Function, w
 end
 
 using ..PatternMatching:update_value
+using ..Taskdata:TaskData
+using FunctionalCollections:PersistentHashMap
 
 function to_abstract_value(p::Abstractor{SelectGroup}, source_value::AbstractDict, selected_key)
     rejected = copy(source_value)
     delete!(rejected, selected_key)
-    out = update_value(Dict(), p.output_keys[1], source_value[selected_key])
+    out = update_value(TaskData(PersistentHashMap{String,Any}(), PersistentHashMap{String,Any}(), Set()), p.output_keys[1], source_value[selected_key])
     update_value(out, p.output_keys[2], rejected)
 end
 

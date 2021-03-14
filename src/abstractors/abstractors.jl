@@ -45,17 +45,16 @@ function Abstractor(cls::AbstractorClass, key::String, to_abs::Bool, found_aux_k
     end
 end
 
+using ..Taskdata:TaskData
 
-function (p::Abstractor)(task_data)
-    out_data = copy(task_data)
-    input_values = fetch_input_values(p, out_data)
+function (p::Abstractor)(task_data::TaskData)::TaskData
+    input_values = fetch_input_values(p, task_data)
     if p.to_abstract
         func = to_abstract_value
     else
         func = from_abstract_value
     end
-    merge!(out_data, wrap_func_call_value_root(p, func, input_values...))
-    return out_data
+    return merge(task_data, wrap_func_call_value_root(p, func, input_values...))
 end
 
 import ..Operations:needed_input_keys
@@ -94,7 +93,7 @@ function wrap_func_call_value(p::Abstractor, func::Function, wrappers::AbstractV
     end
     wrappers[1](p, func, wrappers[2:end], source_values...)
 end
-
+    
 function iter_source_values(source_values)
     result = []
     for source_value in source_values
@@ -102,7 +101,7 @@ function iter_source_values(source_values)
             for key in keys(source_value)
                 values = [isa(v, Dict) && issetequal(keys(v), keys(source_value)) ? v[key] : v for v in source_values]
                 push!(result, (key, values))
-            end
+    end
             return result
         end
     end
@@ -171,7 +170,7 @@ function push_to_tree!(tree::Dict, keys, value)
     if length(keys) == 1
         if !haskey(tree, keys[1])
             tree[keys[1]] = [value]
-        else
+    else
             push!(tree[keys[1]], value)
         end
     else

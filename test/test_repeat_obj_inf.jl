@@ -53,14 +53,14 @@ using .PatternMatching:Either,Option
     end
 
     @testset "repeat object" begin
-        source_data = Dict(
+        source_data = make_taskdata(Dict(
             "input|key" => [
                 Object([1], (1, 1)),
                 Object([1], (2, 2)),
                 Object([1], (3, 3)),
             ],
             "input|grid_size" => (3, 3)
-        )
+        ))
         repeater = RepeatObjectInfinite("input|key", true, source_data)
         out_data = repeater(source_data)
         @test out_data == Dict(
@@ -91,20 +91,20 @@ using .PatternMatching:Either,Option
             ]),
             "input|grid_size" => (3, 3)
         )
-        delete!(out_data, "input|key")
-        abs_data = Dict(
+        out_data = delete(out_data, "input|key")
+        abs_data = make_taskdata(Dict(
             "input|key|first" => Object([1], (1, 1)),
             "input|key|step" => (1, 1),
             "input|grid_size" => (3, 3)
-        )
+        ))
         repeater = RepeatObjectInfinite("input|key", false, source_data)
         reversed_data = repeater(abs_data)
         @test reversed_data["input|key"] == source_data["input|key"]
-        abs_data = Dict(
+        abs_data = make_taskdata(Dict(
             "input|key|first" => Object([1], (3, 3)),
             "input|key|step" => (-1, -1),
             "input|grid_size" => (3, 3)
-        )
+        ))
         reversed_data = repeater(abs_data)
         @test Set(reversed_data["input|key"]) == Set(source_data["input|key"])
     end
@@ -136,12 +136,12 @@ using .PatternMatching:Either,Option
         abstractors = create(RepeatObjectInfinite(), solution, "input|key")
         @test length(abstractors) == 1
         for (priority, reshaper) in abstractors
-            @test priority == 8.8
-            @test reshaper.to_abstract.input_keys == ["input|key", "input|grid_size"]
-            @test reshaper.to_abstract.output_keys == ["input|key|first", "input|key|step"]
-            @test reshaper.from_abstract.input_keys == ["input|key|first", "input|key|step", "input|grid_size"]
-            @test reshaper.from_abstract.output_keys == ["input|key"]
-        end
+    @test priority == 8.8
+    @test reshaper.to_abstract.input_keys == ["input|key", "input|grid_size"]
+    @test reshaper.to_abstract.output_keys == ["input|key|first", "input|key|step"]
+    @test reshaper.from_abstract.input_keys == ["input|key|first", "input|key|step", "input|grid_size"]
+    @test reshaper.from_abstract.output_keys == ["input|key"]
+end
 
         solution = make_dummy_solution([
             Dict(
