@@ -3,7 +3,7 @@ module FindSolution
 export generate_solution
 
 using ..DataTransformers:match_fields
-using ..Solutions:Solution,get_unmatched_complexity_score,insert_operation
+using ..Solutions:Solution,get_unmatched_complexity_score,insert_operation,persist_updates
 
 
 import ..Abstractors
@@ -53,7 +53,7 @@ function get_new_solutions_for_input_key(solution, key)
             if length(matched_solution.unfilled_fields) < length(solution.unfilled_fields)
                 pr /= 4
             end
-            push!(output, (pr, matched_solution))
+            push!(output, (pr, persist_updates(matched_solution)))
         end
     end
     output
@@ -75,7 +75,7 @@ function get_new_solutions_for_unfilled_key(solution::Solution, key::String)
         for matched_solution in match_fields(new_solution)
             pr = priority * get_unmatched_complexity_score(matched_solution) *
                 matched_solution.score^1.5
-            push!(output, (pr, matched_solution))
+            push!(output, (pr, persist_updates(matched_solution)))
         end
     end
     output
