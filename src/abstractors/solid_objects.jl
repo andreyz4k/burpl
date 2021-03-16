@@ -11,12 +11,12 @@ init_create_check_data(::SolidObjects, key, solution) = Dict("effective" => fals
 
 function check_task_value(::SolidObjects, value::AbstractArray{Int,2}, data, aux_values)
     data["effective"] |= length(unique(value)) > 1
-    true
+    return true
 end
 
 
 needed_input_keys(p::Abstractor{SolidObjects}) =
-    p.to_abstract ? p.input_keys : p.input_keys[1:1]
+    p.to_abstract ? p.input_keys : []
 
 
 to_abstract_value(p::Abstractor{SolidObjects}, source_value::AbstractArray{Int,2}) =
@@ -27,7 +27,12 @@ to_abstract_value(p::Abstractor{SolidObjects}, source_value::AbstractArray{Int,2
 
 function from_abstract_value(p::Abstractor{SolidObjects}, objects, grid_size)
     if isnothing(grid_size)
-    grid_size = reduce((a, b) -> max.(a, b), (obj.position .+ size(obj.shape) .- (1, 1) for obj in objects), init=(0, 0))
+        if isnothing(objects)
+            return Dict()
+        end
+        grid_size = reduce((a, b) -> max.(a, b), (obj.position .+ size(obj.shape) .- (1, 1) for obj in objects), init=(0, 0))
+    elseif isnothing(objects)
+        objects = []
     end
     
     grid = fill(-1, grid_size...)

@@ -1,7 +1,7 @@
 export Taskdata
 module Taskdata
 
-import FunctionalCollections:PersistentHashMap
+import FunctionalCollections:PersistentHashMap,dissoc
 
 struct TaskData <: AbstractDict{String,Any}
     persistent_data::PersistentHashMap{String,Any}
@@ -85,11 +85,11 @@ function Base.iterate(t::TaskData, state::Tuple{Int,Any})
     end
 end
 
-Base.merge(t::TaskData, others::AbstractDict...) = 
+Base.merge(t::TaskData, others::AbstractDict...) =
     TaskData(t.persistent_data, merge(t.updated_values, others...), setdiff(t.keys_to_delete, [keys(o) for o in others]...))
 
-Base.merge(t::TaskData, others...) = 
-    TaskData(t.persistent_data, merge(t.updated_values, others...), setdiff(t.keys_to_delete, [keys(o) for o in others]...))
+Base.merge(t::TaskData, others...) =
+    TaskData(t.persistent_data, merge(t.updated_values, others...), setdiff(t.keys_to_delete, [[kv[1] for kv in o] for o in others]...))
 
 Base.filter(f::Function, t::TaskData) =
     TaskData(t.persistent_data, filter(f, t.updated_values), union(t.keys_to_delete, keys(filter(!f, t.persistent_data))))

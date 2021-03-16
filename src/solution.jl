@@ -32,7 +32,7 @@ end
 Base.show(io::IO, b::Block) =
     print(io, "Block([\n", (vcat((["\t\t", op,",\n"] for op in b.operations)...))..., "\t])")
 
-using ..Taskdata:TaskData
+using ..Taskdata:TaskData,persist_data
 
 function (block::Block)(observed_data::TaskData)::TaskData
     for op in block.operations
@@ -530,11 +530,7 @@ Base.show(io::IO, s::Solution) =
                 (in(keyval[1], s.unfilled_fields) || in(keyval[1], s.unused_fields) ||
                 in(keyval[1], s.input_transformed_fields) || in(keyval[1], s.used_fields)))...))...,
           "\t)\n\t",
-          [
-              filter(keyval -> in(keyval[1], s.unfilled_fields) || in(keyval[1], s.unused_fields),
-                     task_data)
-              for task_data in s.taskdata
-          ],
+          s.taskdata,
           "\n)")
 
 function (solution::Solution)(input_grid::Array{Int,2})::Array{Int,2}
