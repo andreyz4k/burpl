@@ -14,7 +14,6 @@ function get_match_transformers(taskdata::Array{TaskData}, field_info,  invalid_
         append!(result, func(taskdata, field_info, invalid_sources, key))
     end
     return result
-
 end
 
 using ..Solutions:Solution,insert_operation
@@ -27,20 +26,26 @@ function find_matched_fields(key, solution::Solution)
                                 added_complexity=transformer.complexity)
         push!(new_solutions, new_solution)
     end
+    if length(new_solutions) != 1
+        append!(new_solutions, find_matching_obj_group(key, solution))
+    end
     return new_solutions
 end
 
 function match_fields(solution::Solution)
     for key in solution.unfilled_fields
         try
-            new_solutions = find_matched_fields(key, solution)
-            if length(new_solutions) != 1
-                append!(new_solutions, find_matching_obj_group(key, solution))
+            matched_results = Dict()
+            for new_solution in find_matched_fields(key, solution)
+                key_result = [task[key] for task in new_solution.taskdata]
+                if !haskey(matched_results, key_result) || matched_results[key_result].complexity_score > new_solution.complexity_score
+                    matched_results[key_result] = new_solution
+                end
             end
-            if !isempty(new_solutions)
+            if !isempty(matched_results)
                 return reduce(
                 vcat,
-                (match_fields(new_solution) for new_solution in new_solutions),
+                (match_fields(new_solution) for (_, new_solution) in matched_results),
                 init=[]
             )
             end
