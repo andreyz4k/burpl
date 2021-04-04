@@ -21,7 +21,7 @@ using .PatternMatching:ObjectShape,common_value
             "key|common_val" => ObjectShape(Object([1], (1, 1))),
             "key|count" => 2
         )
-        out_data = delete(out_data, "key")
+        delete!(out_data, "key")
         reshaper = CompactSimilarObjects("key", false)
         reversed_data = reshaper(out_data)
         @test !isnothing(common_value(reversed_data["key"], source_data["key"]))

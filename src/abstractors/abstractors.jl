@@ -45,16 +45,17 @@ function Abstractor(cls::AbstractorClass, key::String, to_abs::Bool, found_aux_k
     end
 end
 
-using ..Taskdata:TaskData
 
-function (p::Abstractor)(task_data::TaskData)::TaskData
-    input_values = fetch_input_values(p, task_data)
+function (p::Abstractor)(task_data)
+    out_data = copy(task_data)
+    input_values = fetch_input_values(p, out_data)
     if p.to_abstract
         func = to_abstract_value
     else
         func = from_abstract_value
     end
-    return merge(task_data, wrap_func_call_value_root(p, func, input_values...))
+    merge!(out_data, wrap_func_call_value_root(p, func, input_values...))
+    return out_data
 end
 
 import ..Operations:needed_input_keys

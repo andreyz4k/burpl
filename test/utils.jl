@@ -3,8 +3,7 @@ using .Solutions:Solution,Block,FieldInfo,insert_operation,get_unmatched_complex
 using .Operations:Operation,Project
 using .DataTransformers:match_fields
 using .Abstractors:create
-using .Taskdata:TaskData,delete
-using FunctionalCollections:PersistentHashMap
+using .Taskdata:TaskData
 
 make_sample_taskdata(len) =
     fill(Dict("input" => Array{Int}(undef, 0, 0), "output" => Array{Int}(undef, 0, 0)), len)
@@ -21,7 +20,7 @@ make_taskdata(tasks) =
     [make_taskdata(task) for task in tasks]
 
 make_taskdata(task::Dict) = 
-    TaskData(merge(PersistentHashMap{String,Any}(), task), PersistentHashMap{String,Any}(), Set())
+    TaskData(task, Dict{String,Any}(), Set())
 
 make_field_info(taskdata) =
     Dict(key => FieldInfo(val, "input", [], [Set()]) for (key, val) in taskdata[1])

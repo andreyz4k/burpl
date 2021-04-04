@@ -106,14 +106,14 @@ end
 
 
 function select_hash(data::TaskData, option_hash)::TaskData
-    updated = Dict()
+    data = copy(data)
     for (key, value) in data
         selected, effective = _select_hash(value, option_hash)
         if effective
-            updated[key] = selected
+            data[key] = selected
         end
     end
-    merge(data, updated)
+    data
 end
 
 function _select_hash(data::Dict, option_hash)::Tuple{Dict,Bool}
