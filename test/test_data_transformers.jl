@@ -1,5 +1,5 @@
 
-using .PatternMatching:Either,Option,ObjectShape
+using .PatternMatching:Either,Option,ObjectShape,AuxValue
 using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key,
 MultParam,MultByParam,IncParam,IncByParam,MapValues,match_fields,DecByParam
 using .ObjectPrior:Object
@@ -9,10 +9,10 @@ using .Solutions:FieldInfo
 @testset "Data transformers" begin
     @testset "find const" begin
         taskdata = make_taskdata([
-                Dict{String,Any}(
+                Dict(
                     "background" => 1
                 ),
-                Dict{String,Any}(
+                Dict(
                     "background" => 1
                 )
             ])
@@ -20,10 +20,10 @@ using .Solutions:FieldInfo
         @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") == [SetConst("background", 1)]
 
         taskdata = make_taskdata([
-                Dict{String,Any}(
+                Dict(
                     "background" => 1
                 ),
-                Dict{String,Any}(
+                Dict(
                     "background" => Either([1, 2])
                 )
             ])
@@ -31,10 +31,10 @@ using .Solutions:FieldInfo
         @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") == [SetConst("background", 1)]
 
         taskdata = make_taskdata([
-                Dict{String,Any}(
+                Dict(
                     "background" => Either([1, 2])
                 ),
-                Dict{String,Any}(
+                Dict(
                     "background" => 1
                 ),
             ])
@@ -42,10 +42,10 @@ using .Solutions:FieldInfo
         @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") == [SetConst("background", 1)]
 
         taskdata = make_taskdata([
-                Dict{String,Any}(
+                Dict(
                     "background" => Either([1, 2])
                 ),
-                Dict{String,Any}(
+                Dict(
                     "background" => Either([1, 3])
                 ),
             ])
@@ -53,10 +53,10 @@ using .Solutions:FieldInfo
         @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") == [SetConst("background", 1)]
 
         taskdata = make_taskdata([
-                Dict{String,Any}(
+                Dict(
                     "background" => Either([1, 2])
                 ),
-                Dict{String,Any}(
+                Dict(
                     "background" => Either([1, 2])
                 ),
             ])
@@ -66,13 +66,13 @@ using .Solutions:FieldInfo
 
     @testset "match dicts" begin
         taskdata = make_taskdata([
-            Dict{String,Any}(
+            Dict(
                 "key" => Dict(
                     1 => 1,
                     2 => 2
                 )
             ),
-            Dict{String,Any}(
+            Dict(
                 "key" => Dict(
                     1 => 1,
                     2 => 2
@@ -82,13 +82,13 @@ using .Solutions:FieldInfo
         @test find_const(taskdata, Dict("key" => FieldInfo(1, "input", [], [Set()])), [], "key") == [SetConst("key", Dict(2 => 2, 1 => 1))]
 
         taskdata = make_taskdata([
-            Dict{String,Any}(
+            Dict(
                 "key" => Dict(
                     1 => 1,
                     2 => 2
                 )
             ),
-            Dict{String,Any}(
+            Dict(
                 "key" => Dict(
                     1 => Either([1, 3]),
                     2 => 2
@@ -200,36 +200,24 @@ using .Solutions:FieldInfo
             )
         ], ["key1", "key2"])
         new_solutions = match_fields(solution)
-        @test length(new_solutions) == 3
+        @test length(new_solutions) == 2
         expected_operations = Set([
-            [SetConst("key1", 1), SetConst("key2", 2)],
+            [SetConst("key2", 2), SetConst("key1", 1)],
             [SetConst("key2", 4)],
-            [SetConst("key2", 2), IncParam("key1", "key2", -1)]
         ])
+        _compare_operations(expected_operations, new_solutions)
         
-        @test filtered_taskdata(new_solutions[1]) == [
-            Dict(
-                "key1" => 1,
-                "key2" => 2
-            ),
-            Dict(
-                "key1" => 1,
-                "key2" => 2
-            )
-        ]
         @test filtered_taskdata(new_solutions[2]) == [
             Dict(
-                "key2" => 2,
                 "key1" => 1,
-                "key1|inc_shift" => -1
+                "key2" => 2
             ),
             Dict(
-                "key2" => 2, 
-                "key1" => 1, 
-                "key1|inc_shift" => -1
+                "key1" => 1,
+                "key2" => 2
             )
         ]
-        @test filtered_taskdata(new_solutions[3]) == [
+        @test filtered_taskdata(new_solutions[1]) == [
             Dict(
                 "key1" => 3,
                 "key2" => 4
@@ -677,16 +665,16 @@ using .Solutions:FieldInfo
 
     @testset "match nothing" begin
         taskdata = make_taskdata([
-            Dict{String,Any}(
+            Dict(
                 "key_none" => nothing,
                 "key" => 1
             ),
-            Dict{String,Any}(
+            Dict(
                 "key_none" => nothing,
                 "key" => 2
             )
         ])
-        @test find_dependent_key(taskdata, Dict("key" => FieldInfo(1, "input", [], [Set()]), "key_none" => FieldInfo(nothing, "input", [], [Set()])), Set(["key"]), "key") == []
+        @test collect(find_dependent_key(taskdata, Dict("key" => FieldInfo(1, "input", [], [Set()]), "key_none" => FieldInfo(nothing, "input", [], [Set()])), Set(["key"]), "key")) == []
     end
 
     @testset "find multiply" begin
@@ -749,10 +737,9 @@ using .Solutions:FieldInfo
             )
         ], ["key"])
         new_solutions = match_fields(solution)
-        @test length(new_solutions) == 2
+        @test length(new_solutions) == 1
         expected_operations = Set([
             [MultByParam("key", "key1", "key2")],
-            [MultByParam("key", "key2", "key1")],
         ])
         _compare_operations(expected_operations, new_solutions)
     end
@@ -825,10 +812,9 @@ end
             )
         ],["key"])
         new_solutions = match_fields(solution)
-        @test length(new_solutions) == 2
+        @test length(new_solutions) == 1
         expected_operations = Set([
             [IncByParam("key", "key1", "key2")],
-            [IncByParam("key", "key2", "key1")],
         ])
         _compare_operations(expected_operations, new_solutions)
     end
@@ -849,10 +835,9 @@ end
             )
         ],["key"])
         new_solutions = match_fields(solution)
-        @test length(new_solutions) == 2
+        @test length(new_solutions) == 1
         expected_operations = Set([
             [CopyParam("key", "key1")],
-            [CopyParam("key", "key3")],
         ])
         _compare_operations(expected_operations, new_solutions)
     end

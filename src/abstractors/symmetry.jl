@@ -58,7 +58,11 @@ function to_abstract_value(p::Abstractor{VerticalSymmetry}, source_value::Object
                     ), 
                     opt[p.output_keys[2]], 
                     opt[p.output_keys[3]])
-                for opt in unpack_value(res)
+                for opt in unpack_value(Dict(
+                    p.output_keys[1] => res[p.output_keys[1]],
+                    p.output_keys[2] => unwrap_matcher(res[p.output_keys[2]])[1],
+                    p.output_keys[3] => unwrap_matcher(res[p.output_keys[3]])[1],
+                ))
             ]
         )
     )
@@ -93,7 +97,11 @@ function to_abstract_value(p::Abstractor{HorisontalSymmetry}, source_value::Obje
                     ), 
                     opt[p.output_keys[2]], 
                     opt[p.output_keys[3]])
-                for opt in unpack_value(res)
+                for opt in unpack_value(Dict(
+                    p.output_keys[1] => res[p.output_keys[1]],
+                    p.output_keys[2] => unwrap_matcher(res[p.output_keys[2]])[1],
+                    p.output_keys[3] => unwrap_matcher(res[p.output_keys[3]])[1],
+                ))
             ]
         )
     )
@@ -134,7 +142,7 @@ function from_abstract_value(p::Abstractor{VerticalSymmetry}, source_value::Obje
     res_shape = from_abstract_value(p, source_value.shape, is_left, keep_pivot_point)[p.output_keys[1]]
     pos = source_value.position
     if !is_left
-        pos[1] -= size(res_shape)[1] - size(source_value.shape)[1]
+        pos = (pos[1] - size(res_shape)[1] + size(source_value.shape)[1], pos[2])
     end
     return Dict(
         p.output_keys[1] => Object(res_shape, pos)
@@ -160,7 +168,7 @@ function from_abstract_value(p::Abstractor{HorisontalSymmetry}, source_value::Ob
     res_shape = from_abstract_value(p, source_value.shape, is_top, keep_pivot_point)[p.output_keys[1]]
     pos = source_value.position
     if !is_top
-        pos[2] -= size(res_shape)[2] - size(source_value.shape)[2]
+        pos = (pos[1], pos[2] - size(res_shape)[2] + size(source_value.shape)[2])
     end
     return Dict(
         p.output_keys[1] => Object(res_shape, pos)

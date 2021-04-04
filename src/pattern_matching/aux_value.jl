@@ -16,6 +16,7 @@ match(val1::T, val2::AuxValue{T}) where T = common_value(val1, val2.value)
 
 check_match(::AuxValue, ::Any) = false
 
+unpack_value(::AuxValue{T}) where T <: Matcher = []
 unpack_value(p::AuxValue) = unpack_value(p.value)
 
 unwrap_matcher(p::AuxValue) = [p.value]
