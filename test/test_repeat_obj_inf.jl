@@ -91,7 +91,7 @@ using .PatternMatching:Either,Option
             ]),
             "input|grid_size" => (3, 3)
         )
-        out_data = delete(out_data, "input|key")
+        delete!(out_data, "input|key")
         abs_data = make_taskdata(Dict(
             "input|key|first" => Object([1], (1, 1)),
             "input|key|step" => (1, 1),

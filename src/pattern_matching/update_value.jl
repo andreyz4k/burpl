@@ -19,17 +19,14 @@ function update_value(data::TaskData, path_keys::Array, value)::TaskData
 end
 
 function update_value(data::TaskData, path_keys::Array, value, ::Any)::TaskData
-    if length(path_keys) == 1
-        return merge(data, [path_keys[1] => value])
-    end
-    root_item = copy(data[path_keys[1]])
-    item = root_item
-    for key in path_keys[2:end - 1]
+    data = copy(data)
+    item = data
+    for key in path_keys[1:end - 1]
         item[key] = copy(item[key])
         item = item[key]
     end
     item[path_keys[end]] = value
-    return merge(data, [path_keys[1] => root_item])
+    data
 end
 
 function update_value(data::TaskData, path_keys::Array, value, current_value::Dict)::TaskData

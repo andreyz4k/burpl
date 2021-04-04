@@ -1,11 +1,9 @@
 export Taskdata
 module Taskdata
 
-import FunctionalCollections:PersistentHashMap,dissoc
-
 struct TaskData <: AbstractDict{String,Any}
-    persistent_data::PersistentHashMap{String,Any}
-    updated_values::PersistentHashMap{String,Any}
+    persistent_data::Dict{String,Any}
+    updated_values::Dict{String,Any}
     keys_to_delete::Set{String}
 end
 
@@ -19,18 +17,27 @@ Base.show(io::IO, t::TaskData) = print(io,
         ")"
     )
 
+Base.copy(t::TaskData) = 
+    TaskData(copy(t.persistent_data), copy(t.updated_values), copy(t.keys_to_delete))
+
 function persist_data(taskdata::TaskData)
-    persistent_data = taskdata.persistent_data
+    persistent_data = copy(taskdata.persistent_data)
     for key in taskdata.keys_to_delete
-        persistent_data = dissoc(persistent_data, key)
+        delete!(persistent_data, key)
     end
-    persistent_data = merge(persistent_data, filter(kv -> !in(kv[1], taskdata.keys_to_delete), taskdata.updated_values))
-    TaskData(persistent_data, PersistentHashMap{String,Any}(), Set{String}())
+    merge!(persistent_data, filter(kv -> !in(kv[1], taskdata.keys_to_delete), taskdata.updated_values))
+    TaskData(persistent_data, Dict{String,Any}(), Set{String}())
 end
 
+function Base.setindex!(t::TaskData, v, k)
+    if in(k, t.keys_to_delete)
+        delete!(t.keys_to_delete, k)
+    end
+    t.updated_values[k] = v
+end
 
 function Base.length(t::TaskData) 
-    length(t.persistent_data) + length(t.updated_values) +  length(t.keys_to_delete)
+    length(t.persistent_data) + length(t.updated_values) + length(t.keys_to_delete)
 end
 
 function Base.haskey(t::TaskData, key)
@@ -88,13 +95,13 @@ end
 Base.merge(t::TaskData, others::AbstractDict...) =
     TaskData(t.persistent_data, merge(t.updated_values, others...), setdiff(t.keys_to_delete, [keys(o) for o in others]...))
 
-Base.merge(t::TaskData, others...) =
-    TaskData(t.persistent_data, merge(t.updated_values, others...), setdiff(t.keys_to_delete, [[kv[1] for kv in o] for o in others]...))
+# Base.merge(t::TaskData, others...) =
+#     TaskData(t.persistent_data, merge(t.updated_values, others...), setdiff(t.keys_to_delete, [[kv[1] for kv in o] for o in others]...))
 
 Base.filter(f::Function, t::TaskData) =
     TaskData(t.persistent_data, filter(f, t.updated_values), union(t.keys_to_delete, keys(filter(!f, t.persistent_data))))
 
-delete(t::TaskData, keys...) = 
-    TaskData(t.persistent_data, t.updated_values, union(t.keys_to_delete, keys))
-    
+function Base.delete!(t::TaskData, key)
+    push!(t.keys_to_delete, key)
+end
 end

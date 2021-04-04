@@ -40,7 +40,7 @@ using .ObjectPrior:Object
                 Object([1], (7, 6)),
             ]
         )
-        out_data = delete(out_data, "key")
+        delete!(out_data, "key")
         splitter = SplitObject("key", false)
         reversed_data = splitter(out_data)
         @test reversed_data["key"] == value["key"]

@@ -37,7 +37,7 @@ import .ObjectPrior:Object
             ),
             "key|group_keys" => [1, 2, 3]
         )
-        out_data = delete(out_data, "key")
+        delete!(out_data, "key")
         ungrouper = GroupObjectsByColor("key", false)
         @test issetequal(ungrouper(out_data)["key"], source_data["key"])
     end

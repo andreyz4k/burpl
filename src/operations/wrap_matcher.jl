@@ -20,24 +20,18 @@ _check_matcher(value::AbstractVector) = any(_check_matcher(v) for v in value)
 _filter_unmatched_keys(keys, taskdata) =
     filter(key -> any(_check_matcher(task[key]) for task in taskdata if haskey(task, key)), keys)
 
-using ..Taskdata:delete
-
 function wrap_operation(taskdata, operation)
     unmatched_keys = _filter_unmatched_keys(operation.output_keys, taskdata)
     if isempty(unmatched_keys)
         return taskdata, operation
     end
-    out_data = []
-    for task in taskdata
-        for key in unmatched_keys
-            if haskey(task, key) && !haskey(task, key * "|unfilled")
-                task = merge(task, [key * "|unfilled" => task[key]])
-            end
-            task = delete(task, key)
+    for key in unmatched_keys, task in taskdata
+        if haskey(task, key) && !haskey(task, key * "|unfilled")
+            task[key * "|unfilled"] = task[key]
         end
-        push!(out_data, task)
+        delete!(task, key)
     end
-    return out_data, WrapMatcher(
+    return taskdata, WrapMatcher(
         [operation, (CopyParam(k, k * "|unfilled") for k in unmatched_keys)...], 
         vcat(operation.input_keys, [k * "|unfilled" for k in unmatched_keys]), 
         operation.output_keys, 

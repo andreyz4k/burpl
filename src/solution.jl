@@ -81,8 +81,6 @@ end
 _is_valid_value(val) = true
 _is_valid_value(val::Union{Array,Dict}) = !isempty(val)
 
-import FunctionalCollections:PersistentHashMap
-
 struct Solution
     taskdata::Vector{TaskData}
     field_info::Dict{String,FieldInfo}
@@ -126,7 +124,7 @@ end
 
 function Solution(taskdata)
     Solution(
-        [TaskData(merge(PersistentHashMap{String,Any}(), task), PersistentHashMap{String,Any}(), Set{String}()) for task in taskdata],
+        [TaskData(task, Dict{String,Any}(), Set{String}()) for task in taskdata],
         Dict(
             "input" => FieldInfo(taskdata[1]["input"], "input", [], [["input"]]),
             "output" => FieldInfo(taskdata[1]["output"], "input", [], [Set()])
@@ -245,11 +243,10 @@ function move_to_next_block(solution::Solution)::Solution
         unused_fields = filter(key -> !startswith(key, "projected|"), solution.unused_fields)
         field_info = filter(keyval -> !startswith(keyval[1], "|projected"), field_info)
 
-        out_data = []
-        for (observed_task, output) in zip(taskdata, projected_output)
-            for key in project_op.output_keys
+        for key in project_op.output_keys
+            for (observed_task, output) in zip(taskdata, projected_output)
                 if haskey(output, key)
-                    observed_task = merge(observed_task, [key => output[key]])
+                    observed_task[key] = output[key]
                     push!(unused_fields, key)
                     if !haskey(field_info, key) && _is_valid_value(output[key])
                         field_info[key] = FieldInfo(output[key], dependent_key, vcat([info.precursor_types for info in input_field_info]...),
@@ -257,13 +254,13 @@ function move_to_next_block(solution::Solution)::Solution
                     end
                 end
             end
-            push!(out_data, observed_task)
         end
-        taskdata = out_data
     end
 
     if isempty(solution.unfilled_fields)
-        taskdata = [merge(task, ["projected|output" => block_output["output"]]) for (task, block_output) in zip(taskdata, last_block_output)]
+        for (task, block_output) in zip(taskdata, last_block_output)
+            task["projected|output"] = block_output["output"]
+        end 
     end
 
     if !isempty(new_block.operations)
@@ -534,7 +531,7 @@ Base.show(io::IO, s::Solution) =
           "\n)")
 
 function (solution::Solution)(input_grid::Array{Int,2})::Array{Int,2}
-    observed_data = TaskData(merge(PersistentHashMap{String,Any}(), ["input" => input_grid]), PersistentHashMap{String,Any}(), Set())
+    observed_data = TaskData(Dict{String,Any}("input" => input_grid), Dict{String,Any}(), Set())
     for block in solution.blocks
         observed_data = block(observed_data)
     end

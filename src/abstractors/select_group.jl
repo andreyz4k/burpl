@@ -87,12 +87,11 @@ end
 
 using ..PatternMatching:update_value
 using ..Taskdata:TaskData
-using FunctionalCollections:PersistentHashMap
 
 function to_abstract_value(p::Abstractor{SelectGroup}, source_value::AbstractDict, selected_key)
     rejected = copy(source_value)
     delete!(rejected, selected_key)
-    out = update_value(TaskData(PersistentHashMap{String,Any}(), PersistentHashMap{String,Any}(), Set()), p.output_keys[1], source_value[selected_key])
+    out = update_value(TaskData(Dict{String,Any}(), Dict{String,Any}(), Set()), p.output_keys[1], source_value[selected_key])
     update_value(out, p.output_keys[2], rejected)
 end
 

@@ -739,7 +739,7 @@ using .Solutions:FieldInfo
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 1
         expected_operations = Set([
-            [MultByParam("key", "key1", "key2")],
+            [MultByParam("key", "key2", "key1")],
         ])
         _compare_operations(expected_operations, new_solutions)
     end
@@ -814,7 +814,7 @@ end
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 1
         expected_operations = Set([
-            [IncByParam("key", "key1", "key2")],
+            [IncByParam("key", "key2", "key1")],
         ])
         _compare_operations(expected_operations, new_solutions)
     end
@@ -837,7 +837,7 @@ end
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 1
         expected_operations = Set([
-            [CopyParam("key", "key1")],
+            [CopyParam("key", "key3")],
         ])
         _compare_operations(expected_operations, new_solutions)
     end
