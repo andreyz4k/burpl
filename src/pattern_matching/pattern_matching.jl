@@ -10,7 +10,7 @@ match(val1, val2) = nothing
 match(value1::Matcher, value2) = match(value2, value1)
 function match(val1::AbstractDict, val2::AbstractDict)
     if !issetequal(keys(val1), keys(val2))
-        return nothing
+    return nothing
     end
     result = Dict()
     for key in keys(val1)
@@ -25,7 +25,7 @@ end
 
 function match(val1::AbstractVector, val2::AbstractVector)
     if length(val1) != length(val2)
-        return nothing
+    return nothing
     end
     result = []
     for (v1, v2) in zip(val1, val2)
@@ -89,7 +89,7 @@ import ..Complexity:get_complexity
 using Statistics:mean
 
 get_complexity(value::Matcher)::Float64 =
-    mean(get_complexity, unpack_value(value))
+    mean(get_complexity, unwrap_matcher(value))
 
 
 include("either.jl")

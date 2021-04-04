@@ -1,6 +1,8 @@
 
+using IterTools:imap
+using Base.Iterators:flatten
+
 function get_match_transformers(taskdata::Array{TaskData}, field_info,  invalid_sources, key)
-    result = []
     find_matches_funcs = [
         find_const,
         find_dependent_key,
@@ -10,10 +12,7 @@ function get_match_transformers(taskdata::Array{TaskData}, field_info,  invalid_
         find_shifted_by_key,
         find_neg_shifted_by_key,
     ]
-    for func in find_matches_funcs
-        append!(result, func(taskdata, field_info, invalid_sources, key))
-    end
-    return result
+    return flatten(imap(func -> func(taskdata, field_info, invalid_sources, key), find_matches_funcs))
 end
 
 using ..Solutions:Solution,insert_operation
@@ -21,24 +20,32 @@ using ..Solutions:Solution,insert_operation
 function find_matched_fields(key, solution::Solution)
     new_solutions = []
     transformers = get_match_transformers(solution.taskdata, solution.field_info, union(solution.unfilled_fields, solution.transformed_fields), key)
-    for transformer in transformers
-        new_solution = insert_operation(solution, transformer,
-                                added_complexity=transformer.complexity)
-        push!(new_solutions, new_solution)
-    end
-    if length(new_solutions) != 1
-        append!(new_solutions, find_matching_obj_group(key, solution))
-    end
-    return new_solutions
+    return flatten((imap(
+        transformer -> insert_operation(solution, transformer,
+                                        added_complexity=transformer.complexity), 
+        transformers),
+        find_matching_obj_group(key, solution)
+    ))
 end
+
 
 function match_fields(solution::Solution)
     for key in solution.unfilled_fields
         try
             matched_results = Dict()
-            for new_solution in find_matched_fields(key, solution)
+            valid_solutions_count = prod(length(unpack_value(task[key])) for task in solution.taskdata if haskey(task, key))
+            iter = find_matched_fields(key, solution)
+            state = ()
+            counter = 0
+            while length(matched_results) < valid_solutions_count
+                next = iterate(iter, state)
+                if isnothing(next)
+                    break
+                end
+                counter += 1
+                new_solution, state = next
                 key_result = [task[key] for task in new_solution.taskdata]
-                if !haskey(matched_results, key_result) || matched_results[key_result].complexity_score > new_solution.complexity_score
+                if !haskey(matched_results, key_result) 
                     matched_results[key_result] = new_solution
                 end
             end
@@ -51,7 +58,7 @@ function match_fields(solution::Solution)
             end
         catch
             println(solution)
-            println(solution.taskdata)
+            # println(solution.taskdata)
             rethrow()
         end
     end
@@ -61,20 +68,17 @@ end
 
 function find_matching_for_key(taskdata::Vector{TaskData}, field_info, invalid_sources::AbstractSet{String}, key::String,
                                init_func, filter_func, transformer_class, candidate_checker)
-    result = []
     if !check_type(field_info[key].type, Union{Int64,Tuple{Int64,Int64}})
         return []
     end
-    for input_key in keys(taskdata[1])
+    flatten(imap(keys(taskdata[1])) do input_key
         if in(input_key, invalid_sources) || field_info[key].type != field_info[input_key].type
-            continue
+            return []
         end
-        good = true
         candidates = []
         for task_data in taskdata
             if !haskey(task_data, input_key)
-                good = false
-                break
+                return []
             end
             if !haskey(task_data, key)
                 continue
@@ -86,14 +90,10 @@ function find_matching_for_key(taskdata::Vector{TaskData}, field_info, invalid_s
             end
             filter!(candidate -> filter_func(candidate, input_value, out_value, task_data), candidates)
             if isempty(candidates)
-                good = false
-                break
+                return []
             end
         end
-        if good
-            append!(result, [transformer_class(key, input_key, candidate) for candidate in candidates
-                             if candidate_checker(candidate, taskdata)])
-        end
-    end
-    return result
+        return [transformer_class(key, input_key, candidate) for candidate in candidates
+                if candidate_checker(candidate, taskdata)]
+    end)
 end
