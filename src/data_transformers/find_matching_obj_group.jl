@@ -32,8 +32,10 @@ function _get_matching_transformers(taskdata::Vector{TaskData}, field_info, inva
     if endswith(key, "|selected_group") || any(!haskey(task_data, key) for task_data in taskdata)
         return []
     end
+    upd_keys = updated_keys(taskdata)
     flatten(imap(keys(taskdata[1])) do input_key
         if in(input_key, invalid_sources) ||
+                (!in(key, upd_keys) && !in(input_key, upd_keys)) ||
                 !_check_group_type(field_info[input_key].type, field_info[key].type) ||
                 any(!haskey(task, input_key) for task in taskdata) || 
                 all(length(task[input_key]) <= 1 for task in taskdata)

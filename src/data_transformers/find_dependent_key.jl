@@ -2,8 +2,10 @@
 using ..Operations:CopyParam
 
 function find_dependent_key(taskdata::Vector{TaskData}, field_info, invalid_sources::AbstractSet{String}, key::String)
+    upd_keys = updated_keys(taskdata)
     skipmissing(imap(keys(taskdata[1])) do input_key
-        if in(input_key, invalid_sources) || field_info[key].type != field_info[input_key].type
+        if in(input_key, invalid_sources) || field_info[key].type != field_info[input_key].type || 
+                (!in(key, upd_keys) && !in(input_key, upd_keys))
             return missing
         end
         for task_data in taskdata
