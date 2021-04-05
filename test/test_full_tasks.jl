@@ -20,7 +20,9 @@ using Randy:get_solution,test_solution
 
 @testset "Full tasks" begin
     @testset "run task $fname" for fname in TASKS
-        solution = get_solution(fname)
+        @time begin
+            solution = get_solution(fname)
+        end
         @test test_solution(solution, fname) == (0, 0)
     end
 end

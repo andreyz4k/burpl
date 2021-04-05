@@ -18,7 +18,7 @@ Base.show(io::IO, t::TaskData) = print(io,
     )
 
 Base.copy(t::TaskData) = 
-    TaskData(copy(t.persistent_data), copy(t.updated_values), copy(t.keys_to_delete))
+    TaskData(t.persistent_data, copy(t.updated_values), copy(t.keys_to_delete))
 
 function persist_data(taskdata::TaskData)
     persistent_data = copy(taskdata.persistent_data)
@@ -95,13 +95,19 @@ end
 Base.merge(t::TaskData, others::AbstractDict...) =
     TaskData(t.persistent_data, merge(t.updated_values, others...), setdiff(t.keys_to_delete, [keys(o) for o in others]...))
 
-# Base.merge(t::TaskData, others...) =
-#     TaskData(t.persistent_data, merge(t.updated_values, others...), setdiff(t.keys_to_delete, [[kv[1] for kv in o] for o in others]...))
-
 Base.filter(f::Function, t::TaskData) =
     TaskData(t.persistent_data, filter(f, t.updated_values), union(t.keys_to_delete, keys(filter(!f, t.persistent_data))))
 
 function Base.delete!(t::TaskData, key)
     push!(t.keys_to_delete, key)
 end
+
+function updated_keys(t::TaskData)
+    return filter(k -> !in(k, t.keys_to_delete), keys(t.updated_values))
+end
+
+function updated_keys(taskdata::Vector{TaskData})
+    union((updated_keys(task) for task in taskdata)...)
+end
+
 end

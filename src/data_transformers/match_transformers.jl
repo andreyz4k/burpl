@@ -67,12 +67,14 @@ end
 
 
 function find_matching_for_key(taskdata::Vector{TaskData}, field_info, invalid_sources::AbstractSet{String}, key::String,
-                               init_func, filter_func, transformer_class, candidate_checker)
+                               init_func, filter_func, transformer_class)
     if !check_type(field_info[key].type, Union{Int64,Tuple{Int64,Int64}})
         return []
     end
+    upd_keys = updated_keys(taskdata)
     flatten(imap(keys(taskdata[1])) do input_key
-        if in(input_key, invalid_sources) || field_info[key].type != field_info[input_key].type
+        if in(input_key, invalid_sources) || field_info[key].type != field_info[input_key].type || 
+                (!in(key, upd_keys) && !in(input_key, upd_keys))
             return []
         end
         candidates = []
@@ -87,6 +89,42 @@ function find_matching_for_key(taskdata::Vector{TaskData}, field_info, invalid_s
             out_value = task_data[key]
             if isempty(candidates)
                 candidates = init_func(input_value, out_value, task_data, invalid_sources)
+            end
+            filter!(candidate -> filter_func(candidate, input_value, out_value, task_data), candidates)
+            if isempty(candidates)
+                return []
+            end
+        end
+        return [transformer_class(key, input_key, candidate) for candidate in candidates]
+    end)
+end
+
+function find_matching_for_key(taskdata::Vector{TaskData}, field_info, invalid_sources::AbstractSet{String}, key::String,
+                               init_func, filter_func, transformer_class, candidate_checker)
+    if !check_type(field_info[key].type, Union{Int64,Tuple{Int64,Int64}})
+        return []
+    end
+    upd_keys = updated_keys(taskdata)
+    flatten(imap(keys(taskdata[1])) do input_key
+        if in(input_key, invalid_sources) || field_info[key].type != field_info[input_key].type
+            return []
+        end
+        need_updated_candidates = !in(key, upd_keys) && !in(input_key, upd_keys)
+        candidates = []
+        for task_data in taskdata
+            if !haskey(task_data, input_key)
+                return []
+            end
+            if !haskey(task_data, key)
+                continue
+            end
+            input_value = task_data[input_key]
+            out_value = task_data[key]
+            if isempty(candidates)
+                candidates = init_func(input_value, out_value, task_data, invalid_sources)
+                if need_updated_candidates
+                    candidates = filter(k-> in(k, upd_keys), candidates)
+                end
             end
             filter!(candidate -> filter_func(candidate, input_value, out_value, task_data), candidates)
             if isempty(candidates)

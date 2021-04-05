@@ -11,7 +11,7 @@ function _get_diff_value(val1::Dict, val2::Dict)
     _get_diff_value(v1, val2[key])
 end
 
-function _init_shift(input_value, output_value, _, _)
+function _init_shift(input_value, output_value, ::Any, ::Any)
     input_value = unpack_value(input_value)[1]
     filter(v -> !isnothing(v), [_get_diff_value(value, input_value) for value in unpack_value(output_value) if value != input_value])
 end
@@ -19,4 +19,4 @@ _shifted_filter(shift, input_value, output_value, _) = check_match(apply_func(in
 
 
 find_shifted_key(taskdata::Vector{TaskData}, field_info, invalid_sources::AbstractSet{String}, key::String) =
-    find_matching_for_key(taskdata, field_info, invalid_sources, key, _init_shift, _shifted_filter, IncParam, (_, _) -> true)
+    find_matching_for_key(taskdata, field_info, invalid_sources, key, _init_shift, _shifted_filter, IncParam)

@@ -4,7 +4,7 @@ export DataTransformers
 module DataTransformers
 using ..Complexity:get_complexity
 using ..PatternMatching:update_value,unpack_value,common_value,check_type,apply_func,check_match
-using ..Taskdata:TaskData
+using ..Taskdata:TaskData,updated_keys
 
 include("find_const.jl")
 include("find_dependent_key.jl")

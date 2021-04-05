@@ -3,6 +3,9 @@ using ..Operations:SetConst
 
 function find_const(taskdata::Vector{TaskData}, _, _, key::String)::Vector{SetConst}
     result = nothing
+    if !in(key, updated_keys(taskdata))
+        return []
+    end
     for task_data in taskdata
         if !haskey(task_data, key)
             continue

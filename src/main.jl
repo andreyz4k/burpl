@@ -30,9 +30,9 @@ function main()
         "--filename"
             help = "task file to solve"
             # arg_type = string
-            # default = "data/training/ff28f65a.json"
+            default = "data/training/ff28f65a.json"
             # default = "data/training/0a938d79.json"
-            default = "data/training/0b148d64.json"
+            # default = "data/training/0b148d64.json"
             # default = "data/training/39a8645d.json"
             # default = "data/training/6e02f1e3.json"
             # default = "data/training/72ca375d.json"
