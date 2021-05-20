@@ -132,6 +132,6 @@ function find_matching_for_key(taskdata::Vector{TaskData}, field_info, invalid_s
             end
         end
         return [transformer_class(key, input_key, candidate) for candidate in candidates
-                if candidate_checker(candidate, taskdata)]
+                if candidate_checker(candidate, input_key, taskdata)]
     end)
 end

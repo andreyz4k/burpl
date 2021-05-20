@@ -174,14 +174,17 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
                 continue
             end
             # println((priority, new_error))
-            if new_error == 0
-                println((real_visited, length(queue)))
-                return new_solution
-            end
-            i += 1
             if new_error < best_solution.score
                 best_solution = new_solution
             end
+            if new_error == 0
+                if isempty(new_solution.unfilled_fields)
+                    println((real_visited, length(queue)))
+                    return new_solution
+                end
+                continue
+            end
+            i += 1
             new_priority = priority * (i + 1) / 2
             new_priority = min(new_priority, get(queue, (new_solution, i - 1), new_priority))
             queue[(new_solution, i - 1)] = new_priority
