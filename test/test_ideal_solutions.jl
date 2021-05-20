@@ -2,7 +2,7 @@
 using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObjectsByColor,
     RepeatObjectInfinite,DotProductClass,UnwrapSingleList,AlignedWithBorder,DistanceBetweenObjects,RemoveRedundantDict,
     GetPosition,GroupMin,MinPadding,UniteTouching,GroupMax,CompactSimilarObjects,GetSize,SeparateAxis,VerticalSymmetry,
-    HorisontalSymmetry
+    HorisontalSymmetry,UniteInRect
 
 @testset "Check ideal solutions" begin
     @testset "ff28f65a" begin
@@ -46,7 +46,7 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
         fname = "../data/training/0b148d64.json"
         taskdata = Randy.get_taskdata(fname)
         operations = [
-            (BackgroundColor(), "output", false),
+        (BackgroundColor(), "output", false),
             (BackgroundColor(), "input", true),
             (SolidObjects(), "output|bgr_grid", false),
             (SolidObjects(), "input|bgr_grid", true),
@@ -54,8 +54,6 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
             (GetPosition(), "output|bgr_grid|spatial_objects", false),
             (CountObjects(), "input|bgr_grid|spatial_objects|grouped", true),
             (GroupMin(), "input|bgr_grid|spatial_objects|grouped|length", true),
-            (GetPosition(), "output|bgr_grid|spatial_objects|shapes", true),
-            (MinPadding(), "output|bgr_grid|spatial_objects|shapes|positions", true),
         ]
         solution = create_solution(taskdata["train"], operations)
         @test Randy.test_solution(solution, fname) == (0, 0)
@@ -71,11 +69,12 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
             (SolidObjects(), "input|bgr_grid", true),
             (GroupObjectsByColor(), "input|bgr_grid|spatial_objects", true),
             (UniteTouching(), "input|bgr_grid|spatial_objects|grouped", true),
-            (DotProductClass(), "input|bgr_grid|spatial_objects|grouped|united_touch", true),
-            (GroupMax(), "input|bgr_grid|spatial_objects|grouped|united_touch|shapes|count", true),
+            (CompactSimilarObjects(), "input|bgr_grid|spatial_objects|grouped|united_touch", true),
+            (CountObjects(), "input|bgr_grid|spatial_objects|grouped|united_touch|positions", true),
+            (GroupMax(), "input|bgr_grid|spatial_objects|grouped|united_touch|positions|length", true),
             (UniteTouching(), "output|bgr_grid|spatial_objects", false),
-            (GetPosition(), "output|bgr_grid|spatial_objects|united_touch", false),
-            (UnwrapSingleList(), "output|bgr_grid|spatial_objects|united_touch|shapes", false),
+            (UnwrapSingleList(), "output|bgr_grid|spatial_objects|united_touch", false),
+            (GetPosition(), "output|bgr_grid|spatial_objects|united_touch|single_value", false),
         ]
         solution = create_solution(taskdata["train"], operations)
         @test Randy.test_solution(solution, fname) == (0, 0)
@@ -89,10 +88,14 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
             (BackgroundColor(), "input", true),
             (SolidObjects(), "output|bgr_grid", false),
             (SolidObjects(), "input|bgr_grid", true),
-            (GetPosition(), "output|bgr_grid|spatial_objects", false),
-            (GetPosition(), "input|bgr_grid|spatial_objects", true),
-            (GetSize(), "input|bgr_grid|spatial_objects", true),
-            (SeparateAxis(), "input|bgr_grid|spatial_objects|obj_size", true),
+            (GroupObjectsByColor(), "output|bgr_grid|spatial_objects", false),
+            (GroupObjectsByColor(), "input|bgr_grid|spatial_objects", true),
+            (UnwrapSingleList(), "output|bgr_grid|spatial_objects|grouped", false),
+            (UnwrapSingleList(), "input|bgr_grid|spatial_objects|grouped", true),
+            (GetPosition(), "output|bgr_grid|spatial_objects|grouped|single_value", false),
+            (GetPosition(), "input|bgr_grid|spatial_objects|grouped|single_value", true),
+            (GetSize(), "input|bgr_grid|spatial_objects|grouped|single_value", true),
+            (SeparateAxis(), "input|bgr_grid|spatial_objects|grouped|single_value|obj_size", true),
         ]
         solution = create_solution(taskdata["train"], operations)
         @test Randy.test_solution(solution, fname) == (0, 0)
@@ -110,8 +113,8 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
             (UnwrapSingleList(), "output|bgr_grid|spatial_objects|united_touch", false),
             (VerticalSymmetry(), "output|bgr_grid|spatial_objects|united_touch|single_value", false),
             (HorisontalSymmetry(), "output|bgr_grid|spatial_objects|united_touch|single_value|vert_kernel", false),
-            (DotProductClass(), "output|bgr_grid|spatial_objects|united_touch|single_value|vert_kernel|horz_kernel", false),
             (UnwrapSingleList(), "input|bgr_grid|spatial_objects", true),
+            (DotProductClass(), "output|bgr_grid|spatial_objects|united_touch|single_value|vert_kernel|horz_kernel", false),
         ]
         solution = create_solution(taskdata["train"], operations)
         @test Randy.test_solution(solution, fname) == (0, 0)

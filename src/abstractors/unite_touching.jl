@@ -24,19 +24,21 @@ function _is_touching(a::Object, b::Object)
     false
 end
 
-function check_task_value(::UniteTouching, value::AbstractVector{Object}, data, aux_values)
+function check_task_value(::UniteTouching, value::AbstractSet{Object}, data, aux_values)
+    value = collect(value)
     for (i, a) in enumerate(value), b in view(value, i + 1:length(value))
         if get_color(a) == get_color(b) && _is_touching(a, b)
             data["effective"] = true
             break
         end
     end
-    true
+true
 end
 
-function to_abstract_value(p::Abstractor{UniteTouching}, source_value::AbstractVector{Object})
-    out = Object[]
+function to_abstract_value(p::Abstractor{UniteTouching}, source_value::AbstractSet{Object})
+    out = Set{Object}()
     merged = Set()
+    source_value = collect(source_value)
     for (i, obj) in enumerate(source_value)
         if in(obj, merged)
             continue

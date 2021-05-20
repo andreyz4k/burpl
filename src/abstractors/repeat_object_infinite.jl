@@ -9,11 +9,11 @@ init_create_check_data(::RepeatObjectInfinite, key, solution) = Dict("effective"
 
 using ..ObjectPrior:point_in_rect
 
-function check_task_value(::RepeatObjectInfinite, value::AbstractVector{Object}, data, aux_values)
+function check_task_value(::RepeatObjectInfinite, value::AbstractSet{Object}, data, aux_values)
     if isempty(value)
         return false
     end
-    items = sort(value, by=obj -> obj.position)
+    items = sort(collect(value), by=obj -> obj.position)
     if any(obj.shape != items[1].shape for obj in view(items, 2:length(items)))
         return false
     end
@@ -30,7 +30,7 @@ function check_task_value(::RepeatObjectInfinite, value::AbstractVector{Object},
             return false
         end
     end
-    true
+true
 end
 
 
@@ -38,7 +38,7 @@ needed_input_keys(p::Abstractor{RepeatObjectInfinite}) =
     p.to_abstract ? p.input_keys : p.input_keys[1:2:3]
 
 function to_abstract_value(p::Abstractor{RepeatObjectInfinite}, source_value, grid_size)
-    objects = sort(source_value, by=obj -> obj.position)
+    objects = sort(collect(source_value), by=obj -> obj.position)
     if length(objects) == 1
         return Dict(p.output_keys[1] => objects[1])
     end
@@ -61,7 +61,7 @@ function to_abstract_value(p::Abstractor{RepeatObjectInfinite}, source_value, gr
 end
 
 function from_abstract_value(p::Abstractor{RepeatObjectInfinite}, first, step, grid_size)
-    out_value = [first]
+    out_value = Set{Object}([first])
     i = 1
     while !isnothing(step)
         pos = first.position .+ step .* i

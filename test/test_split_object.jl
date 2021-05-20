@@ -30,7 +30,7 @@ using .ObjectPrior:Object
         out_data = splitter(value)
         @test out_data == Dict(
             "key" => Object([1; 1; 1; 1; 1; 1; 1], (1, 6)),
-            "key|splitted" => [
+            "key|splitted" => Set([
                 Object([1], (1, 6)),
                 Object([1], (2, 6)),
                 Object([1], (3, 6)),
@@ -38,7 +38,7 @@ using .ObjectPrior:Object
                 Object([1], (5, 6)),
                 Object([1], (6, 6)),
                 Object([1], (7, 6)),
-            ]
+            ])
         )
         delete!(out_data, "key")
         splitter = SplitObject("key", false)
@@ -72,7 +72,7 @@ using .ObjectPrior:Object
             ]),
             "key|splitted" => Either([
                 Option(
-                    [
+                    Set([
                         Object([1], (1, 6)),
                         Object([1], (2, 6)),
                         Object([1], (3, 6)),
@@ -80,11 +80,11 @@ using .ObjectPrior:Object
                         Object([1], (5, 6)),
                         Object([1], (6, 6)),
                         Object([1], (7, 6)),
-                    ],
+                    ]),
                     1519798033240906986
                 ),
                 Option(
-                    [
+                    Set([
                         Object([1], (1, 18)),
                         Object([1], (2, 18)),
                         Object([1], (3, 18)),
@@ -92,7 +92,7 @@ using .ObjectPrior:Object
                         Object([1], (5, 18)),
                         Object([1], (6, 18)),
                         Object([1], (7, 18)),
-                    ],
+                    ]),
                     -8964597388769226366
                 )
             ])

@@ -8,7 +8,7 @@ abs_keys(::GroupObjectsByColor) = ["grouped", "group_keys"]
 
 init_create_check_data(::GroupObjectsByColor, key, solution) = Dict("effective" => false)
 
-function check_task_value(::GroupObjectsByColor, value::AbstractVector{Object}, data, aux_values)
+function check_task_value(::GroupObjectsByColor, value::AbstractSet{Object}, data, aux_values)
     colors = Set()
     for obj in value
         push!(colors, get_color(obj))
@@ -18,14 +18,14 @@ function check_task_value(::GroupObjectsByColor, value::AbstractVector{Object}, 
 end
 
 function to_abstract_value(p::Abstractor{GroupObjectsByColor}, source_value)
-    results = DefaultDict(() -> Object[])
+    results = DefaultDict(() -> Set{Object}())
     for obj in source_value
         key = get_color(obj)
         push!(results[key], obj)
     end
     return Dict(
         p.output_keys[1] => Dict(k => v for (k, v) in results),
-        p.output_keys[2] => sort([k for k in keys(results)])
+        p.output_keys[2] => Set(keys(results))
     )
 end
 
@@ -40,9 +40,9 @@ end
 
 function from_abstract_value(p::Abstractor{GroupObjectsByColor}, data, keys)
     results = reduce(
-        vcat,
+        union,
         values(data),
-        init=Object[]
+        init=Set{Object}()
     )
     return Dict(p.output_keys[1] => results)
 end

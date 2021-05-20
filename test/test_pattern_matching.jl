@@ -1,6 +1,6 @@
 
 using .FindSolution:match_fields
-using .PatternMatching:Either,make_either,Option,common_value,update_value,unpack_value,ArrayPrefix,ObjectShape,Matcher
+using .PatternMatching:Either,make_either,Option,common_value,update_value,unpack_value,SubSet,ObjectShape,Matcher,check_match,AuxValue
 using .ObjectPrior:Object
 using .Abstractors:iter_source_either_values
 
@@ -278,8 +278,50 @@ using .Abstractors:iter_source_either_values
         ]
     end
 
+    @testset "order values in subset" begin
+        a = SubSet(Set{Int}([3, 2, 1]))
+        b = SubSet(Set{Int}([2, 1]))
+        c = common_value(a, b)
+        @test unpack_value(c)[1][3] == 3
+        d = SubSet(Set{Int}([1]))
+        e = common_value(c, d)
+        @test unpack_value(e)[1] == [1, 2, 3]
+    end
+
+    @testset "match set of shapes" begin
+        a = SubSet(
+            Set{ObjectShape{Object}}([
+                ObjectShape(Object([2], (1, 2))),
+                ObjectShape(Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 1))),
+                ObjectShape(Object([2], (7, 6))),
+                ObjectShape(Object([2; 2], (9, 6)))
+            ])
+        )
+        b = Set{Object}([
+            Object([2], (1, 13)),
+            Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
+            Object([2], (7, 17)),
+            Object([2 2], (8, 17)),
+            Object([2; 2], (9, 17))
+        ])
+        @test check_match(b, a)
+        c = Set{Object}([
+            Object([2], (1, 13)),
+            Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
+            Object([2 2], (8, 17)),
+            Object([2; 2], (9, 17))
+        ])
+        @test !check_match(c, a)
+        d = Set{Object}([
+            Object([2], (1, 13)),
+            Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
+            Object([2], (7, 17)),
+        ])
+        @test !check_match(d, a)
+    end
+
     @testset "match counted array of shapes" begin
-        a = ArrayPrefix(
+        a = SubSet(
             ObjectShape{Object}[
                 ObjectShape(Object([2], (1, 2))),
                 ObjectShape(Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 1))),
@@ -293,7 +335,291 @@ using .Abstractors:iter_source_either_values
             Object([2], (7, 17)),
             Object([2; 2], (9, 17))
         ]
-        @test !isnothing(common_value(b, a))
+        @test check_match(b, a)
+        c = Object[
+            Object([2], (1, 13)),
+            Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
+            Object([2 2], (8, 17)),
+            Object([2; 2], (9, 17))
+        ]
+        @test !check_match(c, a)
+        d = Object[
+            Object([2], (1, 13)),
+            Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
+            Object([2], (7, 17)),
+        ]
+        @test !check_match(d, a)
+        e = Object[
+            Object([2], (1, 13)),
+            Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
+            Object([2], (7, 17)),
+            Object([2; 2], (9, 17)),
+            Object([2 2], (8, 17)),
+        ]
+        @test check_match(e, a)
     end
 
+    @testset "match either of subsets" begin
+        a = Either([
+            Option(
+                Either([
+                    Option(
+                        SubSet(
+                            Set([
+                                Object([0], (2, 1)), 
+                                Object([0], (1, 2))
+                            ])
+                        ), 
+                        13303829909579842466
+                    ), 
+                    Option(
+                        SubSet(
+                            Set([
+                                Object([0], (1, 1)), 
+                                Object([0], (2, 2))
+                            ])
+                        ), 
+                        6573933442709006643
+                    )
+                ]), 
+                7969767543712303777
+            ), 
+            Option(
+                Either([
+                    Option(
+                        SubSet(
+                            Set([
+                                Object([0], (2, 1)), 
+                                Object([0], (1, 2))
+                            ])
+                        ), 
+                        14134205155490256176
+                    ), 
+                    Option(
+                        SubSet(
+                            Set([
+                                Object([0], (1, 1)), 
+                                Object([0], (2, 2))
+                            ])
+                        ), 
+                        4314826064247553369
+                    )
+                ]), 
+                8389884921107435457
+            )
+        ])
+        b = Object[
+            Object([0], (1, 1)), 
+            Object([0], (2, 2)), 
+            Object([0], (3, 3)), 
+            Object([0], (4, 4))
+        ]
+        c = Either([
+            Option(
+                SubSet(
+                    Set([
+                        Object([0], (2, 1)), 
+                        Object([0], (1, 2))
+                    ])
+                ), 
+                13303829909579842466
+            ), 
+            Option(
+                SubSet(
+                    Set([
+                        Object([0], (1, 1)), 
+                        Object([0], (2, 2))
+                    ])
+                ), 
+                6573933442709006643
+            )
+        ])
+        d = SubSet(
+            Set([
+                Object([0], (1, 1)), 
+                Object([0], (2, 2))
+            ])
+        )
+        e = [
+            Object([0], (1, 1)), 
+            Object([0], (2, 2))
+        ]
+        @test check_match(b, a)
+        @test check_match(b, c)
+        @test check_match(b, d)
+        @test check_match(e, d)
+    end
+
+    @testset "match nested either with aux" begin
+        taskdata = make_taskdata(
+            Dict(
+                "vert_kernel|horz_kernel|splitted|first" => Either([
+                    Option(Either([
+                        Option(Object([0], (2, 2)), 2229600132097324827), 
+                        Option(Either([
+                            Option(Object([0], (1, 2)), 17375691416059178657), 
+                            Option(Object([0], (2, 1)), 7846536631665789771)
+                        ]), 8454689442923949871), 
+                        Option(Object([0], (2, 2)), 9066318667632083547), 
+                        Option(Either([
+                            Option(Object([0], (2, 3)), 2793800711255044032), 
+                            Option(Object([0], (1, 2)), 16699880208097204678)
+                        ]), 2841229356805458503)
+                    ]), 14914076444286691944), 
+                    Option(Either([
+                        Option(Object([0], (2, 2)), 15068936698137099477), 
+                        Option(Object([0], (2, 2)), 9455476612018608109), 
+                        Option(Either([
+                            Option(Object([0], (3, 2)), 10804414570319185252), 
+                            Option(Object([0], (2, 1)), 6263381081530699870)
+                        ]), 15680565922845233153), 
+                        Option(Either([
+                            Option(Object([0], (3, 2)), 13064878422929315778), 
+                            Option(Object([0], (2, 3)), 4146920221692058636)
+                        ]), 8843847387310474433)
+                    ]), 15081192867680029596), 
+                    Option(Either([
+                        Option(Object([0], (2, 2)), 2229600132097324827), 
+                        Option(Either([
+                            Option(Object([0], (1, 2)), 17375691416059178657), 
+                            Option(Object([0], (2, 1)), 7846536631665789771)
+                        ]), 8454689442923949871), 
+                        Option(Object([0], (2, 2)), 9066318667632083547), 
+                        Option(Either([
+                            Option(Object([0], (2, 3)), 2793800711255044032), 
+                            Option(Object([0], (1, 2)), 16699880208097204678)
+                        ]), 2841229356805458503)
+                    ]), 895491277412430600), 
+                    Option(Either([
+                        Option(Object([0], (2, 2)), 15068936698137099477), 
+                        Option(Object([0], (2, 2)), 9455476612018608109), 
+                        Option(Either([
+                            Option(Object([0], (3, 2)), 10804414570319185252), 
+                            Option(Object([0], (2, 1)), 6263381081530699870)
+                        ]), 15680565922845233153), 
+                        Option(Either([
+                            Option(Object([0], (3, 2)), 13064878422929315778), 
+                            Option(Object([0], (2, 3)), 4146920221692058636)
+                        ]), 8843847387310474433)
+                    ]), 1062607700805768252)
+                ]), 
+                "vert_kernel|horz_kernel|splitted|step" => Either([
+                    Option(Either([
+                        Option((-1, 1), 2229600132097324827), 
+                        Option(Either([
+                            Option((1, -1), 17375691416059178657), 
+                            Option((-1, 1), 7846536631665789771)
+                        ]), 8454689442923949871), 
+                        Option((-1, -1), 9066318667632083547), 
+                        Option(Either([
+                            Option((-1, -1), 2793800711255044032), 
+                            Option((1, 1), 16699880208097204678)
+                        ]), 2841229356805458503)
+                    ]), 14914076444286691944), 
+                    Option(Either([
+                        Option((1, -1), 15068936698137099477), 
+                        Option((1, 1), 9455476612018608109), 
+                        Option(Either([
+                            Option((-1, -1), 10804414570319185252), 
+                            Option((1, 1), 6263381081530699870)
+                        ]), 15680565922845233153), 
+                        Option(Either([
+                            Option((-1, 1), 13064878422929315778), 
+                            Option((1, -1), 4146920221692058636)
+                        ]), 8843847387310474433)
+                    ]), 15081192867680029596), 
+                    Option(Either([
+                        Option((-1, 1), 2229600132097324827), 
+                        Option(Either([
+                            Option((1, -1), 17375691416059178657), 
+                            Option((-1, 1), 7846536631665789771)
+                        ]), 8454689442923949871), 
+                        Option((-1, -1), 9066318667632083547), 
+                        Option(Either([
+                            Option((-1, -1), 2793800711255044032), 
+                            Option((1, 1), 16699880208097204678)
+                        ]), 2841229356805458503)
+                    ]), 895491277412430600), 
+                    Option(Either([
+                        Option((1, -1), 15068936698137099477), 
+                        Option((1, 1), 9455476612018608109), 
+                        Option(Either([
+                            Option((-1, -1), 10804414570319185252), 
+                            Option((1, 1), 6263381081530699870)
+                        ]), 15680565922845233153), 
+                        Option(Either([
+                            Option((-1, 1), 13064878422929315778), 
+                            Option((1, -1), 4146920221692058636)
+                        ]), 8843847387310474433)
+                    ]), 1062607700805768252)
+                ]), 
+                "vert_is_left" => AuxValue(Either([
+                    Option(true, 895491277412430600), 
+                    Option(true, 14914076444286691944), 
+                    Option(false, 1062607700805768252), 
+                    Option(false, 15081192867680029596)
+                ])),
+                "vert_kernel|horz_is_top" => Either([
+                    Option(AuxValue(Either([
+                        Option(true, 8454689442923949871), 
+                        Option(true, 9066318667632083547), 
+                        Option(false, 2229600132097324827), 
+                        Option(false, 2841229356805458503)
+                    ])), 14914076444286691944), 
+                    Option(AuxValue(Either([
+                        Option(true, 15068936698137099477), 
+                        Option(true, 15680565922845233153), 
+                        Option(false, 8843847387310474433), 
+                        Option(false, 9455476612018608109)
+                    ])), 15081192867680029596), 
+                    Option(AuxValue(Either([
+                        Option(true, 9066318667632083547), 
+                        Option(true, 8454689442923949871), 
+                        Option(false, 2841229356805458503), 
+                        Option(false, 2229600132097324827)
+                    ])), 895491277412430600), 
+                    Option(AuxValue(Either([
+                        Option(true, 15680565922845233153), 
+                        Option(true, 15068936698137099477), 
+                        Option(false, 9455476612018608109), 
+                        Option(false, 8843847387310474433)
+                    ])), 1062607700805768252)
+                ]),
+            )
+        )
+        new_data = update_value(taskdata, "vert_kernel|horz_kernel|splitted|step", (-1, -1))
+        @test new_data == Dict(
+            "vert_kernel|horz_kernel|splitted|first" => Either([
+                Option(Either([
+                    Option(Object([0], (2, 2)), 9066318667632083547), 
+                    Option(Object([0], (2, 3)), 2841229356805458503)
+                ]), 14914076444286691944), 
+                Option(Object([0], (3, 2)), 15081192867680029596), 
+                Option(Either([
+                    Option(Object([0], (2, 2)), 9066318667632083547), 
+                    Option(Object([0], (2, 3)), 2841229356805458503)
+                ]), 895491277412430600), 
+                Option(Object([0], (3, 2)), 1062607700805768252)
+            ]), 
+            "vert_kernel|horz_kernel|splitted|step" => (-1, -1), 
+            "vert_is_left" => AuxValue(Either([
+                Option(true, 895491277412430600), 
+                Option(true, 14914076444286691944), 
+                Option(false, 1062607700805768252), 
+                Option(false, 15081192867680029596)
+            ])),
+            "vert_kernel|horz_is_top" => Either([
+                Option(AuxValue(Either([
+                    Option(true, 9066318667632083547), 
+                    Option(false, 2841229356805458503)
+                ])), 14914076444286691944), 
+                Option(AuxValue(true), 15081192867680029596), 
+                Option(AuxValue(Either([
+                    Option(true, 9066318667632083547), 
+                    Option(false, 2841229356805458503), 
+                ])), 895491277412430600), 
+                Option(AuxValue(true), 1062607700805768252)
+            ]),
+        )
+    end
 end

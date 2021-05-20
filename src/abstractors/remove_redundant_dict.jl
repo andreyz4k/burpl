@@ -23,7 +23,7 @@ end
 to_abstract_value(p::Abstractor{RemoveRedundantDict}, source_value::AbstractDict) =
     Dict(
         p.output_keys[1] => first(values(source_value)),
-        p.output_keys[2] => sort(collect(keys(source_value)))
+        p.output_keys[2] => Set(keys(source_value))
         )
 
 from_abstract_value(p::Abstractor{RemoveRedundantDict}, value, keys) =

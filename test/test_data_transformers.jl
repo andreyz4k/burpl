@@ -1,7 +1,7 @@
 
 using .PatternMatching:Either,Option,ObjectShape,AuxValue
 using .DataTransformers:find_const,SetConst,CopyParam,find_dependent_key,
-MultParam,MultByParam,IncParam,IncByParam,MapValues,match_fields,DecByParam
+MultParam,MultByParam,IncParam,IncByParam,MapValues,match_fields,DecByParam,_init_shift
 using .ObjectPrior:Object
 using .Abstractors:SelectGroup,Abstractor
 using .Solutions:FieldInfo
@@ -207,9 +207,9 @@ using .Solutions:FieldInfo
         ])
         _compare_operations(expected_operations, new_solutions)
         
-        @test filtered_taskdata(new_solutions[2]) == [
+        @test filtered_taskdata(new_solutions[1]) == [
             Dict(
-                "key1" => 1,
+        "key1" => 1,
                 "key2" => 2
             ),
             Dict(
@@ -217,7 +217,7 @@ using .Solutions:FieldInfo
                 "key2" => 2
             )
         ]
-        @test filtered_taskdata(new_solutions[1]) == [
+        @test filtered_taskdata(new_solutions[2]) == [
             Dict(
                 "key1" => 3,
                 "key2" => 4
@@ -744,12 +744,12 @@ using .Solutions:FieldInfo
         _compare_operations(expected_operations, new_solutions)
     end
 
-    @testset "find shift" begin
+        @testset "find shift" begin
         solution = make_dummy_solution([
             Dict(
-                "key" => 10,
+    "key" => 10,
                 "key1" => 5,
-                "key2" => 2
+        "key2" => 2
             ),
             Dict(
                 "key" => 12,
@@ -763,6 +763,70 @@ using .Solutions:FieldInfo
             [IncParam("key", "key1", 5)],
         ])
         _compare_operations(expected_operations, new_solutions)
+    end
+
+    @testset "init shift" begin
+        output = Dict{Any,Any}(
+        4 => Either([
+                Option(Either([
+                    Option(Either([
+                        Option((12, 13), 1439039091715606646), 
+                        Option((13, 13), 10532915747997997688)
+                    ]), 13989309722801013475), 
+                    Option(Either([
+                        Option((13, 12), 11929263516269903923), 
+                        Option((12, 12), 2835386859987512881)
+                    ]), 12906144782117681285)
+                ]), 13594747185408603336), 
+                Option(Either([
+                    Option(Either([
+        Option(Either([
+                            Option((10, 15), 3865867272043605856), 
+                            Option((11, 15), 12959395361664993112)
+                        ]), 16416137903129012685), 
+                        Option(Either([
+                            Option((10, 14), 5260989930958528677), 
+                            Option((11, 14), 14354518020579915933)
+                        ]), 15331747853088697081)
+                    ]), 17213712404802159526), 
+                    Option(Either([
+                        Option((10, 12), 8053821950825653342), 
+                        Option((11, 12), 17147350040447040598)
+                    ]), 17527031715714045766)
+                ]), 16333669567291505372)
+            ]), 
+            2 => Either([
+                Option(Either([
+                    Option(Either([
+                        Option((6, 15), 3553143675243435865), 
+                        Option((5, 15), 12906220461588955694)
+                    ]), 7009747018964810907), 
+                    Option(Either([
+                        Option((6, 14), 4948266334158358686), 
+                        Option((5, 14), 14301343120503878515)
+                    ]), 5925356968924495303)
+                ]), 5327808811682719323), 
+                Option(Either([
+                    Option((7, 14), 9083140335856952278), 
+                    Option((8, 14), 18176737439160367447)
+                ]), 2589118735991031511)
+            ]), 
+            1 => Either([
+                Option(Either([
+                    Option(Either([
+                        Option((2, 15), 7375351003490943509), 
+                        Option((2, 14), 6290960953450627905)
+                    ]), 8172925505164090350), 
+                    Option((2, 12), 8486244816075976590)
+                ]), 7292882667653436196), 
+                Option(Either([
+                    Option((3, 13), 16781297397194507969), 
+                    Option((3, 12), 15698132456511175779)
+                ]), 16386734859802097830)
+            ])
+        )
+        input = Dict(4 => (10, 12), 2 => (5, 14), 1 => (2, 12))
+        @test _init_shift(input, output) == [(1, 0)]
     end
 
     @testset "find shifted tuple list" begin
@@ -974,7 +1038,7 @@ end
                 "input|bgr_grid|spatial_objects|obj_size|coord2" => [(0, 4), (0, 2), (0, 4)],
                 "output|grid|bgr_grid|spatial_objects|positions" => [(2, 8), (5, 12), (10, 8)],
             ),
-            Dict(
+        Dict(
                 "input|bgr_grid|spatial_objects|positions" => [(2, 10), (8, 14), (12, 11)],
                 "input|bgr_grid|spatial_objects|obj_size|coord2" => [(0, 6), (0, 2), (0, 5)],
                 "output|grid|bgr_grid|spatial_objects|positions" => [(2, 4), (8, 12), (12, 6)],
@@ -983,6 +1047,66 @@ end
                 "input|bgr_grid|spatial_objects|positions" => [(2, 15), (8, 12), (12, 13)],
                 "input|bgr_grid|spatial_objects|obj_size|coord2" => [(0, 1), (0, 4), (0, 3)],
                 "output|grid|bgr_grid|spatial_objects|positions" => [(2, 14), (8, 8), (12, 10)],
+            )
+        ],["output|grid|bgr_grid|spatial_objects|positions"])
+        new_solutions = match_fields(solution)
+        @test length(new_solutions) == 1
+        expected_operations = Set([
+            [DecByParam("output|grid|bgr_grid|spatial_objects|positions", "input|bgr_grid|spatial_objects|positions", "input|bgr_grid|spatial_objects|obj_size|coord2")],
+        ])
+        _compare_operations(expected_operations, new_solutions)
+
+        solution = make_dummy_solution([
+            Dict(
+                "input|bgr_grid|spatial_objects|positions" => Dict(
+                    1 => (2, 12), 
+                    2 => (5, 14), 
+                    3 => (10, 12)
+                ),
+                "input|bgr_grid|spatial_objects|obj_size|coord2" => Dict(
+                    1 => (0, 4), 
+                    2 => (0, 2), 
+                    3 => (0, 4)
+                ),
+                "output|grid|bgr_grid|spatial_objects|positions" => Dict(
+                    1 => (2, 8), 
+                    2 => (5, 12), 
+                    3 => (10, 8)
+        ),
+            ),
+            Dict(
+                "input|bgr_grid|spatial_objects|positions" => Dict(
+                    1 => (2, 10), 
+                    2 => (8, 14), 
+                    3 => (12, 11)
+                ),
+                "input|bgr_grid|spatial_objects|obj_size|coord2" => Dict(
+                    1 => (0, 6), 
+                    2 => (0, 2), 
+                    3 => (0, 5)
+                ),
+                "output|grid|bgr_grid|spatial_objects|positions" => Dict(
+                    1 => (2, 4), 
+                    2 => (8, 12), 
+                    3 => (12, 6)
+                ),
+            ),
+            Dict(
+                "input|bgr_grid|spatial_objects|positions" => Dict(
+                    1 => (2, 15), 
+                    2 => (8, 12), 
+                    3 => (12, 13)
+                ),
+                "input|bgr_grid|spatial_objects|obj_size|coord2" => Dict(
+                    1 => (0, 1), 
+                    2 => (0, 4), 
+                    3 => (0, 3)
+                ),
+                "output|grid|bgr_grid|spatial_objects|positions" => Dict(
+                    1 => (2, 14), 
+                    2 => (8, 8), 
+                    3 => (12, 10)
+                ),
             )
         ],["output|grid|bgr_grid|spatial_objects|positions"])
         new_solutions = match_fields(solution)

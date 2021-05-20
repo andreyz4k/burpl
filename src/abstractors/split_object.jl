@@ -13,7 +13,7 @@ function check_task_value(::SplitObject, value::Object, data, aux_values)
 end
 
 function to_abstract_value(p::Abstractor{SplitObject}, object::Object)
-    res = Object[]
+    res = Set{Object}()
     for i in 1:size(object.shape)[1], j in 1:size(object.shape)[2]
         if object.shape[i, j] != -1
             push!(res, Object([object.shape[i, j]], object.position .+ (i - 1, j - 1)))
@@ -33,8 +33,8 @@ function _merge_objects(obj1::Object, obj2::Object)
 end
 
 function from_abstract_value(p::Abstractor{SplitObject}, objects)
-    result = objects[1]
-    for obj in objects[2:end]
+    result = first(objects)
+    for obj in objects
         result = _merge_objects(result, obj)
     end
     return Dict(p.output_keys[1] => result)

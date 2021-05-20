@@ -32,7 +32,7 @@ function from_abstract_value(p::Abstractor{SolidObjects}, objects, grid_size)
         end
         grid_size = reduce((a, b) -> max.(a, b), (obj.position .+ size(obj.shape) .- (1, 1) for obj in objects), init=(0, 0))
     elseif isnothing(objects)
-        objects = []
+        objects = Set()
     end
     
     grid = fill(-1, grid_size...)

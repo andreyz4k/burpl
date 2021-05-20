@@ -4,7 +4,6 @@ struct DotProductClass <: AbstractorClass end
 
 const ALLOWED_DOT_PRODUCTS = [
     [SplitObject(),RepeatObjectInfinite()],
-    [GetPosition(), CompactSimilarObjects()],
 ]
 
 struct DotProduct <: Operation

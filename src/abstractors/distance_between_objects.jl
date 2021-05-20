@@ -4,7 +4,7 @@ struct DistanceBetweenObjects <: ComputeFunctionClass end
 
 abs_keys(::DistanceBetweenObjects) = ["distance"]
 
-check_task_value(::DistanceBetweenObjects, value::AbstractVector{Object}, data, aux_values) =
+check_task_value(::DistanceBetweenObjects, value::AbstractSet{Object}, data, aux_values) =
     length(value) == 2
 
 function to_abstract_value(p::Abstractor{DistanceBetweenObjects}, source_value)

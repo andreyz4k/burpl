@@ -2,10 +2,10 @@
 
 struct GetPosition <: AbstractorClass end
 
-abs_keys(::GetPosition) = ["positions", "shapes"]
+abs_keys(::GetPosition) = ["position", "shape"]
 
 check_task_value(::GetPosition, value::Object, data, aux_values) = true
-check_task_value(::GetPosition, value::AbstractVector{Object}, data, aux_values) = true
+check_task_value(::GetPosition, value::AbstractSet{Object}, data, aux_values) = true
 
 
 function wrap_func_call_shape_value(p::Abstractor{GetPosition}, func::Function, wrappers::AbstractVector{Function}, source_values...)
@@ -23,10 +23,10 @@ to_abstract_value(p::Abstractor{GetPosition}, object::Object) =
         p.output_keys[1] => object.position
     )
 
-to_abstract_value(p::Abstractor{GetPosition}, objects::AbstractVector{Object}) =
+to_abstract_value(p::Abstractor{GetPosition}, objects::AbstractSet{Object}) =
     Dict(
-        p.output_keys[2] => [ObjectShape(o) for o in objects],
-        p.output_keys[1] => [o.position for o in objects]
+        p.output_keys[2] => ObjectsGroup(objects),
+        p.output_keys[1] => reduce((a, b) -> min.(a, b), (obj.position for obj in objects)) .- 1
     )
 
 from_abstract_value(p::Abstractor{GetPosition}, position::Tuple{Int64,Int64}, object::Object) =
@@ -34,7 +34,9 @@ from_abstract_value(p::Abstractor{GetPosition}, position::Tuple{Int64,Int64}, ob
         p.output_keys[1] => Object(object.shape, position)
     )
 
-from_abstract_value(p::Abstractor{GetPosition}, positions::AbstractArray{Tuple{Int64,Int64}}, objects::AbstractArray{Object}) =
+function from_abstract_value(p::Abstractor{GetPosition}, position::Tuple{Int64,Int64}, objects::AbstractSet{Object})
+    min_pos = reduce((a, b) -> min.(a, b), (obj.position for obj in objects)) .- 1
     Dict(
-        p.output_keys[1] => [Object(o.shape, pos) for (o, pos) in zip(objects, positions)]
+        p.output_keys[1] => Set([Object(o.shape, o.position .- min_pos .+ position) for o in objects])
     )
+end

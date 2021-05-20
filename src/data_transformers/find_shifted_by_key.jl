@@ -1,13 +1,11 @@
 
 using ..Operations:IncByParam
 
-_init_shift_keys(input_value, _, task_data, invalid_sources) =
+_init_shift_keys(input_key, field_info, task_data, invalid_sources) =
     [key for (key, value) in task_data if !in(key, invalid_sources) && (
-        isa(value, Union{Int64,Tuple{Int64,Int64}}) || 
-        (
-            isa(value, typeof(input_value)) && 
-            isa(input_value, Union{Vector{Int64},Vector{Tuple{Int64,Int64}}})
-        )
+        field_info[key].type == Int64 || 
+        field_info[key].type == Tuple{Int64,Int64} || 
+        field_info[key].type == field_info[input_key].type
      )]
 
 _shifted_key_filter(shift_key, input_value, output_value, task_data) = haskey(task_data, shift_key) &&

@@ -5,48 +5,48 @@ using .PatternMatching:Either,Option
 
 @testset "Repeat object infinite" begin
     @testset "simple repeat" begin
-        value = [
+        value = Set([
             Object([1], (1, 1)),
             Object([1], (2, 1)),
             Object([1], (3, 1)),
-        ]
+        ])
         data = Dict("effective" => false)
         @test check_task_value(RepeatObjectInfinite(), value, data, [(3, 3)]) == true
         @test data["effective"] == true
     end
 
     @testset "different objects" begin
-        value = [
+        value = Set([
             Object([1], (1, 1)),
             Object([1 1], (2, 1)),
             Object([1], (3, 1)),
-        ]
+        ])
         data = Dict("effective" => false)
         @test check_task_value(RepeatObjectInfinite(), value, data, [(3, 3)]) == false
     end
 
     @testset "not infinite" begin
-        value = [
+        value = Set([
             Object([1], (1, 1)),
             Object([1], (2, 1)),
             Object([1], (3, 1)),
-        ]
+        ])
         data = Dict("effective" => false)
         @test check_task_value(RepeatObjectInfinite(), value, data, [(4, 4)]) == true
         @test data["effective"] == true
-        value = [
+        value = Set([
             Object([1], (1, 1)),
             Object([1], (2, 1)),
             Object([1], (3, 1)),
             Object([1], (4, 1)),
-        ]
+        ])
         data = Dict("effective" => false)
         @test check_task_value(RepeatObjectInfinite(), value, data, [(4, 4)]) == true
         @test data["effective"] == true
-        value = [
+        value = Set([
             Object([1], (2, 1)),
             Object([1], (3, 1)),
-        ]
+        ])
         data = Dict("effective" => false)
         @test check_task_value(RepeatObjectInfinite(), value, data, [(4, 4)]) == false
         @test data["effective"] == true
@@ -54,21 +54,21 @@ using .PatternMatching:Either,Option
 
     @testset "repeat object" begin
         source_data = make_taskdata(Dict(
-            "input|key" => [
+            "input|key" => Set([
                 Object([1], (1, 1)),
                 Object([1], (2, 2)),
                 Object([1], (3, 3)),
-            ],
+            ]),
             "input|grid_size" => (3, 3)
         ))
         repeater = RepeatObjectInfinite("input|key", true, source_data)
         out_data = repeater(source_data)
         @test out_data == Dict(
-            "input|key" => [
+            "input|key" => Set([
                 Object([1], (1, 1)),
                 Object([1], (2, 2)),
                 Object([1], (3, 3)),
-            ],
+            ]),
             "input|key|first" => Either([
                 Option(
                     Object([1], (1, 1)),
@@ -112,24 +112,24 @@ using .PatternMatching:Either,Option
     @testset "get object repeater" begin
         solution = make_dummy_solution([
             Dict(
-                "input|key" => [
+                "input|key" => Set([
                     Object([1], (1, 1)),
                     Object([1], (2, 3)),
-                ],
+                ]),
                 "input|grid_size" => (3, 3)
             ),
             Dict(
-                "input|key" => [
+                "input|key" => Set([
                     Object([1], (1, 1)),
-                ],
+                ]),
                 "input|grid_size" => (3, 3)
             ),
             Dict(
-                "input|key" => [
+                "input|key" => Set([
                     Object([1], (1, 1)),
                     Object([1], (2, 2)),
                     Object([1], (3, 3)),
-                ],
+                ]),
                 "input|grid_size" => (3, 3)
             )
         ])
@@ -145,24 +145,24 @@ end
 
         solution = make_dummy_solution([
             Dict(
-                "input|key" => [
+                "input|key" => Set([
                     Object([1], (1, 1)),
                     Object([1], (2, 3)),
-                ],
+                ]),
                 "input|grid_size" => (3, 3)
             ),
             Dict(
-                "input|key" => [
+                "input|key" => Set([
                     Object([1], (1, 1)),
-                ],
+                ]),
                 "input|grid_size" => (3, 3)
             ),
             Dict(
-                "input|key" => [
+                "input|key" => Set([
                     Object([1], (1, 1)),
                     Object([1], (2, 3)),
                     Object([1], (3, 3)),
-                ],
+                ]),
                 "input|grid_size" => (3, 3)
             )
         ])
@@ -174,35 +174,35 @@ end
             Dict(
                 "input|spatial_objects|grid_size" => (10, 25),
                 "input|spatial_objects|grouped|0" => Dict(
-                    2 => [
+                    2 => Set([
                         Object([2 2 2 2 2 2 2 2 2 2], (1, 10)),
                         Object([2 2 2 2 2 2 2 2 2 2], (1, 22)),
                         Object([2 2 2 2 2 2 2 2 2 2], (1, 18)),
                         Object([2 2 2 2 2 2 2 2 2 2], (1, 6)),
                         Object([2 2 2 2 2 2 2 2 2 2], (1, 14)),
-                    ],
-                    8 => [
+                    ]),
+                    8 => Set([
                         Object([8 8 8 8 8 8 8 8 8 8], (1, 20)),
                         Object([8 8 8 8 8 8 8 8 8 8], (1, 16)),
                         Object([8 8 8 8 8 8 8 8 8 8], (1, 24)),
                         Object([8 8 8 8 8 8 8 8 8 8], (1, 12)),
                         Object([8 8 8 8 8 8 8 8 8 8], (1, 8)),
-                    ]
+                    ])
                 )
             ),
             Dict(
                 "input|spatial_objects|grid_size" => (7, 23),
                 "input|spatial_objects|grouped|0" => Dict(
-                    1 => [
+                    1 => Set([
                         Object([1 1 1 1 1 1 1], (1, 18)),
                         Object([1 1 1 1 1 1 1], (1, 6)),
                         Object([1 1 1 1 1 1 1], (1, 12)),
-                    ],
-                    3 => [
+                    ]),
+                    3 => Set([
                         Object([3 3 3 3 3 3 3], (1, 15)),
                         Object([3 3 3 3 3 3 3], (1, 9)),
                         Object([3 3 3 3 3 3 3], (1, 21)),
-                    ]
+                    ])
                 )
             )
         ])

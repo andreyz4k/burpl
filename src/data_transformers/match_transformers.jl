@@ -88,7 +88,7 @@ function find_matching_for_key(taskdata::Vector{TaskData}, field_info, invalid_s
             input_value = task_data[input_key]
             out_value = task_data[key]
             if isempty(candidates)
-                candidates = init_func(input_value, out_value, task_data, invalid_sources)
+                candidates = init_func(input_value, out_value)
             end
             filter!(candidate -> filter_func(candidate, input_value, out_value, task_data), candidates)
             if isempty(candidates)
@@ -121,7 +121,7 @@ function find_matching_for_key(taskdata::Vector{TaskData}, field_info, invalid_s
             input_value = task_data[input_key]
             out_value = task_data[key]
             if isempty(candidates)
-                candidates = init_func(input_value, out_value, task_data, invalid_sources)
+                candidates = init_func(input_key, field_info, task_data, invalid_sources)
                 if need_updated_candidates
                     candidates = filter(k-> in(k, upd_keys), candidates)
                 end

@@ -1,8 +1,10 @@
 
-
+_get_type(::T) where T = T
+_get_type(val::Matcher) = _get_type(unwrap_matcher(val)[1])
 struct Option{T}
     value::Union{T,Matcher{T}}
     option_hash
+    Option(v::T, op_hash) where T = new{_get_type(v)}(v, op_hash)
 end
 Option(value) = Option(value, nothing)
 
@@ -51,7 +53,7 @@ function make_either(keys, options)
     end
 end
 
-function match(val1, val2::Either)
+function _common_value(val1, val2::Either)
     valid_options = Option[]
     for option in val2.options
         m = common_value(val1, option.value)
@@ -71,8 +73,8 @@ function match(val1, val2::Either)
 end
 
 
-match(val1::Matcher, val2::Either) =
-    invoke(match, Tuple{Any,Either}, val1, val2)
+_common_value(val1::Matcher, val2::Either) =
+    invoke(_common_value, Tuple{Any,Either}, val1, val2)
 
 
 _check_match(val1, val2::Either) =
@@ -92,64 +94,102 @@ update_value(data::TaskData, path_keys::Array, value::Either, current_value::Eit
     invoke(update_value, Tuple{TaskData,Array,Any,Any}, data, path_keys, value, current_value)
 
 function update_value(data::TaskData, path_keys::Array, value, current_value::Either)::TaskData
+    data = _update_value(data, value, current_value)
+    return invoke(update_value, Tuple{TaskData,Array,Any,Any}, data, path_keys, value, current_value)
+end
+
+function _update_value(data::TaskData, value, current_value::Either)::TaskData
     for option in current_value.options
-        if !isnothing(common_value(value, option.value))
+        if isnothing(common_value(value, option.value))
             if !isnothing(option.option_hash)
-                data = select_hash(data, option.option_hash)
-            else
-                data = invoke(update_value, Tuple{TaskData,Array,Any,Any}, data, path_keys, option.value, current_value)
+                hashes_to_del = Set([option.option_hash])
+                while !isempty(hashes_to_del)
+                    data, hashes_to_del = drop_hashes(data, hashes_to_del)
+                end
             end
-            return update_value(data, path_keys, value)
+        else
+            data = _update_value(data, value, option.value)
         end
     end
+    return data
 end
 
+_update_value(data::TaskData, value, current_value) = data
 
-function select_hash(data::TaskData, option_hash)::TaskData
+
+function drop_hashes(data::TaskData, hashes)
     data = copy(data)
+    new_hashes = Set()
     for (key, value) in data
-        selected, effective = _select_hash(value, option_hash)
+        modified, effective, mod_hashes = _drop_hashes(value, hashes)
         if effective
-            data[key] = selected
+            data[key] = modified
+            union!(new_hashes, mod_hashes)
         end
     end
-    data
+    data, new_hashes
 end
 
-function _select_hash(data::Dict, option_hash)::Tuple{Dict,Bool}
+function _drop_hashes(data::Dict, hashes)
     effective = false
     result = Dict()
+    new_hashes = Set()
     for (key, value) in data
-        selected, eff = _select_hash(value, option_hash)
-        result[key] = selected
+        modified, eff, mod_hashes = _drop_hashes(value, hashes)
+        result[key] = modified
         effective |= eff
+        union!(new_hashes, mod_hashes)
     end
-    return result, effective
+    result, effective, new_hashes
 end
 
-function _select_hash(data::Vector, option_hash)::Tuple{Vector,Bool}
+function _drop_hashes(data::Vector, hashes)
     effective = false
     result = []
+    new_hashes = Set()
     for value in data
-        selected, eff = _select_hash(value, option_hash)
-        push!(result, selected)
+        modified, eff, mod_hashes = _drop_hashes(value, hashes)
+        push!(result, modified)
         effective |= eff
+        union!(new_hashes, mod_hashes)
     end
-    return result, effective
+    return result, effective, new_hashes
 end
 
-function _select_hash(data::Either, option_hash)
+function _drop_hashes(data::Either, hashes)
     new_options = Option[]
     effective = false
+    new_hashes = Set()
     for option in data.options
-        if option.option_hash == option_hash
-            return option.value, true
+        if in(option.option_hash, hashes)
+            union!(new_hashes, _all_hashes(option.value))
+            effective = true
+        else
+            modified, eff, mod_hashes = _drop_hashes(option.value, hashes)
+            effective |= eff
+            union!(new_hashes, mod_hashes)
+            if !isnothing(modified)
+                push!(new_options, Option(modified, option.option_hash))
+            end
         end
-        selected, eff = _select_hash(option.value, option_hash)
-        effective |= eff
-        push!(new_options, Option(selected, option.option_hash))
     end
-    return Either(new_options), effective
+    if isempty(new_options)
+        return nothing, true, new_hashes
+    end
+    return Either(new_options), effective, new_hashes
 end
 
-_select_hash(data, option_hash) = data, false
+_drop_hashes(data, hashes) = data, false, Set()
+
+function _all_hashes(data::Either)
+    result = Set()
+    for option in data.options
+        if !isnothing(option.option_hash)
+            push!(result, option.option_hash)
+        end
+        union!(result, _all_hashes(option.value))
+    end
+    return result
+end
+
+_all_hashes(::Any) = Set()

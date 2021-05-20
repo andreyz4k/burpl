@@ -82,6 +82,7 @@ call_wrappers() = [
     wrap_func_call_either_value,
     wrap_func_call_prefix_value,
     wrap_func_call_shape_value,
+    wrap_func_call_obj_group_value,
 ]
 
 function wrap_func_call_value_root(p::Abstractor, func::Function, source_values...)
@@ -202,13 +203,13 @@ function wrap_func_call_either_value(p::Abstractor, func::Function, wrappers::Ab
 end
 
 
-using ..PatternMatching:ArrayPrefix
+using ..PatternMatching:SubSet
 function wrap_func_call_prefix_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
-    if any(isa(v, ArrayPrefix) for v in source_values)
+    if any(isa(v, SubSet) for v in source_values)
         outputs = Dict()
-        for (key, value) in wrap_func_call_value_root(p, func, [isa(v, ArrayPrefix) ? v.value : v for v in source_values]...)
-            if isa(value, AbstractVector)
-                outputs[key] = ArrayPrefix(value)
+        for (key, value) in wrap_func_call_value_root(p, func, [isa(v, SubSet) ? unwrap_matcher(v)[1] : v for v in source_values]...)
+            if isa(value, AbstractSet)
+                outputs[key] = SubSet(value)
             else
                 outputs[key] = value
             end
@@ -229,6 +230,24 @@ function wrap_func_call_shape_value(p::Abstractor, func::Function, wrappers::Abs
                 outputs[key] = ObjectShape(value)
             elseif isa(value, AbstractVector{Object})
                 outputs[key] = [ObjectShape(v) for v in value]
+            else
+                outputs[key] = value
+            end
+        end
+        return outputs
+    end
+    wrap_func_call_value(p, func, wrappers, source_values...)
+end
+
+
+using ..PatternMatching:ObjectsGroup
+    function wrap_func_call_obj_group_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
+    if any(isa(v, ObjectsGroup) for v in source_values)
+        outputs = Dict()
+        unwrapped_values = [isa(v, ObjectsGroup) ? v.objects : v for v in source_values]
+        for (key, value) in wrap_func_call_value_root(p, func, unwrapped_values...)
+            if isa(value, Set{Object})
+                outputs[key] = ObjectsGroup(value)
             else
                 outputs[key] = value
             end

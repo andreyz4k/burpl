@@ -1,29 +1,35 @@
 
 
 struct AuxValue{T} <: Matcher{T}
-    value::T
+    value::Union{T,Matcher{T}}
+    AuxValue(v::Matcher{T}) where T = new{T}(v)
+    AuxValue(v::T) where T = new{T}(v)
 end
 
 Base.:(==)(a::AuxValue, b::AuxValue) = a.value == b.value
 Base.hash(p::AuxValue, h::UInt64) = hash(p.value, h)
-Base.show(io::IO, p::AuxValue) = print(io, "AuxValue(", p.value, ")")
+Base.show(io::IO, p::AuxValue{T}) where T = print(io, "AuxValue{", T, "}(", p.value, ")")
 
-match(val1::AuxValue{T}, val2::AuxValue{T}) where T <: Matcher = nothing
-match(val1::Any, val2::AuxValue{T}) where T <: Matcher = nothing
-match(val1::Matcher, val2::AuxValue{T}) where T <: Matcher = nothing
-match(val1::AuxValue{T}, val2::AuxValue{T}) where T = common_value(val1.value, val2.value)
-match(val1::T, val2::AuxValue{T}) where T = common_value(val1, val2.value)
+_common_value(val1::AuxValue{T}, val2::AuxValue{T}) where T = isa(val2.value, Matcher) ? nothing : common_value(val1.value, val2.value)
+_common_value(val1::T, val2::AuxValue{T}) where T = isa(val2.value, Matcher) ? nothing : common_value(val1, val2.value)
 
 check_match(::AuxValue, ::Any) = false
 
-unpack_value(::AuxValue{T}) where T <: Matcher = []
-unpack_value(p::AuxValue) = unpack_value(p.value)
+unpack_value(p::AuxValue) = isa(p.value, Matcher) ? [] : unpack_value(p.value)
 
 unwrap_matcher(p::AuxValue) = [p.value]
 
-function _select_hash(data::AuxValue, option_hash)
-    selected, effective = _select_hash(data.value, option_hash)
-    AuxValue(selected), effective
+
+_update_value(data::TaskData, value, current_value::AuxValue) = _update_value(data, value, current_value.value)
+
+function _drop_hashes(data::AuxValue, hashes)
+    modified, effective, mod_hashes = _drop_hashes(data.value, hashes)
+    if isnothing(modified)
+        return nothing, effective, mod_hashes
+    end
+    AuxValue(modified), effective, mod_hashes
 end
+
+_all_hashes(data::AuxValue) = _all_hashes(data.value)
 
 apply_func(value::AuxValue, func, param) = apply_func(value.value, func, param)
