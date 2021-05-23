@@ -7,7 +7,7 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
 @testset "Check ideal solutions" begin
     @testset "ff28f65a" begin
         fname = "../data/training/ff28f65a.json"
-        taskdata = Randy.get_taskdata(fname)
+        taskdata = burpl.get_taskdata(fname)
         operations = [
             (BackgroundColor(), "output", false),
             (BackgroundColor(), "input", true),
@@ -18,12 +18,12 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
             (CountObjects(), "input|bgr_grid|spatial_objects", true),
         ]
         solution = create_solution(taskdata["train"], operations)
-        @test Randy.test_solution(solution, fname) == (0, 0)
+        @test burpl.test_solution(solution, fname) == (0, 0)
     end
 
     @testset "0a938d79" begin
         fname = "../data/training/0a938d79.json"
-        taskdata = Randy.get_taskdata(fname)
+        taskdata = burpl.get_taskdata(fname)
         operations = [
             (BackgroundColor(), "output", false),
             (BackgroundColor(), "input", true),
@@ -39,12 +39,12 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
             (DistanceBetweenObjects(), "projected|output|bgr_grid|spatial_objects", true),
         ]
         solution = create_solution(taskdata["train"], operations)
-        @test Randy.test_solution(solution, fname) == (0, 0)
+        @test burpl.test_solution(solution, fname) == (0, 0)
     end
 
     @testset "0b148d64" begin
         fname = "../data/training/0b148d64.json"
-        taskdata = Randy.get_taskdata(fname)
+        taskdata = burpl.get_taskdata(fname)
         operations = [
         (BackgroundColor(), "output", false),
             (BackgroundColor(), "input", true),
@@ -56,12 +56,12 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
             (GroupMin(), "input|bgr_grid|spatial_objects|grouped|length", true),
         ]
         solution = create_solution(taskdata["train"], operations)
-        @test Randy.test_solution(solution, fname) == (0, 0)
+        @test burpl.test_solution(solution, fname) == (0, 0)
     end
 
     @testset "39a8645d" begin
         fname = "../data/training/39a8645d.json"
-        taskdata = Randy.get_taskdata(fname) 
+        taskdata = burpl.get_taskdata(fname) 
         operations = [
             (BackgroundColor(), "output", false),
             (BackgroundColor(), "input", true),
@@ -77,12 +77,12 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
             (GetPosition(), "output|bgr_grid|spatial_objects|united_touch|single_value", false),
         ]
         solution = create_solution(taskdata["train"], operations)
-        @test Randy.test_solution(solution, fname) == (0, 0)
+        @test burpl.test_solution(solution, fname) == (0, 0)
     end
 
     @testset "5521c0d9" begin
         fname = "../data/training/5521c0d9.json"
-        taskdata = Randy.get_taskdata(fname) 
+        taskdata = burpl.get_taskdata(fname) 
         operations = [
             (BackgroundColor(), "output", false),
             (BackgroundColor(), "input", true),
@@ -98,12 +98,12 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
             (SeparateAxis(), "input|bgr_grid|spatial_objects|grouped|single_value|obj_size", true),
         ]
         solution = create_solution(taskdata["train"], operations)
-        @test Randy.test_solution(solution, fname) == (0, 0)
+        @test burpl.test_solution(solution, fname) == (0, 0)
     end
 
     @testset "ea786f4a" begin
         fname = "../data/training/ea786f4a.json"
-        taskdata = Randy.get_taskdata(fname) 
+        taskdata = burpl.get_taskdata(fname) 
         operations = [
             (BackgroundColor(), "input", true),
             (BackgroundColor(), "output", false),
@@ -117,6 +117,6 @@ using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObje
             (DotProductClass(), "output|bgr_grid|spatial_objects|united_touch|single_value|vert_kernel|horz_kernel", false),
         ]
         solution = create_solution(taskdata["train"], operations)
-        @test Randy.test_solution(solution, fname) == (0, 0)
+        @test burpl.test_solution(solution, fname) == (0, 0)
     end
 end

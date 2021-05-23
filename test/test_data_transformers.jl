@@ -909,7 +909,7 @@ end
     @testset "find matching group" begin
         solution = make_dummy_solution([
             Dict(
-                "input|bgr_grid|grid|spatial_objects|grouped" => Dict{Int64,Array{Main.Randy.ObjectPrior.Object,1}}(
+                "input|bgr_grid|grid|spatial_objects|grouped" => Dict{Int64,Array{Object,1}}(
                     2 => [
                         Object([2], (1, 13)),
                         Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
@@ -945,7 +945,7 @@ end
                 "output" => [1 2; 3 4]
             ),
             Dict(
-                "input|bgr_grid|grid|spatial_objects|grouped" => Dict{Int64,Array{Main.Randy.ObjectPrior.Object,1}}(
+                "input|bgr_grid|grid|spatial_objects|grouped" => Dict{Int64,Array{Object,1}}(
                     2 => [
                         Object([2 2 -1 -1 -1 -1; -1 2 -1 -1 -1 -1; 2 2 2 2 -1 -1; 2 2 2 -1 2 -1; 2 -1 -1 2 2 2; 2 2 2 2 2 -1; -1 2 -1 -1 2 2], (1, 1)),
                         Object([2], (1, 4)),
@@ -984,7 +984,7 @@ end
                 "output" => [2 3; 4 5]
             ),
             Dict(
-                "input|bgr_grid|grid|spatial_objects|grouped" => Dict{Int64,Array{Main.Randy.ObjectPrior.Object,1}}(
+                "input|bgr_grid|grid|spatial_objects|grouped" => Dict{Int64,Array{Object,1}}(
                     4 => [
                         Object([4 4 4 -1 4 -1 -1 -1 4; -1 4 -1 4 4 4 4 4 4; -1 4 4 4 4 4 4 -1 -1; 4 4 -1 4 -1 4 4 -1 -1; -1 -1 -1 4 4 4 -1 -1 -1; -1 -1 -1 -1 4 -1 -1 -1 -1], (1, 11)),
                         Object([4], (4, 19)),

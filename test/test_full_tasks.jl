@@ -16,7 +16,7 @@ TASKS = [
     "../data/training/ff28f65a.json",
 ]
 
-using Randy:get_solution,test_solution
+using burpl:get_solution,test_solution
 
 @testset "Full tasks" begin
     @testset "run task $fname" for fname in TASKS

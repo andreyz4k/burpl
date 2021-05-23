@@ -1,4 +1,4 @@
-module Randy
+module burpl
 
 include("object_prior.jl")
 include("complexity.jl")

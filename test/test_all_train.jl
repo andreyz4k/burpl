@@ -1,6 +1,6 @@
 
 
-using Randy:get_solution,test_solution
+using burpl:get_solution,test_solution
 
 skip  = [
     # "../data/training/264363fd.json",

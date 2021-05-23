@@ -1,6 +1,6 @@
 using Test
-include("../src/Randy.jl")
-using .Randy
+include("../src/burpl.jl")
+using .burpl
 include("utils.jl")
 using TestSetExtensions
 
