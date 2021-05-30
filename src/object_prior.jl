@@ -14,7 +14,16 @@ Base.hash(obj::Object, h::UInt64) = hash(obj.shape, h) + hash(obj.position, h)
 
 Base.show(io::IO, obj::Object) = print(io, "Object(", obj.shape, ", ", obj.position, ")")
 
-get_color(obj::Object) = maximum(obj.shape)
+struct Color
+    value::Int
+end
+
+Base.:(==)(a::Color, b::Color) = a.value == b.value
+
+Base.hash(c::Color, h::UInt64) = hash(c.value, h)
+Base.show(io::IO, c::Color) = print(io, "Color(", c.value, ")")
+
+get_color(obj::Object) = Color(maximum(obj.shape))
 
 function candidates(i, j, grid)
     res = []

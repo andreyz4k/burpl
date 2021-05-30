@@ -5,7 +5,8 @@ _init_factor_keys(input_key, field_info, task_data, invalid_sources) =
     [key for (key, value) in task_data if !in(key, invalid_sources) && (
         field_info[key].type == Int64 || 
         field_info[key].type == Tuple{Int64,Int64} || 
-        field_info[key].type == field_info[input_key].type
+        (field_info[key].type == field_info[input_key].type && 
+         (isa(value, Dict) ? keys(value) == keys(task_data[input_key]) : true))
     )]
 
 _factor_key_filter(shift_key, input_value, output_value, task_data) = haskey(task_data, shift_key) &&

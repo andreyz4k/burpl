@@ -18,7 +18,6 @@ end
 using ..Solutions:Solution,insert_operation
 
 function find_matched_fields(key, solution::Solution)
-    new_solutions = []
     transformers = get_match_transformers(solution.taskdata, solution.field_info, union(solution.unfilled_fields, solution.transformed_fields), key)
     return flatten((imap(
         transformer -> insert_operation(solution, transformer,

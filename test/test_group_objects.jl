@@ -1,5 +1,5 @@
 import .Abstractors:GroupObjectsByColor,create
-import .ObjectPrior:Object
+import .ObjectPrior:Object,Color
 
 @testset "Group objects by color" begin
     @testset "group objects" begin
@@ -23,19 +23,19 @@ import .ObjectPrior:Object
                 Object([2], (1, 3)),
             ]),
             "key|grouped" => Dict(
-                1 => Set([
+                Color(1) => Set([
                     Object([1], (1, 1)),
                     Object([1 1], (2, 4)),
                 ]),
-                2 => Set([
+                Color(2) => Set([
                     Object([2], (2, 2)),
                     Object([2], (1, 3)),
                 ]),
-                3 => Set([
+                Color(3) => Set([
                     Object([3], (9, 1)),
                 ])
             ),
-            "key|group_keys" => Set([1, 2, 3])
+            "key|group_keys" => Set([Color(1), Color(2), Color(3)])
         )
         delete!(out_data, "key")
         ungrouper = GroupObjectsByColor("key", false)

@@ -182,6 +182,8 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
                     println((real_visited, length(queue)))
                     return new_solution
                 end
+                println("found")
+                println(new_solution)
                 continue
             end
             i += 1

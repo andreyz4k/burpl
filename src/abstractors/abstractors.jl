@@ -101,8 +101,8 @@ function iter_source_values(source_values)
     for source_value in source_values
         if isa(source_value, Dict)
             for key in keys(source_value)
-                values = [isa(v, Dict) && issetequal(keys(v), keys(source_value)) ? v[key] : v for v in source_values]
-                push!(result, (key, values))
+                vals = [isa(v, Dict) && issetequal(keys(v), keys(source_value)) ? v[key] : v for v in source_values]
+                push!(result, (key, vals))
     end
             return result
         end
@@ -113,8 +113,8 @@ end
 function wrap_func_call_dict_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, AbstractDict) for v in source_values)
         result = DefaultDict(() -> Dict())
-        for (key, values) in iter_source_values(source_values)
-            for (out_key, out_value) in wrap_func_call_value_root(p, func, values...)
+        for (key, vals) in iter_source_values(source_values)
+            for (out_key, out_value) in wrap_func_call_value_root(p, func, vals...)
                 result[out_key][key] = out_value
             end
         end
