@@ -2,8 +2,17 @@
 struct SeparateAxis <: AbstractorClass end
 abs_keys(::SeparateAxis) = ["coord1", "coord2"]
 
-check_task_value(::SeparateAxis, value::Tuple{Int,Int}, data, aux_values) = true
-check_task_value(::SeparateAxis, value::AbstractVector{Tuple{Int,Int}}, data, aux_values) = true
+init_create_check_data(::SeparateAxis, key, solution) = Dict("effective" => false, "effective_parts" => (false, false))
+
+function check_task_value(::SeparateAxis, value::Tuple{Int,Int}, data, aux_values)
+    data["effective_parts"] = (data["effective_parts"][1] || (value[1] != 0), data["effective_parts"][2] || (value[2] != 0))
+    data["effective"] = data["effective_parts"][1] && data["effective_parts"][2]
+    true
+end
+
+function check_task_value(c::SeparateAxis, value::AbstractVector{Tuple{Int,Int}}, data, aux_values)
+    all(check_task_value(c, v, data, aux_values) for v in value)
+end
 
 to_abstract_value(p::Abstractor{SeparateAxis}, source_value::Tuple{Int,Int}) =
     Dict(

@@ -28,6 +28,6 @@ function from_abstract_value(p::Abstractor{CountObjects}, len, counted_items)
     if length(counted_items) > len
         Dict(p.output_keys[1] => Set(counted_items[1:min(len, length(counted_items))]))
     else
-        Dict(p.output_keys[1] => counted_items)
+        Dict(p.output_keys[1] => Set(counted_items))
     end
 end
