@@ -37,13 +37,17 @@ end
 
 using ..PatternMatching:unpack_value,AuxValue
 
-_wrap_aux_values(keys, result) =
-    Dict(
-        keys[1] => result[keys[1]],
-        keys[2] => AuxValue(result[keys[2]]),
-        keys[3] => AuxValue(result[keys[3]]),
-    )
-
+function _wrap_aux_values(keys, result)
+    if isa(result[keys[1]], Either)
+        Dict(
+            keys[1] => result[keys[1]],
+            keys[2] => AuxValue(result[keys[2]]),
+            keys[3] => AuxValue(result[keys[3]]),
+        )
+    else
+        result
+    end
+end
 function to_abstract_value(p::Abstractor{VerticalSymmetry}, source_value::Object)
     res = to_abstract_value(p, source_value.shape)
     return _wrap_aux_values(
