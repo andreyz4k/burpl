@@ -408,108 +408,114 @@ end
 
 
 function insert_operation(solution::Solution, operation::Operation; added_complexity::Float64=0.0, reversed_op=nothing, no_wrap=false)::Solution
-    op = isnothing(reversed_op) ? operation : reversed_op
+    try
+        op = isnothing(reversed_op) ? operation : reversed_op
 
-    taskdata = [
-        op(task)
-        for task
-        in solution.taskdata
-    ]
+        taskdata = [
+            op(task)
+            for task
+            in solution.taskdata
+        ]
 
-    if isnothing(reversed_op) && !no_wrap
-        taskdata, operation = wrap_operation(taskdata, operation)
-    end
+        if isnothing(reversed_op) && !no_wrap
+            taskdata, operation = wrap_operation(taskdata, operation)
+        end
 
-    unfilled_fields = copy(solution.unfilled_fields)
-    transformed_fields = copy(solution.transformed_fields)
-    filled_fields = copy(solution.filled_fields)
-    unused_fields = copy(solution.unused_fields)
-    used_fields = copy(solution.used_fields)
-    input_transformed_fields = copy(solution.input_transformed_fields)
+        unfilled_fields = copy(solution.unfilled_fields)
+        transformed_fields = copy(solution.transformed_fields)
+        filled_fields = copy(solution.filled_fields)
+        unused_fields = copy(solution.unused_fields)
+        used_fields = copy(solution.used_fields)
+        input_transformed_fields = copy(solution.input_transformed_fields)
 
-    blocks = copy(solution.blocks)
-    blocks[end], index = insert_operation(blocks, operation)
+        blocks = copy(solution.blocks)
+        blocks[end], index = insert_operation(blocks, operation)
 
-    field_info = copy(solution.field_info)
-    input_field_info = [field_info[key] for key in operation.input_keys if haskey(field_info, key)]
-    output_field_info = [field_info[key] for key in operation.output_keys if haskey(field_info, key)]
+        field_info = copy(solution.field_info)
+        input_field_info = [field_info[key] for key in operation.input_keys if haskey(field_info, key)]
+        output_field_info = [field_info[key] for key in operation.output_keys if haskey(field_info, key)]
 
-    new_input_fields = filter(key -> !in(key, unused_fields) && !in(key, used_fields) &&
-                                     !in(key, input_transformed_fields) && !in(key, unfilled_fields) &&
-                                     !in(key, transformed_fields) && !in(key, filled_fields), operation.input_keys)
-    union!(unfilled_fields, new_input_fields)
+        new_input_fields = filter(key -> !in(key, unused_fields) && !in(key, used_fields) &&
+                                        !in(key, input_transformed_fields) && !in(key, unfilled_fields) &&
+                                        !in(key, transformed_fields) && !in(key, filled_fields), operation.input_keys)
+        union!(unfilled_fields, new_input_fields)
 
-    if !isempty(new_input_fields)
-        if !isempty(output_field_info)
-            i = argmax([length(info.derived_from) for info in output_field_info])
-            out_dependent_key = output_field_info[i].derived_from
-        else
+        if !isempty(new_input_fields)
+            if !isempty(output_field_info)
+                i = argmax([length(info.derived_from) for info in output_field_info])
+                out_dependent_key = output_field_info[i].derived_from
+            else
+                i = argmax([length(info.derived_from) for info in input_field_info])
+                out_dependent_key = input_field_info[i].derived_from
+            end
+            for key in new_input_fields
+                for task in taskdata
+                    if haskey(task, key) && _is_valid_value(task[key])
+                        field_info[key] = FieldInfo(task[key], get_source_key(operation, out_dependent_key), vcat([info.precursor_types for info in output_field_info]...), [Set()])
+                        break
+                    end
+                end
+            end
+        end
+
+        for key in setdiff(operation.input_keys, new_input_fields)
+            if in(key, unused_fields)
+                delete!(unused_fields, key)
+                push!(input_transformed_fields, key)
+            end
+        end
+
+        if !isempty(input_field_info)
             i = argmax([length(info.derived_from) for info in input_field_info])
-            out_dependent_key = input_field_info[i].derived_from
+            inp_dependent_key = input_field_info[i].derived_from
         end
-        for key in new_input_fields
-            for task in taskdata
-                if haskey(task, key) && _is_valid_value(task[key])
-                    field_info[key] = FieldInfo(task[key], get_source_key(operation, out_dependent_key), vcat([info.precursor_types for info in output_field_info]...), [Set()])
-                    break
+
+        fields_to_mark = []
+
+        for key in operation.output_keys
+            if in(key, unfilled_fields)
+                delete!(unfilled_fields, key)
+                push!(transformed_fields, key)
+                if isempty(new_input_fields)
+                    push!(fields_to_mark, key)
+                end
+            else
+                push!(unused_fields, key)
+                for task in taskdata
+                    if haskey(task, key) && _is_valid_value(task[key])
+                        field_info[key] = FieldInfo(task[key], inp_dependent_key, vcat([info.precursor_types for info in input_field_info]...),
+                                                    [(field_info[k].previous_fields for k in operation.input_keys)..., [key]])
+                        break
+                    end
                 end
             end
         end
-    end
 
-    for key in setdiff(operation.input_keys, new_input_fields)
-        if in(key, unused_fields)
-            delete!(unused_fields, key)
-            push!(input_transformed_fields, key)
+        for key in fields_to_mark
+            mark_used_fields(key, index, blocks, unfilled_fields, filled_fields, transformed_fields, unused_fields, used_fields, input_transformed_fields, taskdata, field_info)
         end
-    end
 
-    if !isempty(input_field_info)
-        i = argmax([length(info.derived_from) for info in input_field_info])
-        inp_dependent_key = input_field_info[i].derived_from
-    end
-
-    fields_to_mark = []
-
-    for key in operation.output_keys
-        if in(key, unfilled_fields)
-            delete!(unfilled_fields, key)
-            push!(transformed_fields, key)
-            if isempty(new_input_fields)
-                push!(fields_to_mark, key)
-            end
-        else
-            push!(unused_fields, key)
-            for task in taskdata
-                if haskey(task, key) && _is_valid_value(task[key])
-                    field_info[key] = FieldInfo(task[key], inp_dependent_key, vcat([info.precursor_types for info in input_field_info]...),
-                                                [(field_info[k].previous_fields for k in operation.input_keys)..., [key]])
-                    break
-                end
-            end
+        new_solution = Solution(
+            taskdata,
+            field_info,
+            blocks,
+            unfilled_fields,
+            filled_fields,
+            transformed_fields,
+            unused_fields,
+            used_fields,
+            input_transformed_fields,
+            solution.complexity_score + added_complexity,
+        )
+        if !isempty(fields_to_mark)
+            return move_to_next_block(new_solution)
         end
+        return new_solution
+    catch
+        println(operation)
+        println(solution)
+        rethrow()
     end
-
-    for key in fields_to_mark
-        mark_used_fields(key, index, blocks, unfilled_fields, filled_fields, transformed_fields, unused_fields, used_fields, input_transformed_fields, taskdata, field_info)
-    end
-
-    new_solution = Solution(
-        taskdata,
-        field_info,
-        blocks,
-        unfilled_fields,
-        filled_fields,
-        transformed_fields,
-        unused_fields,
-        used_fields,
-        input_transformed_fields,
-        solution.complexity_score + added_complexity,
-    )
-    if !isempty(fields_to_mark)
-        return move_to_next_block(new_solution)
-    end
-    new_solution
 end
 
 Base.show(io::IO, s::Solution) =

@@ -6,7 +6,7 @@ CountObjects(key, to_abs) = Abstractor(CountObjects(), key, to_abs)
 priority(::CountObjects) = 10
 abs_keys(::CountObjects) = ["length", "counted"]
 
-check_task_value(::CountObjects, value::AbstractSet, data, aux_values) = true
+check_task_value(::CountObjects, value::AbstractSet, data, aux_values) = !isempty(value)
 
 using ..PatternMatching:SubSet
 

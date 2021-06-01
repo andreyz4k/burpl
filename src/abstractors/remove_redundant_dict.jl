@@ -20,11 +20,13 @@ function wrap_func_call_dict_value(p::Abstractor{RemoveRedundantDict}, func::Fun
     end
 end
 
-to_abstract_value(p::Abstractor{RemoveRedundantDict}, source_value::AbstractDict) =
+function to_abstract_value(p::Abstractor{RemoveRedundantDict}, source_value::AbstractDict)
+    T = typeof(first(keys(source_value)))
     Dict(
         p.output_keys[1] => first(values(source_value)),
-        p.output_keys[2] => Set(keys(source_value))
-        )
+        p.output_keys[2] => Set{T}(keys(source_value))
+    )
+end
 
 from_abstract_value(p::Abstractor{RemoveRedundantDict}, value, keys) =
     Dict(p.output_keys[1] => Dict(key => value for key in keys))

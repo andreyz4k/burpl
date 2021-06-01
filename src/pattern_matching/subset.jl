@@ -92,23 +92,6 @@ _check_match(val1::SubSet, val2::SubSet) = check_match(val1.value, val2)
 _check_match(val1::SubSet, val2::Either) = check_match(val1.value, val2)
 _check_match(val1::SubSet, ::Matcher) = false
 
-function _check_match(val1::T, val2::SubSet{T}) where T <: AbstractSet
-    for pref in val2.value, val in pref
-        found = false
-        for v1 in val1
-            if check_match(v1, val)
-                val1 = setdiff(val1, [v1])
-                found = true
-                break
-            end
-        end
-        if !found
-            return false
-        end
-    end
-    return true
-end
-
 function _check_match(val1::Vector{T}, val2::SubSet{Set{T}}) where T
     i = 1
     for pref in val2.value

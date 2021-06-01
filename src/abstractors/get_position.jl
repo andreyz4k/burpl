@@ -5,7 +5,7 @@ struct GetPosition <: AbstractorClass end
 abs_keys(::GetPosition) = ["position", "shape"]
 
 check_task_value(::GetPosition, value::Object, data, aux_values) = true
-check_task_value(::GetPosition, value::AbstractSet{Object}, data, aux_values) = true
+check_task_value(::GetPosition, value::AbstractSet{Object}, data, aux_values) = !isempty(value)
 
 
 function wrap_func_call_shape_value(p::Abstractor{GetPosition}, func::Function, wrappers::AbstractVector{Function}, source_values...)

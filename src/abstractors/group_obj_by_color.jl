@@ -25,7 +25,7 @@ function to_abstract_value(p::Abstractor{GroupObjectsByColor}, source_value)
     end
     return Dict(
         p.output_keys[1] => Dict(k => v for (k, v) in results),
-        p.output_keys[2] => Set(keys(results))
+        p.output_keys[2] => Set{Color}(keys(results))
     )
 end
 
