@@ -29,6 +29,8 @@ function wrap_operation(taskdata, operation)
         if haskey(task, key) && !haskey(task, key * "|unfilled")
             task[key * "|unfilled"] = task[key]
         end
+    end
+    for key in operation.output_keys, task in taskdata
         delete!(task, key)
     end
     return taskdata, WrapMatcher(

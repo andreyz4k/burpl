@@ -507,7 +507,7 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
             input_transformed_fields,
             solution.complexity_score + added_complexity,
         )
-        if !isempty(fields_to_mark)
+        if !isempty(filter(k -> !startswith(k, "projected|"), fields_to_mark))
             return move_to_next_block(new_solution)
         end
         return new_solution

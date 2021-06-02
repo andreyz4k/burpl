@@ -55,7 +55,7 @@ using .Abstractors:iter_source_either_values
                 ]),
                 3 => (0, 6)
             ),
-            "spatial_objects|grouped|0|first|splitted|first" => Dict(
+    "spatial_objects|grouped|0|first|splitted|first" => Dict(
                 1 => Either([
                     Option(Either([
                         Option(Object([1],  (6, 17)), 5337975097275602430),
@@ -288,46 +288,14 @@ using .Abstractors:iter_source_either_values
         @test unpack_value(e)[1] == [1, 2, 3]
     end
 
-    @testset "match set of shapes" begin
-        a = SubSet(
-            Set{ObjectShape{Object}}([
-                ObjectShape(Object([2], (1, 2))),
-                ObjectShape(Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 1))),
-                ObjectShape(Object([2], (7, 6))),
-                ObjectShape(Object([2; 2], (9, 6)))
-            ])
-        )
-        b = Set{Object}([
-            Object([2], (1, 13)),
-            Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
-            Object([2], (7, 17)),
-            Object([2 2], (8, 17)),
-            Object([2; 2], (9, 17))
-        ])
-        @test check_match(b, a)
-        c = Set{Object}([
-            Object([2], (1, 13)),
-            Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
-            Object([2 2], (8, 17)),
-            Object([2; 2], (9, 17))
-        ])
-        @test !check_match(c, a)
-        d = Set{Object}([
-            Object([2], (1, 13)),
-            Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 12)),
-            Object([2], (7, 17)),
-        ])
-        @test !check_match(d, a)
-    end
-
     @testset "match counted array of shapes" begin
         a = SubSet(
             ObjectShape{Object}[
                 ObjectShape(Object([2], (1, 2))),
                 ObjectShape(Object([-1 -1 -1 2 2 2 2 -1 2 2; 2 -1 2 2 2 2 2 2 2 -1; 2 2 2 2 2 2 -1 2 2 2; 2 2 2 2 2 2 2 -1 2 2; -1 2 2 -1 2 2 2 -1 2 -1; -1 -1 2 2 2 -1 -1 2 2 2; 2 -1 2 2 -1 -1 -1 2 2 2; 2 2 -1 2 2 -1 -1 -1 2 2; 2 2 2 2 -1 -1 -1 -1 2 2; 2 2 -1 2 -1 -1 -1 2 2 2], (1, 1))),
                 ObjectShape(Object([2], (7, 6))),
-                ObjectShape(Object([2; 2], (9, 6)))
-            ]
+    ObjectShape(Object([2; 2], (9, 6)))
+        ]
         )
         b = Object[
             Object([2], (1, 13)),
@@ -474,7 +442,7 @@ using .Abstractors:iter_source_either_values
                             Option(Object([0], (2, 1)), 6263381081530699870)
                         ]), 15680565922845233153), 
                         Option(Either([
-                            Option(Object([0], (3, 2)), 13064878422929315778), 
+    Option(Object([0], (3, 2)), 13064878422929315778), 
                             Option(Object([0], (2, 3)), 4146920221692058636)
                         ]), 8843847387310474433)
                     ]), 15081192867680029596), 

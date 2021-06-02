@@ -45,6 +45,11 @@ function _wrap_aux_values(keys, result)
             keys[3] => AuxValue(result[keys[3]]),
         )
     else
+        # Dict(
+        #     keys[1] => result[keys[1]],
+        #     keys[2] => isa(result[keys[2]], Either) ? unwrap_matcher(result[keys[2]])[1] : result[keys[2]],
+        #     keys[3] => isa(result[keys[3]], Either) ? unwrap_matcher(result[keys[3]])[1] : result[keys[3]],
+        # )
         result
     end
 end
@@ -64,8 +69,8 @@ function to_abstract_value(p::Abstractor{VerticalSymmetry}, source_value::Object
                     opt[p.output_keys[3]])
                 for opt in unpack_value(Dict(
                     p.output_keys[1] => res[p.output_keys[1]],
-                    p.output_keys[2] => unwrap_matcher(res[p.output_keys[2]])[1],
-                    p.output_keys[3] => unwrap_matcher(res[p.output_keys[3]])[1],
+                    p.output_keys[2] => isa(res[p.output_keys[2]], AuxValue) ? unwrap_matcher(res[p.output_keys[2]])[1] : res[p.output_keys[2]],
+                    p.output_keys[3] => isa(res[p.output_keys[3]], AuxValue) ? unwrap_matcher(res[p.output_keys[3]])[1] : res[p.output_keys[3]],
                 ))
             ]
         )
@@ -103,8 +108,8 @@ function to_abstract_value(p::Abstractor{HorisontalSymmetry}, source_value::Obje
                     opt[p.output_keys[3]])
                 for opt in unpack_value(Dict(
                     p.output_keys[1] => res[p.output_keys[1]],
-                    p.output_keys[2] => unwrap_matcher(res[p.output_keys[2]])[1],
-                    p.output_keys[3] => unwrap_matcher(res[p.output_keys[3]])[1],
+                    p.output_keys[2] => isa(res[p.output_keys[2]], AuxValue) ? unwrap_matcher(res[p.output_keys[2]])[1] : res[p.output_keys[2]],
+                    p.output_keys[3] => isa(res[p.output_keys[3]], AuxValue) ? unwrap_matcher(res[p.output_keys[3]])[1] : res[p.output_keys[3]],
                 ))
             ]
         )
@@ -124,7 +129,7 @@ function to_abstract_value(p::Abstractor{HorisontalSymmetry}, source_value::Abst
             ]
         )
     )
-end
+    end
 
 
 function from_abstract_value(p::Abstractor{VerticalSymmetry}, source_value::AbstractArray{Int,2}, is_left::Bool, keep_pivot_point::Bool)
@@ -151,7 +156,7 @@ function from_abstract_value(p::Abstractor{VerticalSymmetry}, source_value::Obje
     return Dict(
         p.output_keys[1] => Object(res_shape, pos)
     )
-end
+    end
 
 function from_abstract_value(p::Abstractor{HorisontalSymmetry}, source_value::AbstractArray{Int,2}, is_top::Bool, keep_pivot_point::Bool)
     width = size(source_value)[2] * 2 - keep_pivot_point
