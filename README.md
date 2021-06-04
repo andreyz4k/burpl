@@ -39,3 +39,15 @@ The list of these abstract operations is definitely incomplete at the moment and
 
 The system is written in Julia because of its speed, clean syntax (including multiple dispatch), and rich type system. 
 In the future, we may also try to make use of its differentiability feature to determine the values of some magical constants.
+
+### How to start
+
+1. Install julia
+2. Clone the code
+3. Start `julia --project=.` from the project root folder
+4. Type `]` enable package manager mode
+5. Run `instantiate` to download all the dependencies
+6. Exit julia process
+7. Go to the `test` folder
+8. Run `julia --project=.. runtests.jl` to run all the tests
+9. 
