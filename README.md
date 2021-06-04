@@ -50,4 +50,3 @@ In the future, we may also try to make use of its differentiability feature to d
 6. Exit julia process
 7. Go to the `test` folder
 8. Run `julia --project=.. runtests.jl` to run all the tests
-9. 
