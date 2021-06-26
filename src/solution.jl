@@ -40,7 +40,7 @@ function (block::Block)(observed_data::TaskData)::TaskData
             observed_data = op(observed_data)
         catch e
             if isa(e, KeyError)
-                println("missing key $e")
+                @info("missing key $e")
             else
                 rethrow()
             end
@@ -140,17 +140,17 @@ function Solution(taskdata)
     )
 end
 
-persist_updates(solution::Solution) = 
+persist_updates(solution::Solution) =
     Solution(
         [persist_data(task) for task in solution.taskdata],
         solution.field_info,
         solution.blocks,
         solution.unfilled_fields,
         solution.filled_fields,
-        solution.transformed_fields, 
-        solution.unused_fields, 
+        solution.transformed_fields,
+        solution.unused_fields,
         solution.used_fields,
-        solution.input_transformed_fields, 
+        solution.input_transformed_fields,
         solution.complexity_score
     )
 
@@ -260,7 +260,7 @@ function move_to_next_block(solution::Solution)::Solution
     if isempty(solution.unfilled_fields)
         for (task, block_output) in zip(taskdata, last_block_output)
             task["projected|output"] = block_output["output"]
-        end 
+        end
     end
 
     if !isempty(new_block.operations)
@@ -512,8 +512,8 @@ function insert_operation(solution::Solution, operation::Operation; added_comple
         end
         return new_solution
     catch
-        println(operation)
-        println(solution)
+        @info(operation)
+        @info(solution)
         rethrow()
     end
 end

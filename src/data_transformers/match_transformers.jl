@@ -21,7 +21,7 @@ function find_matched_fields(key, solution::Solution)
     transformers = get_match_transformers(solution.taskdata, solution.field_info, union(solution.unfilled_fields, solution.transformed_fields), key)
     return flatten((imap(
         transformer -> insert_operation(solution, transformer,
-                                        added_complexity=transformer.complexity), 
+                                        added_complexity=transformer.complexity),
         transformers),
         find_matching_obj_group(key, solution)
     ))
@@ -44,7 +44,7 @@ function match_fields(solution::Solution)
                 counter += 1
                 new_solution, state = next
                 key_result = [task[key] for task in new_solution.taskdata]
-                if !haskey(matched_results, key_result) 
+                if !haskey(matched_results, key_result)
                     matched_results[key_result] = new_solution
                 end
             end
@@ -56,8 +56,8 @@ function match_fields(solution::Solution)
             )
             end
         catch
-            println(solution)
-            # println(solution.taskdata)
+            @info(solution)
+            # @info(solution.taskdata)
             rethrow()
         end
     end
@@ -72,7 +72,7 @@ function find_matching_for_key(taskdata::Vector{TaskData}, field_info, invalid_s
     end
     upd_keys = updated_keys(taskdata)
     flatten(imap(keys(taskdata[1])) do input_key
-        if in(input_key, invalid_sources) || field_info[key].type != field_info[input_key].type || 
+        if in(input_key, invalid_sources) || field_info[key].type != field_info[input_key].type ||
                 (!in(key, upd_keys) && !in(input_key, upd_keys))
             return []
         end

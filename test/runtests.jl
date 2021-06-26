@@ -4,6 +4,6 @@ using .burpl
 include("utils.jl")
 using TestSetExtensions
 
-@testset "all" begin
+@testset ExtendedTestSet "all" begin
     @includetests ARGS
 end

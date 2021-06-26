@@ -1,9 +1,9 @@
 export FindSolution
 module FindSolution
-export generate_solution
+export solve_and_check
 
 using ..DataTransformers:match_fields
-using ..Solutions:Solution,get_unmatched_complexity_score,insert_operation,persist_updates
+using ..Solutions:Solution,get_unmatched_complexity_score,insert_operation,persist_updates,compare_grids
 
 
 import ..Abstractors
@@ -25,7 +25,7 @@ function get_new_solutions_for_input_key(solution, key)
     for (priority, abstractor) in get_next_operations(solution, key)
         new_solution = insert_operation(solution, abstractor.to_abstract)
 
-        if any(haskey(new_solution.field_info, k) for k in abstractor.to_abstract.output_keys) && 
+        if any(haskey(new_solution.field_info, k) for k in abstractor.to_abstract.output_keys) &&
             !any(in(new_solution.field_info[k].type, required_types)
                  for k in abstractor.to_abstract.output_keys if haskey(new_solution.field_info, k))
             priority *= 4
@@ -63,8 +63,8 @@ function get_new_solutions_for_unfilled_key(solution::Solution, key::String)
     output = []
     source_fields = [solution.field_info[k].derived_from for k in solution.unfilled_fields]
     priority_key = all(in(k, solution.field_info[solution.field_info[key].derived_from].previous_fields) for k in source_fields)
-    # println(key, " ", source_fields, " ", priority_key)
-    # println(solution.field_info[solution.field_info[key].derived_from])
+    # @info(key, " ", source_fields, " ", priority_key)
+    # @info(solution.field_info[solution.field_info[key].derived_from])
     for (priority, abstractor) in get_next_operations(solution, key)
         new_solution = insert_operation(solution, abstractor.from_abstract, reversed_op=abstractor.to_abstract)
 
@@ -94,8 +94,8 @@ function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64
     end
     sort!(new_solutions, by=(ps -> ps[1]))
     if debug
-        println(solution)
-        println(new_solutions)
+        @info(solution)
+        @info(new_solutions)
         readline(stdin)
     end
     return new_solutions
@@ -140,16 +140,11 @@ end
 
 using DataStructures
 
-function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
-    # debug = true
-    println(fname)
-    init_solution = Solution(taskdata)
-    queue = PriorityQueue()
-    visited = Set()
-    real_visited = 0
-    border = Set()
-    enqueue!(queue, (init_solution, 0), 0)
-    best_solution = init_solution
+using IterTools:imap
+using Base.Iterators:flatten
+
+
+function pop_solution(queue, visited, border)
     while !isempty(queue)
         (solution, i), pr = peek(queue)
         dequeue!(queue)
@@ -157,47 +152,109 @@ function generate_solution(taskdata::Array, fname::AbstractString, debug::Bool)
             continue
         end
         push!(visited, solution)
-        if !check_border(solution, border)
-            continue
+        if check_border(solution, border)
+            update_border!(border, solution)
+            return solution, i, pr
         end
-        real_visited += 1
-        update_border!(border, solution)
-        println((real_visited, length(border), length(queue), solution.score, pr, i))
-        # println((pr, i, solution))
+    end
+end
+
+function generate_solutions(taskdata::Array, debug::Bool)
+    init_solution = Solution(taskdata)
+    queue = PriorityQueue()
+    visited = Set()
+    border = Set()
+    enqueue!(queue, (init_solution, 0), 0)
+
+    return flatten(imap(0:500) do real_visited
+        sol_tuple = pop_solution(queue, visited, border)
+        if isnothing(sol_tuple)
+            return []
+        end
+        solution, i, pr = sol_tuple
+
+        @info((real_visited, length(border), length(queue), solution.score, pr, i))
         new_solutions = get_new_solutions(solution, debug)
-        for (priority, new_solution) in new_solutions
+        skipmissing(imap(new_solutions) do (priority, new_solution)
             if in(new_solution, visited) || !check_border(new_solution, border)
-                continue
+                return missing
             end
             new_error = new_solution.score
             if new_error > solution.score
-                continue
-            end
-            # println((priority, new_error))
-            if new_error < best_solution.score
-                best_solution = new_solution
+                return missing
             end
             if new_error == 0
-                if isempty(new_solution.unfilled_fields)
-                    println((real_visited, length(queue)))
-                    return new_solution
-                end
-                println("found")
-                println(new_solution)
-                continue
+                @info("found")
+                @info(new_solution)
+                push!(visited, new_solution)
+                update_border!(border, new_solution)
+                return new_solution
             end
             i += 1
             new_priority = priority * (i + 1) / 2
             new_priority = min(new_priority, get(queue, (new_solution, i - 1), new_priority))
             queue[(new_solution, i - 1)] = new_priority
+            return missing
+        end)
+
+    end)
+end
+
+
+function solve_task(task_info::Dict, debug::Bool, early_stop=true::Bool)
+    answers = []
+    for solution in generate_solutions(task_info["train"], debug)
+        answer = [solution(task["input"]) for task in task_info["test"]]
+        if !in(answer, answers)
+            push!(answers, answer)
         end
-        if real_visited > 500
+        if length(answers) >= 3
             break
         end
+        if early_stop
+            if all(compare_grids(target["output"], out_grid) == 0 for (out_grid, target) in zip(answer, task_info["test"]))
+                break
+            end
+        end
     end
-    println((real_visited, length(queue)))
-    # println(visited)
-    return best_solution
+    return answers
+end
+
+function validate_results(test_info::Vector, answers::Vector)::Bool
+    for answer in answers
+        if all(compare_grids(target["output"], out_grid) == 0 for (out_grid, target) in zip(answer, test_info))
+            return true
+        end
+    end
+    return false
+end
+
+function convert_grids(taskdef)
+    Dict(
+        "train" => [
+            Dict(
+                "input" => hcat(task["input"]...),
+                "output" => hcat(task["output"]...),
+            ) for task in taskdef["train"]
+        ],
+        "test" => [
+            Dict(
+                "input" => hcat(task["input"]...),
+                "output" => hcat(task["output"]...),
+            ) for task in taskdef["test"]
+        ]
+    )
+end
+
+using JSON
+
+get_taskdef(fname) = convert_grids(JSON.parsefile(fname))
+
+function solve_and_check(fname::String, debug=false)::Bool
+    @info(split(split(fname, '/')[end], '.')[1])
+    task_info = get_taskdef(fname)
+    answers = solve_task(task_info, debug)
+    return validate_results(task_info["test"], answers)
 end
 
 end

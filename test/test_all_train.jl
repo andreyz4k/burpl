@@ -1,6 +1,6 @@
 
 
-using burpl:get_solution,test_solution
+using .burpl:solve_and_check
 
 skip  = [
     "../data/training/2dd70a9a.json",
@@ -18,7 +18,8 @@ skip  = [
         if in(fname, skip)
             continue
         end
-        solution = get_solution(fname)
-        @test test_solution(solution, fname) == (0, 0)
+        @time begin
+            @test solve_and_check(fname)
+        end
     end
 end

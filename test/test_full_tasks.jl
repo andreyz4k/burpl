@@ -32,13 +32,12 @@ FAILING_TASKS = [
     "../data/training/22eb0ac0.json",
 ]
 
-using burpl:get_solution,test_solution
+using .burpl:solve_and_check
 
 @testset "Full tasks" begin
     @testset "run task $fname" for fname in TASKS
         @time begin
-            solution = get_solution(fname)
+            @test solve_and_check(fname)
         end
-        @test test_solution(solution, fname) == (0, 0)
     end
 end
