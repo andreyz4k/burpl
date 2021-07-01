@@ -1,6 +1,6 @@
 
 
-using .burpl:solve_and_check
+using burpl:solve_and_check
 
 skip  = [
     "../data/training/2dd70a9a.json",

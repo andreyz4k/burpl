@@ -20,16 +20,16 @@ function get_new_solutions_for_input_key(solution, key)
 
     interesting_source = all(in(solution.field_info[k].derived_from, solution.field_info[key].previous_fields) for k in solution.unfilled_fields)
 
-    required_types = union([vcat([[t, Dict{Int64,t}] for t in solution.field_info[k].precursor_types]...) for k in solution.unfilled_fields]...)
+    # required_types = union([vcat([[t, Dict{Int64,t}] for t in solution.field_info[k].precursor_types]...) for k in solution.unfilled_fields]...)
 
     for (priority, abstractor) in get_next_operations(solution, key)
         new_solution = insert_operation(solution, abstractor.to_abstract)
 
-        if any(haskey(new_solution.field_info, k) for k in abstractor.to_abstract.output_keys) &&
-            !any(in(new_solution.field_info[k].type, required_types)
-                 for k in abstractor.to_abstract.output_keys if haskey(new_solution.field_info, k))
-            priority *= 4
-        end
+        # if any(haskey(new_solution.field_info, k) for k in abstractor.to_abstract.output_keys) &&
+        #     !any(in(new_solution.field_info[k].type, required_types)
+        #          for k in abstractor.to_abstract.output_keys if haskey(new_solution.field_info, k))
+        #     priority *= 4
+        # end
 
         if !interesting_source
             priority *= 8
@@ -184,8 +184,6 @@ function generate_solutions(taskdata::Array, debug::Bool)
                 return missing
             end
             if new_error == 0
-                @info("found")
-                @info(new_solution)
                 push!(visited, new_solution)
                 update_border!(border, new_solution)
                 return new_solution
@@ -206,6 +204,8 @@ function solve_task(task_info::Dict, debug::Bool, early_stop=true::Bool)
     for solution in generate_solutions(task_info["train"], debug)
         answer = [solution(task["input"]) for task in task_info["test"]]
         if !in(answer, answers)
+            @info("found")
+            @info(solution)
             push!(answers, answer)
         end
         if length(answers) >= 3
