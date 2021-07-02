@@ -15,9 +15,9 @@ end
 (op::FakeOperation)(task_data) = task_data
 
 make_taskdata(tasks) =
-    TaskData(Dict{String,Vector}(), Dict(key => [task[key] for task in tasks] for key in keys(tasks[1])), Set())
+    TaskData(Dict{String,Vector}(), Dict(key => Any[task[key] for task in tasks] for key in keys(tasks[1])), Set())
 
-make_taskdata(task::Dict) = TaskData(Dict{String,Vector}(), Dict(key => [val] for (key, val) in task), Set())
+make_taskdata(task::Dict) = TaskData(Dict{String,Vector}(), Dict(key => Any[val] for (key, val) in task), Set())
 
 make_field_info(taskdata) = Dict(key => FieldInfo(vals[1], "input", [], [Set()]) for (key, vals) in taskdata)
 
@@ -50,8 +50,10 @@ function _compare_operations(expected, solutions)
 end
 
 filtered_taskdata(solution) = [
-    Dict(filter(keyval -> keyval[1] != "input" && keyval[1] != "output" && keyval[1] != "projected|output", task))
-    for task in solution.taskdata
+    Dict(
+        key => values[i] for
+        (key, values) in solution.taskdata if key != "input" && key != "output" && key != "projected|output"
+    ) for (i, _) in enumerate(solution.taskdata["input"])
 ]
 
 filtered_ops(solution) =

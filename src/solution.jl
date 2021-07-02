@@ -591,15 +591,17 @@ function insert_operation(
                 end
             else
                 push!(unused_fields, key)
-                for val in taskdata[key]
-                    if !ismissing(val) && _is_valid_value(val)
-                        field_info[key] = FieldInfo(
-                            val,
-                            inp_dependent_key,
-                            vcat([info.precursor_types for info in input_field_info]...),
-                            [(field_info[k].previous_fields for k in operation.input_keys)..., [key]],
-                        )
-                        break
+                if haskey(taskdata, key)
+                    for val in taskdata[key]
+                        if !ismissing(val) && _is_valid_value(val)
+                            field_info[key] = FieldInfo(
+                                val,
+                                inp_dependent_key,
+                                vcat([info.precursor_types for info in input_field_info]...),
+                                [(field_info[k].previous_fields for k in operation.input_keys)..., [key]],
+                            )
+                            break
+                        end
                     end
                 end
             end
@@ -704,7 +706,7 @@ function check_task(solution::Solution, input_grids::Vector{Array{Int,2}}, targe
     compare_grids(targets, out)
 end
 
-function compare_grids(targets::Vector{Array{Int,2}}, outputs::Vector{Array{Int,2}})
+function compare_grids(targets::Vector, outputs::Vector)
     result = 0
     for (target, output) in zip(targets, outputs)
         if size(target) != size(output)
