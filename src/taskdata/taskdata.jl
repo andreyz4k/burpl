@@ -7,18 +7,10 @@ struct TaskData <: AbstractDict{String,Any}
     keys_to_delete::Set{String}
 end
 
-Base.show(io::IO, t::TaskData) = print(io,
-        "TaskData(",
-        t.persistent_data,
-        ", ",
-        t.updated_values,
-        ", ",
-        t.keys_to_delete,
-        ")"
-    )
+Base.show(io::IO, t::TaskData) =
+    print(io, "TaskData(", t.persistent_data, ", ", t.updated_values, ", ", t.keys_to_delete, ")")
 
-Base.copy(t::TaskData) = 
-    TaskData(t.persistent_data, copy(t.updated_values), copy(t.keys_to_delete))
+Base.copy(t::TaskData) = TaskData(t.persistent_data, copy(t.updated_values), copy(t.keys_to_delete))
 
 function persist_data(taskdata::TaskData)
     persistent_data = copy(taskdata.persistent_data)
@@ -36,7 +28,7 @@ function Base.setindex!(t::TaskData, v, k)
     t.updated_values[k] = v
 end
 
-function Base.length(t::TaskData) 
+function Base.length(t::TaskData)
     length(t.persistent_data) + length(t.updated_values) + length(t.keys_to_delete)
 end
 
@@ -92,11 +84,17 @@ function Base.iterate(t::TaskData, state::Tuple{Int,Any})
     end
 end
 
-Base.merge(t::TaskData, others::AbstractDict...) =
-    TaskData(t.persistent_data, merge(t.updated_values, others...), setdiff(t.keys_to_delete, [keys(o) for o in others]...))
+Base.merge(t::TaskData, others::AbstractDict...) = TaskData(
+    t.persistent_data,
+    merge(t.updated_values, others...),
+    setdiff(t.keys_to_delete, [keys(o) for o in others]...),
+)
 
-Base.filter(f::Function, t::TaskData) =
-    TaskData(t.persistent_data, filter(f, t.updated_values), union(t.keys_to_delete, keys(filter(!f, t.persistent_data))))
+Base.filter(f::Function, t::TaskData) = TaskData(
+    t.persistent_data,
+    filter(f, t.updated_values),
+    union(t.keys_to_delete, keys(filter(!f, t.persistent_data))),
+)
 
 function Base.delete!(t::TaskData, key)
     push!(t.keys_to_delete, key)

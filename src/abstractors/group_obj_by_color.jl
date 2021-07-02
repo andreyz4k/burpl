@@ -1,5 +1,5 @@
 
-using ..ObjectPrior:Object,get_color
+using ..ObjectPrior: Object, get_color
 
 struct GroupObjectsByColor <: AbstractorClass end
 
@@ -23,26 +23,31 @@ function to_abstract_value(p::Abstractor{GroupObjectsByColor}, source_value)
         key = get_color(obj)
         push!(results[key], obj)
     end
-    return Dict(
-        p.output_keys[1] => Dict(k => v for (k, v) in results),
-        p.output_keys[2] => Set{Color}(keys(results))
-    )
+    return Dict(p.output_keys[1] => Dict(k => v for (k, v) in results), p.output_keys[2] => Set{Color}(keys(results)))
 end
 
 
-function wrap_func_call_dict_value(p::Abstractor{GroupObjectsByColor}, func::Function, wrappers::AbstractVector{Function}, source_values...)
+function wrap_func_call_dict_value(
+    p::Abstractor{GroupObjectsByColor},
+    func::Function,
+    wrappers::AbstractVector{Function},
+    source_values...,
+)
     if func == from_abstract_value
         wrap_func_call_value(p, func, wrappers, source_values...)
     else
-        invoke(wrap_func_call_dict_value, Tuple{Abstractor,Function,AbstractVector{Function},Vararg{Any}}, p, func, wrappers, source_values...)
+        invoke(
+            wrap_func_call_dict_value,
+            Tuple{Abstractor,Function,AbstractVector{Function},Vararg{Any}},
+            p,
+            func,
+            wrappers,
+            source_values...,
+        )
     end
 end
 
 function from_abstract_value(p::Abstractor{GroupObjectsByColor}, data, keys)
-    results = reduce(
-        union,
-        values(data),
-        init=Set{Object}()
-    )
+    results = reduce(union, values(data), init = Set{Object}())
     return Dict(p.output_keys[1] => results)
 end

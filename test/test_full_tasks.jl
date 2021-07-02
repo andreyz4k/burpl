@@ -32,7 +32,7 @@ FAILING_TASKS = [
     "../data/training/22eb0ac0.json",
 ]
 
-using burpl:solve_and_check
+using burpl: solve_and_check
 
 @testset "Full tasks" begin
     @testset "run task $fname" for fname in TASKS

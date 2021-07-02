@@ -1,5 +1,5 @@
 
-using ..Operations:SetConst
+using ..Operations: SetConst
 
 function find_const(taskdata::Vector{TaskData}, _, _, key::String)::Vector{SetConst}
     result = nothing

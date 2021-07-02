@@ -68,7 +68,7 @@ function normalize_component(points, grid)
     miny, maxy = extrema((p[2] for p in points))
     component = fill(-1, maxx - minx + 1, maxy - miny + 1)
     for p in points
-        component[p[1] - minx + 1, p[2] - miny + 1] = grid[p...]
+        component[p[1]-minx+1, p[2]-miny+1] = grid[p...]
     end
     (minx, miny), component
 end
@@ -79,7 +79,7 @@ function find_objects(grid::Array{Int,2})
     visited = Set()
     s = size(grid)
 
-    for i in 1:s[1], j in 1:s[2]
+    for i = 1:s[1], j = 1:s[2]
         if grid[i, j] != -1 && !in((i, j), visited)
             points = find_component(grid, i, j, visited)
             position, component = normalize_component(points, grid)
@@ -90,11 +90,10 @@ function find_objects(grid::Array{Int,2})
     return objects
 end
 
-point_in_rect(point::Tuple{Int,Int}, c1::Tuple{Int,Int}, c2::Tuple{Int,Int}) =
-    all(c1 .<= point .<= c2)
+point_in_rect(point::Tuple{Int,Int}, c1::Tuple{Int,Int}, c2::Tuple{Int,Int}) = all(c1 .<= point .<= c2)
 
 function draw_object!(grid::Array{Int,2}, object)
-    for i in 1:size(object.shape)[1], j in 1:size(object.shape)[2]
+    for i = 1:size(object.shape)[1], j = 1:size(object.shape)[2]
         p = (i, j) .+ object.position .- (1, 1)
         if point_in_rect(p, (1, 1), size(grid)) && object.shape[i, j] != -1
             grid[p...] = object.shape[i, j]

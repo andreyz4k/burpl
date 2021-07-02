@@ -17,8 +17,6 @@ function check_task_value(::SortArray, value::AbstractVector{T}, data, aux_value
     return true
 end
 
-to_abstract_value(p::Abstractor{SortArray}, source_value) =
-    Dict(p.output_keys[1] => sort(source_value))
+to_abstract_value(p::Abstractor{SortArray}, source_value) = Dict(p.output_keys[1] => sort(source_value))
 
-from_abstract_value(p::Abstractor{SortArray}, source_value) =
-    Dict(p.output_keys[1] => source_value)
+from_abstract_value(p::Abstractor{SortArray}, source_value) = Dict(p.output_keys[1] => source_value)

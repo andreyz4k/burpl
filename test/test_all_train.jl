@@ -1,8 +1,8 @@
 
 
-using burpl:solve_and_check
+using burpl: solve_and_check
 
-skip  = [
+skip = [
     "../data/training/2dd70a9a.json",
     "../data/training/7df24a62.json",
     "../data/training/46f33fce.json",
@@ -13,7 +13,7 @@ skip  = [
 
 @testset "Run all train tasks" begin
     return
-    files = readdir("../data/training", join=true)
+    files = readdir("../data/training", join = true)
     @testset "test file $fname" for fname in files[301:400]
         if in(fname, skip)
             continue

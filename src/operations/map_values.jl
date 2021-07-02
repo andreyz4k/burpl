@@ -1,5 +1,5 @@
 
-using ..Complexity:get_complexity
+using ..Complexity: get_complexity
 
 struct MapValues <: Operation
     input_keys::Array{String}
@@ -12,9 +12,11 @@ struct MapValues <: Operation
     end
 end
 
-Base.show(io::IO, op::MapValues) = print(io, "MapValues(\"", op.output_keys[1], "\", \"", op.input_keys[1], "\", ", op.match_pairs, ")")
+Base.show(io::IO, op::MapValues) =
+    print(io, "MapValues(\"", op.output_keys[1], "\", \"", op.input_keys[1], "\", ", op.match_pairs, ")")
 
-Base.:(==)(a::MapValues, b::MapValues) = a.output_keys == b.output_keys && a.input_keys == b.input_keys && a.match_pairs == b.match_pairs
+Base.:(==)(a::MapValues, b::MapValues) =
+    a.output_keys == b.output_keys && a.input_keys == b.input_keys && a.match_pairs == b.match_pairs
 Base.hash(op::MapValues, h::UInt64) = hash(op.output_keys, h) + hash(op.input_keys, h) + hash(op.match_pairs, h)
 
 function (op::MapValues)(task_data)

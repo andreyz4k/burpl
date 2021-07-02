@@ -1,17 +1,17 @@
 
-_get_type(::T) where T = T
+_get_type(::T) where {T} = T
 _get_type(val::Matcher) = _get_type(unwrap_matcher(val)[1])
 struct Option{T}
     value::Union{T,Matcher{T}}
-    option_hash
-    Option(v::T, op_hash) where T = new{_get_type(v)}(v, op_hash)
+    option_hash::Any
+    Option(v::T, op_hash) where {T} = new{_get_type(v)}(v, op_hash)
 end
 Option(value) = Option(value, nothing)
 
 Base.:(==)(a::Option, b::Option) = a.value == b.value && a.option_hash == b.option_hash
 Base.hash(op::Option, h::UInt64) = hash(op.value, h) + hash(op.option_hash, h)
-Base.show(io::IO, op::Option{T}) where {T} = print(io, "Option{", T, "}(", op.value,
-    (isnothing(op.option_hash) ? [] : [", ", op.option_hash])..., ")")
+Base.show(io::IO, op::Option{T}) where {T} =
+    print(io, "Option{", T, "}(", op.value, (isnothing(op.option_hash) ? [] : [", ", op.option_hash])..., ")")
 
 struct Either{T} <: Matcher{T}
     options::Array{Option{T}}
@@ -33,8 +33,9 @@ Either(options::AbstractVector) = Either([isa(op, Option) ? op : Option(op) for 
 
 Base.:(==)(a::Either, b::Either) = issetequal(a.options, b.options)
 Base.hash(e::Either, h::UInt64) = hash(e.options, h)
-Base.show(io::IO, e::Either{T}) where {T} = print(io, "Either{", T, "}([", vcat([[op, ", "] for op in e.options]...)[1:end - 1]..., "])")
-    
+Base.show(io::IO, e::Either{T}) where {T} =
+    print(io, "Either{", T, "}([", vcat([[op, ", "] for op in e.options]...)[1:end-1]..., "])")
+
 function make_either(keys, options)
     if length(options) == 1
         for option in options
@@ -68,27 +69,24 @@ function _common_value(val1, val2::Either)
     if isempty(valid_options)
         return nothing
     else
-    return Either(unique(valid_options))
+        return Either(unique(valid_options))
     end
 end
 
 
-_common_value(val1::Matcher, val2::Either) =
-    invoke(_common_value, Tuple{Any,Either}, val1, val2)
+_common_value(val1::Matcher, val2::Either) = invoke(_common_value, Tuple{Any,Either}, val1, val2)
 
 
-_check_match(val1, val2::Either) =
-    any(check_match(val1, option.value) for option in val2.options)
+_check_match(val1, val2::Either) = any(check_match(val1, option.value) for option in val2.options)
 
-_check_match(val1::Matcher, val2::Either) =
-    invoke(_check_match, Tuple{Any,Either}, val1, val2)
-    
+_check_match(val1::Matcher, val2::Either) = invoke(_check_match, Tuple{Any,Either}, val1, val2)
+
 
 unpack_value(value::Either) = vcat([unpack_value(option.value) for option in value.options]...)
 
 unwrap_matcher(value::Either) = [option.value for option in value.options]
 
-using ..Taskdata:TaskData
+using ..Taskdata: TaskData
 
 update_value(data::TaskData, path_keys::Array, value::Either, current_value::Either)::TaskData =
     invoke(update_value, Tuple{TaskData,Array,Any,Any}, data, path_keys, value, current_value)

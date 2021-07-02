@@ -8,17 +8,18 @@ priority(::UniteInRect) = 12
 
 init_create_check_data(::UniteInRect, key, solution) = Dict("effective" => false)
 
-_is_in(a::Object, b::Object) = all(a.position .<= b.position) && all(a.position .+ size(a.shape) .>= b.position .+ size(b.shape))
+_is_in(a::Object, b::Object) =
+    all(a.position .<= b.position) && all(a.position .+ size(a.shape) .>= b.position .+ size(b.shape))
 
 function check_task_value(::UniteInRect, value::AbstractSet{Object}, data, aux_values)
     value = collect(value)
-    for (i, a) in enumerate(value), b in view(value, i + 1:length(value))
+    for (i, a) in enumerate(value), b in view(value, i+1:length(value))
         if get_color(a) == get_color(b) && (_is_in(a, b) || _is_in(b, a))
             data["effective"] = true
             break
         end
     end
-true
+    true
 end
 
 function to_abstract_value(p::Abstractor{UniteInRect}, source_value::AbstractSet{Object})
@@ -32,7 +33,7 @@ function to_abstract_value(p::Abstractor{UniteInRect}, source_value::AbstractSet
         complete = false
         while !complete
             complete = true
-            for obj2 in view(source_value, i + 1:length(source_value))
+            for obj2 in view(source_value, i+1:length(source_value))
                 if in(obj2, merged)
                     continue
                 end
@@ -49,5 +50,4 @@ function to_abstract_value(p::Abstractor{UniteInRect}, source_value::AbstractSet
     return Dict(p.output_keys[1] => out)
 end
 
-from_abstract_value(p::Abstractor{UniteInRect}, source_value) =
-    Dict(p.output_keys[1] => source_value)
+from_abstract_value(p::Abstractor{UniteInRect}, source_value) = Dict(p.output_keys[1] => source_value)

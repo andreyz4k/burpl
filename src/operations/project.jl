@@ -1,15 +1,14 @@
 
 
 struct Project <: Operation
-    operations
-    input_keys
-    output_keys
-    aux_keys
-    Project(operations, out_keys) =
-        new(copy(operations), _get_keys_for_items(operations, out_keys)...)
+    operations::Any
+    input_keys::Any
+    output_keys::Any
+    aux_keys::Any
+    Project(operations, out_keys) = new(copy(operations), _get_keys_for_items(operations, out_keys)...)
 end
 
-Base.show(io::IO, p::Project) = print(io, "Project(", (vcat(([op,", "] for op in p.operations)...))..., ")")
+Base.show(io::IO, p::Project) = print(io, "Project(", (vcat(([op, ", "] for op in p.operations)...))..., ")")
 
 Base.:(==)(a::Project, b::Project) = a.operations == b.operations
 

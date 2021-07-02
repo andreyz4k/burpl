@@ -1,14 +1,11 @@
 
-using .Abstractors:wrap_check_task_value,SplitObject
-using .PatternMatching:Either,Option
-using .ObjectPrior:Object
+using .Abstractors: wrap_check_task_value, SplitObject
+using .PatternMatching: Either, Option
+using .ObjectPrior: Object
 
 @testset "Split object" begin
     @testset "split either object" begin
-        value = Dict(
-            2 => Object([2 2 2 2 2 2 2 2 2 2], (1, 6)),
-            8 => Object([8 8 8 8 8 8 8 8 8 8], (1, 8)),
-        )
+        value = Dict(2 => Object([2 2 2 2 2 2 2 2 2 2], (1, 6)), 8 => Object([8 8 8 8 8 8 8 8 8 8], (1, 8)))
         data = Dict("effective" => false)
         @test wrap_check_task_value(SplitObject(), value, data, []) == true
 
@@ -23,9 +20,7 @@ using .ObjectPrior:Object
     end
 
     @testset "to abstract" begin
-        value = make_taskdata(Dict{String,Any}(
-            "key" => Object([1; 1; 1; 1; 1; 1; 1], (1, 6)),
-        ))
+        value = make_taskdata(Dict{String,Any}("key" => Object([1; 1; 1; 1; 1; 1; 1], (1, 6))))
         splitter = SplitObject("key", true)
         out_data = splitter(value)
         @test out_data == Dict(
@@ -38,37 +33,27 @@ using .ObjectPrior:Object
                 Object([1], (5, 6)),
                 Object([1], (6, 6)),
                 Object([1], (7, 6)),
-            ])
+            ]),
         )
         delete!(out_data, "key")
         splitter = SplitObject("key", false)
         reversed_data = splitter(out_data)
         @test reversed_data["key"] == value["key"]
 
-        value = make_taskdata(Dict{String,Any}(
-            "key" => Either([
-                Option(
-                    Object([1; 1; 1; 1; 1; 1; 1], (1, 6)),
-                    1519798033240906986
-                ),
-                Option(
-                    Object([1; 1; 1; 1; 1; 1; 1], (1, 18)),
-                    -8964597388769226366
-                )
-            ])
-        ))
+        value = make_taskdata(
+            Dict{String,Any}(
+                "key" => Either([
+                    Option(Object([1; 1; 1; 1; 1; 1; 1], (1, 6)), 1519798033240906986),
+                    Option(Object([1; 1; 1; 1; 1; 1; 1], (1, 18)), -8964597388769226366),
+                ]),
+            ),
+        )
         splitter = SplitObject("key", true)
         out_data = splitter(value)
         @test out_data == Dict(
             "key" => Either([
-                Option(
-                    Object([1; 1; 1; 1; 1; 1; 1], (1, 6)),
-                    1519798033240906986
-                ),
-                Option(
-                    Object([1; 1; 1; 1; 1; 1; 1], (1, 18)),
-                    -8964597388769226366
-                )
+                Option(Object([1; 1; 1; 1; 1; 1; 1], (1, 6)), 1519798033240906986),
+                Option(Object([1; 1; 1; 1; 1; 1; 1], (1, 18)), -8964597388769226366),
             ]),
             "key|splitted" => Either([
                 Option(
@@ -81,7 +66,7 @@ using .ObjectPrior:Object
                         Object([1], (6, 6)),
                         Object([1], (7, 6)),
                     ]),
-                    1519798033240906986
+                    1519798033240906986,
                 ),
                 Option(
                     Set([
@@ -93,9 +78,9 @@ using .ObjectPrior:Object
                         Object([1], (6, 18)),
                         Object([1], (7, 18)),
                     ]),
-                    -8964597388769226366
-                )
-            ])
+                    -8964597388769226366,
+                ),
+            ]),
         )
     end
 end

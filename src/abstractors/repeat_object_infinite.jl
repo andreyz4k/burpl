@@ -1,23 +1,26 @@
 
 struct RepeatObjectInfinite <: AbstractorClass end
 
-RepeatObjectInfinite(key, to_abs, taskdata) = Abstractor(RepeatObjectInfinite(), key, to_abs, aux_keys(RepeatObjectInfinite(), key, taskdata))
+RepeatObjectInfinite(key, to_abs, taskdata) =
+    Abstractor(RepeatObjectInfinite(), key, to_abs, aux_keys(RepeatObjectInfinite(), key, taskdata))
 abs_keys(::RepeatObjectInfinite) = ["first", "step"]
 aux_keys(::RepeatObjectInfinite) = ["grid_size"]
 
 init_create_check_data(::RepeatObjectInfinite, key, solution) = Dict("effective" => false)
 
-using ..ObjectPrior:point_in_rect
+using ..ObjectPrior: point_in_rect
 
 function check_task_value(::RepeatObjectInfinite, value::AbstractSet{Object}, data, aux_values)
     if isempty(value)
         return false
     end
-    items = sort(collect(value), by=obj -> obj.position)
+    items = sort(collect(value), by = obj -> obj.position)
     if any(obj.shape != items[1].shape for obj in view(items, 2:length(items)))
         return false
     end
-    if any(items[i].position .- items[i - 1].position != items[i + 1].position .- items[i].position for i in 2:(length(items) - 1))
+    if any(
+        items[i].position .- items[i-1].position != items[i+1].position .- items[i].position for i = 2:(length(items)-1)
+    )
         return false
     end
     if length(items) > 1
@@ -30,15 +33,14 @@ function check_task_value(::RepeatObjectInfinite, value::AbstractSet{Object}, da
             return false
         end
     end
-true
+    true
 end
 
 
-needed_input_keys(p::Abstractor{RepeatObjectInfinite}) =
-    p.to_abstract ? p.input_keys : p.input_keys[1:2:3]
+needed_input_keys(p::Abstractor{RepeatObjectInfinite}) = p.to_abstract ? p.input_keys : p.input_keys[1:2:3]
 
 function to_abstract_value(p::Abstractor{RepeatObjectInfinite}, source_value, grid_size)
-    objects = sort(collect(source_value), by=obj -> obj.position)
+    objects = sort(collect(source_value), by = obj -> obj.position)
     if length(objects) == 1
         return Dict(p.output_keys[1] => objects[1])
     end

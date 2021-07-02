@@ -1,10 +1,29 @@
 
-using .Abstractors:BackgroundColor,Transpose,SolidObjects,CountObjects,GroupObjectsByColor,
-    RepeatObjectInfinite,DotProductClass,UnwrapSingleList,AlignedWithBorder,DistanceBetweenObjects,RemoveRedundantDict,
-    GetPosition,GroupMin,MinPadding,UniteTouching,GroupMax,CompactSimilarObjects,GetSize,SeparateAxis,VerticalSymmetry,
-    HorisontalSymmetry,UniteInRect
+using .Abstractors:
+    BackgroundColor,
+    Transpose,
+    SolidObjects,
+    CountObjects,
+    GroupObjectsByColor,
+    RepeatObjectInfinite,
+    DotProductClass,
+    UnwrapSingleList,
+    AlignedWithBorder,
+    DistanceBetweenObjects,
+    RemoveRedundantDict,
+    GetPosition,
+    GroupMin,
+    MinPadding,
+    UniteTouching,
+    GroupMax,
+    CompactSimilarObjects,
+    GetSize,
+    SeparateAxis,
+    VerticalSymmetry,
+    HorisontalSymmetry,
+    UniteInRect
 
-using .FindSolution:get_taskdef
+using .FindSolution: get_taskdef
 
 @testset "Check ideal solutions" begin
     @testset "ff28f65a" begin
@@ -48,7 +67,7 @@ using .FindSolution:get_taskdef
         fname = "../data/training/0b148d64.json"
         task_info = get_taskdef(fname)
         operations = [
-        (BackgroundColor(), "output", false),
+            (BackgroundColor(), "output", false),
             (BackgroundColor(), "input", true),
             (SolidObjects(), "output|bgr_grid", false),
             (SolidObjects(), "input|bgr_grid", true),
@@ -61,7 +80,7 @@ using .FindSolution:get_taskdef
         @test test_solution(solution, task_info["test"])
     end
 
-        @testset "39a8645d" begin
+    @testset "39a8645d" begin
         fname = "../data/training/39a8645d.json"
         task_info = get_taskdef(fname)
         operations = [
@@ -87,7 +106,7 @@ using .FindSolution:get_taskdef
         task_info = get_taskdef(fname)
         operations = [
             (BackgroundColor(), "output", false),
-        (BackgroundColor(), "input", true),
+            (BackgroundColor(), "input", true),
             (SolidObjects(), "output|bgr_grid", false),
             (SolidObjects(), "input|bgr_grid", true),
             (GroupObjectsByColor(), "output|bgr_grid|spatial_objects", false),
@@ -109,14 +128,18 @@ using .FindSolution:get_taskdef
         operations = [
             (BackgroundColor(), "input", true),
             (BackgroundColor(), "output", false),
-        (SolidObjects(), "output|bgr_grid", false),
+            (SolidObjects(), "output|bgr_grid", false),
             (SolidObjects(), "input|bgr_grid", true),
             (UniteTouching(), "output|bgr_grid|spatial_objects", false),
             (UnwrapSingleList(), "output|bgr_grid|spatial_objects|united_touch", false),
             (VerticalSymmetry(), "output|bgr_grid|spatial_objects|united_touch|single_value", false),
             (HorisontalSymmetry(), "output|bgr_grid|spatial_objects|united_touch|single_value|vert_kernel", false),
             (UnwrapSingleList(), "input|bgr_grid|spatial_objects", true),
-            (DotProductClass(), "output|bgr_grid|spatial_objects|united_touch|single_value|vert_kernel|horz_kernel", false),
+            (
+                DotProductClass(),
+                "output|bgr_grid|spatial_objects|united_touch|single_value|vert_kernel|horz_kernel",
+                false,
+            ),
         ]
         solution = create_solution(task_info["train"], operations)
         @test test_solution(solution, task_info["test"])

@@ -1,7 +1,7 @@
 export Complexity
 module Complexity
 
-using ..ObjectPrior:Object,Color
+using ..ObjectPrior: Object, Color
 
 get_complexity(v::Any)::Float64 = length(repr(v))
 
@@ -38,8 +38,9 @@ function get_complexity(value::AbstractDict)::Float64
         denominator = 1
     end
     denominator = min(denominator, length(value))
-    return 2 + sum(Float64[get_complexity(k) for k in keys(value)]) / length(value) +
-        sum(Float64[get_complexity(v) for v in values(value)]) / denominator
+    return 2 +
+           sum(Float64[get_complexity(k) for k in keys(value)]) / length(value) +
+           sum(Float64[get_complexity(v) for v in values(value)]) / denominator
 end
 
 end

@@ -1,14 +1,21 @@
 
-using ..PatternMatching:Matcher,Either
+using ..PatternMatching: Matcher, Either
 
 struct WrapMatcher <: Operation
-    operations
-    input_keys
-    output_keys
-    aux_keys 
+    operations::Any
+    input_keys::Any
+    output_keys::Any
+    aux_keys::Any
 end
 
-Base.show(io::IO, wr::WrapMatcher) = print(io, "WrapMatcher(", wr.operations[1], ", ", filter(k -> !in(k, wr.operations[1].input_keys), wr.input_keys), ")")
+Base.show(io::IO, wr::WrapMatcher) = print(
+    io,
+    "WrapMatcher(",
+    wr.operations[1],
+    ", ",
+    filter(k -> !in(k, wr.operations[1].input_keys), wr.input_keys),
+    ")",
+)
 
 Base.:(==)(a::WrapMatcher, b::WrapMatcher) = a.operations == b.operations
 
@@ -27,24 +34,24 @@ function wrap_operation(taskdata, operation)
     end
     for key in unmatched_keys, task in taskdata
         if haskey(task, key) && !haskey(task, key * "|unfilled")
-            task[key * "|unfilled"] = task[key]
+            task[key*"|unfilled"] = task[key]
         end
     end
     for key in operation.output_keys, task in taskdata
         delete!(task, key)
     end
-    return taskdata, WrapMatcher(
-        [operation, (CopyParam(k, k * "|unfilled") for k in unmatched_keys)...], 
-        vcat(operation.input_keys, [k * "|unfilled" for k in unmatched_keys]), 
-        operation.output_keys, 
-        operation.aux_keys
+    return taskdata,
+    WrapMatcher(
+        [operation, (CopyParam(k, k * "|unfilled") for k in unmatched_keys)...],
+        vcat(operation.input_keys, [k * "|unfilled" for k in unmatched_keys]),
+        operation.output_keys,
+        operation.aux_keys,
     )
 end
 
 get_unfilled_inputs(operation, taskdata) = operation.input_keys
 
-get_unfilled_inputs(operation::WrapMatcher, taskdata) =
-    _filter_unmatched_keys(operation.input_keys, taskdata)
+get_unfilled_inputs(operation::WrapMatcher, taskdata) = _filter_unmatched_keys(operation.input_keys, taskdata)
 
 function (wrapper::WrapMatcher)(observed_data)
     filled = false

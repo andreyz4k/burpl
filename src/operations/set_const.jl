@@ -2,7 +2,7 @@
 struct SetConst <: Operation
     input_keys::Array{String}
     output_keys::Array{String}
-    value
+    value::Any
     complexity::Float64
     SetConst(key, value) = new([], [key], value, get_complexity(value))
 end

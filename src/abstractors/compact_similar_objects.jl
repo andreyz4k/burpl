@@ -1,5 +1,5 @@
 
-using ..PatternMatching:common_value
+using ..PatternMatching: common_value
 
 struct CompactSimilarObjects <: AbstractorClass end
 
@@ -18,13 +18,10 @@ function check_task_value(::CompactSimilarObjects, value::AbstractSet{Object}, d
 end
 
 
-to_abstract_value(p::Abstractor{CompactSimilarObjects}, objects::AbstractSet{Object}) =
-     Dict(
-        p.output_keys[1] => length(objects) > 0 ? ObjectShape(first(objects)) : nothing,
-        p.output_keys[2] => Set([o.position for o in objects])
-    )
+to_abstract_value(p::Abstractor{CompactSimilarObjects}, objects::AbstractSet{Object}) = Dict(
+    p.output_keys[1] => length(objects) > 0 ? ObjectShape(first(objects)) : nothing,
+    p.output_keys[2] => Set([o.position for o in objects]),
+)
 
 from_abstract_value(p::Abstractor{CompactSimilarObjects}, shape_template, positions) =
-    Dict(
-        p.output_keys[1] => Set([Object(shape_template.shape, pos) for pos in positions])
-    )
+    Dict(p.output_keys[1] => Set([Object(shape_template.shape, pos) for pos in positions]))

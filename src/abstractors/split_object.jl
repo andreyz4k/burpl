@@ -14,7 +14,7 @@ end
 
 function to_abstract_value(p::Abstractor{SplitObject}, object::Object)
     res = Set{Object}()
-    for i in 1:size(object.shape)[1], j in 1:size(object.shape)[2]
+    for i = 1:size(object.shape)[1], j = 1:size(object.shape)[2]
         if object.shape[i, j] != -1
             push!(res, Object([object.shape[i, j]], object.position .+ (i - 1, j - 1)))
         end

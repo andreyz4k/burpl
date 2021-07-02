@@ -1,5 +1,5 @@
 
-using ..ObjectPrior:Object
+using ..ObjectPrior: Object
 
 struct ObjectShape{Object} <: Matcher{Object}
     object::Object
@@ -34,8 +34,7 @@ function _common_value(val1::ObjectShape, val2::ObjectShape)
     return nothing
 end
 
-_common_value(val1::Either, val2::ObjectShape) =
-    invoke(_common_value, Tuple{Any,Either}, val2, val1)
+_common_value(val1::Either, val2::ObjectShape) = invoke(_common_value, Tuple{Any,Either}, val2, val1)
 
 _common_value(::Matcher, ::ObjectShape) = nothing
 
@@ -54,7 +53,8 @@ function _common_value(val1::Set{Object}, val2::ObjectsGroup)
             for v2 in val2
                 if v1.shape == v2.shape
                     str = isnothing(stride) ? v2.position .- v1.position : stride
-                    if v1.position .+ str == v2.position && !isnothing(_inner(setdiff(val1, [v1]), setdiff(val2, [v2]), str))
+                    if v1.position .+ str == v2.position &&
+                       !isnothing(_inner(setdiff(val1, [v1]), setdiff(val2, [v2]), str))
                         found = true
                         break
                     end
@@ -74,16 +74,14 @@ function _common_value(val1::ObjectsGroup, val2::ObjectsGroup)
     return _common_value(val1.objects, val2)
 end
 
-_common_value(val1::Either, val2::ObjectsGroup) =
-    invoke(_common_value, Tuple{Any,Either}, val2, val1)
+_common_value(val1::Either, val2::ObjectsGroup) = invoke(_common_value, Tuple{Any,Either}, val2, val1)
 
 _common_value(::Matcher, ::ObjectsGroup) = nothing
 
 
 _check_match(::Any, ::ObjectShape) = false
 
-_check_match(val1::Object, val2::ObjectShape) =
-    val2.object.shape == val1.shape
+_check_match(val1::Object, val2::ObjectShape) = val2.object.shape == val1.shape
 
 _check_match(val1::ObjectShape, val2) = check_match(val1.object, val2)
 _check_match(val1::ObjectShape, val2::ObjectShape) = check_match(val1.object, val2)
@@ -91,8 +89,7 @@ _check_match(val1::ObjectShape, val2::Either) = check_match(val1.object, val2)
 
 _check_match(::Any, ::ObjectsGroup) = false
 
-_check_match(val1::Set{Object}, val2::ObjectsGroup) =
-    !isnothing(common_value(val1, val2))
+_check_match(val1::Set{Object}, val2::ObjectsGroup) = !isnothing(common_value(val1, val2))
 
 _check_match(val1::ObjectsGroup, val2) = check_match(val1.objects, val2)
 _check_match(val1::ObjectsGroup, val2::ObjectsGroup) = check_match(val1.objects, val2)

@@ -8,7 +8,7 @@ function fetch_value(data, keys)
     end
     return data
 end
-using ..Taskdata:TaskData
+using ..Taskdata: TaskData
 
 function update_value(data::TaskData, key::String, value)::TaskData
     return update_value(data, [key], unpack_value(value)[1])
@@ -21,7 +21,7 @@ end
 function update_value(data::TaskData, path_keys::Array, value, ::Any)::TaskData
     data = copy(data)
     item = data
-    for key in path_keys[1:end - 1]
+    for key in path_keys[1:end-1]
         item[key] = copy(item[key])
         item = item[key]
     end

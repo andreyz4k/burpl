@@ -7,9 +7,11 @@ struct IncParam <: Operation
     IncParam(key, inp_key, shift) = new([inp_key], [key, key * "|inc_shift"], shift, 1)
 end
 
-Base.show(io::IO, op::IncParam) = print(io, "IncParam(\"", op.output_keys[1], "\", \"", op.input_keys[1], "\", ", op.shift, ")")
+Base.show(io::IO, op::IncParam) =
+    print(io, "IncParam(\"", op.output_keys[1], "\", \"", op.input_keys[1], "\", ", op.shift, ")")
 
-Base.:(==)(a::IncParam, b::IncParam) = a.output_keys == b.output_keys && a.input_keys == b.input_keys && a.shift == b.shift
+Base.:(==)(a::IncParam, b::IncParam) =
+    a.output_keys == b.output_keys && a.input_keys == b.input_keys && a.shift == b.shift
 Base.hash(op::IncParam, h::UInt64) = hash(op.output_keys, h) + hash(op.input_keys, h) + hash(op.shift, h)
 
 function (op::IncParam)(task_data)

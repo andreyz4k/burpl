@@ -10,13 +10,13 @@ _common_value(val1, val2) = nothing
 _common_value(value1::Matcher, value2) = _common_value(value2, value1)
 function _common_value(val1::AbstractDict, val2::AbstractDict)
     if !issetequal(keys(val1), keys(val2))
-    return nothing
+        return nothing
     end
     result = Dict()
     for key in keys(val1)
         m = common_value(val1[key], val2[key])
         if isnothing(m)
-        return nothing
+            return nothing
         end
         result[key] = m
     end
@@ -25,13 +25,13 @@ end
 
 function _common_value(val1::AbstractVector, val2::AbstractVector)
     if length(val1) != length(val2)
-    return nothing
+        return nothing
     end
     result = []
     for (v1, v2) in zip(val1, val2)
         m = common_value(v1, v2)
         if isnothing(m)
-        return nothing
+            return nothing
         end
         push!(result, m)
     end
@@ -58,14 +58,14 @@ end
 
 apply_func(value, func, param) = func(value, param)
 apply_func(value::Vector, func, param) = [apply_func(v, func, param) for v in value]
-apply_func(value::T, func, param::T) where T <: Vector = [apply_func(v, func, p) for (v, p) in zip(value, param)]
+apply_func(value::T, func, param::T) where {T<:Vector} = [apply_func(v, func, p) for (v, p) in zip(value, param)]
 apply_func(value::Dict, func, param) = Dict(key => apply_func(v, func, param) for (key, v) in value)
 apply_func(value::Dict, func, param::Dict) = Dict(key => apply_func(v, func, param[key]) for (key, v) in value)
 
 
 check_type(existing::Type, expected::Type) = existing <: expected
 check_type(::Type{Dict{K,V}}, expected::Type) where {K,V} = check_type(V, expected)
-check_type(::Type{Vector{T}}, expected::Type) where T = check_type(T, expected)
+check_type(::Type{Vector{T}}, expected::Type) where {T} = check_type(T, expected)
 
 
 unpack_value(value) = [value]
@@ -76,7 +76,7 @@ function unpack_value(value::AbstractDict)
         out = [[part..., key => v] for part in out for v in unpack_value(val)]
     end
     [Dict(k => v for (k, v) in pairs) for pairs in out]
-    end
+end
 
 function unpack_value(value::AbstractVector)
     out = [[]]
@@ -86,11 +86,10 @@ function unpack_value(value::AbstractVector)
     out
 end
 
-import ..Complexity:get_complexity
-using Statistics:mean
+import ..Complexity: get_complexity
+using Statistics: mean
 
-get_complexity(value::Matcher)::Float64 =
-    mean(get_complexity, unwrap_matcher(value))
+get_complexity(value::Matcher)::Float64 = mean(get_complexity, unwrap_matcher(value))
 
 
 include("either.jl")

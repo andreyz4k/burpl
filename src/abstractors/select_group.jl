@@ -5,7 +5,8 @@ struct SelectGroup <: AbstractorClass end
 abs_keys(::SelectGroup) = ["selected_by", "rejected_by"]
 priority(::SelectGroup) = 4
 
-abs_keys(cls::SelectGroup, key::String, param_key::String) = [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
+abs_keys(cls::SelectGroup, key::String, param_key::String) =
+    [key * "|" * a_key * "|" * param_key for a_key in abs_keys(cls)]
 detail_keys(::SelectGroup, key::String, param_key::String) = [key, param_key]
 
 
@@ -15,17 +16,27 @@ function Abstractor(cls::SelectGroup, key::String, selector_key::String, to_abs:
     if to_abs
         return Abstractor(cls, true, detail_keys(cls, key, selector_key), abs_keys(cls, key, selector_key), String[])
     else
-        return Abstractor(cls, false, vcat(abs_keys(cls, key, selector_key), detail_keys(cls, key, selector_key)[2:2]), detail_keys(cls, key, selector_key)[1:1], String[])
+        return Abstractor(
+            cls,
+            false,
+            vcat(abs_keys(cls, key, selector_key), detail_keys(cls, key, selector_key)[2:2]),
+            detail_keys(cls, key, selector_key)[1:1],
+            String[],
+        )
     end
 end
 
-function create(cls::SelectGroup, solution, key)::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{Abstractor,Abstractor}}},1}
+function create(
+    cls::SelectGroup,
+    solution,
+    key,
+)::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{Abstractor,Abstractor}}},1}
     data = init_create_check_data(cls, key, solution)
-    
-    if !all(haskey(task_data, key) && check_task_value(
-                cls, task_data[key], data,
-                task_data)
-            for task_data in solution.taskdata)
+
+    if !all(
+        haskey(task_data, key) && check_task_value(cls, task_data[key], data, task_data) for
+        task_data in solution.taskdata
+    )
         return []
     end
     output = []
@@ -51,7 +62,7 @@ function init_create_check_data(::SelectGroup, key, solution)
             push!(data["existing_choices"], m.captures[1])
         end
     end
-data
+    data
 end
 
 function check_task_value(::SelectGroup, value::AbstractDict, data, task_data)
@@ -59,8 +70,10 @@ function check_task_value(::SelectGroup, value::AbstractDict, data, task_data)
     if !haskey(data, "allowed_choices")
         data["allowed_choices"] = Set{String}()
         for (key, data_value) in task_data
-            if key != data["key"] && in(data["key"], data["field_info"][key].previous_fields) &&
-                    !in(key, data["existing_choices"]) && haskey(value, data_value)
+            if key != data["key"] &&
+               in(data["key"], data["field_info"][key].previous_fields) &&
+               !in(key, data["existing_choices"]) &&
+               haskey(value, data_value)
                 push!(data["allowed_choices"], key)
             end
         end
@@ -72,26 +85,40 @@ end
 
 function create_abstractors(cls::SelectGroup, data, key)
     if data["effective"]
-        [(priority(cls),
-          (to_abstract = Abstractor(cls, key, selector_key, true),
-           from_abstract = Abstractor(cls, key, selector_key, false)))
-         for selector_key in data["allowed_choices"]]
+        [
+            (
+                priority(cls),
+                (
+                    to_abstract = Abstractor(cls, key, selector_key, true),
+                    from_abstract = Abstractor(cls, key, selector_key, false),
+                ),
+            ) for selector_key in data["allowed_choices"]
+        ]
     else
         []
     end
 end
 
-function wrap_func_call_dict_value(p::Abstractor{SelectGroup}, func::Function, wrappers::AbstractVector{Function}, source_values...)
+function wrap_func_call_dict_value(
+    p::Abstractor{SelectGroup},
+    func::Function,
+    wrappers::AbstractVector{Function},
+    source_values...,
+)
     wrap_func_call_value(p, func, wrappers, source_values...)
 end
 
-using ..PatternMatching:update_value
-using ..Taskdata:TaskData
+using ..PatternMatching: update_value
+using ..Taskdata: TaskData
 
 function to_abstract_value(p::Abstractor{SelectGroup}, source_value::AbstractDict, selected_key)
     rejected = copy(source_value)
     delete!(rejected, selected_key)
-    out = update_value(TaskData(Dict{String,Any}(), Dict{String,Any}(), Set()), p.output_keys[1], source_value[selected_key])
+    out = update_value(
+        TaskData(Dict{String,Any}(), Dict{String,Any}(), Set()),
+        p.output_keys[1],
+        source_value[selected_key],
+    )
     update_value(out, p.output_keys[2], rejected)
 end
 
@@ -101,7 +128,7 @@ function from_abstract_value(p::Abstractor{SelectGroup}, selected, rejected, sel
     Dict(p.output_keys[1] => out)
 end
 
-import ..Solutions:get_source_key
+import ..Solutions: get_source_key
 
 function get_source_key(operation::Abstractor{SelectGroup}, source_key)
     operation.input_keys[1]
