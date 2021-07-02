@@ -29,9 +29,9 @@ function _init_shift(input_value, output_value)
         ),
     )
 end
-_shifted_filter(shift, input_value, output_value, _) =
+_shifted_filter(shift, input_value, output_value) =
     check_match(apply_func(input_value, (x, y) -> x .+ y, shift), output_value)
 
 
-find_shifted_key(taskdata::Vector{TaskData}, field_info, invalid_sources::AbstractSet{String}, key::String) =
+find_shifted_key(taskdata::TaskData, field_info, invalid_sources::AbstractSet{String}, key::String) =
     find_matching_for_key(taskdata, field_info, invalid_sources, key, _init_shift, _shifted_filter, IncParam)

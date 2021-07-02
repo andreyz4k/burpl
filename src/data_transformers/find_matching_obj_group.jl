@@ -28,35 +28,24 @@ using ..Abstractors: Abstractor, SelectGroup
 _check_group_type(::Type, ::Type) = false
 _check_group_type(::Type{Dict{K,V}}, expected::Type) where {K,V} = V == expected
 
-function _get_matching_transformers(
-    taskdata::Vector{TaskData},
-    field_info,
-    invalid_sources::AbstractSet{String},
-    key::String,
-)
-    if endswith(key, "|selected_group") || any(!haskey(task_data, key) for task_data in taskdata)
+function _get_matching_transformers(taskdata::TaskData, field_info, invalid_sources::AbstractSet{String}, key::String)
+    if endswith(key, "|selected_group") || any(ismissing(val) for val in taskdata[key])
         return []
     end
     upd_keys = updated_keys(taskdata)
     flatten(
-        imap(keys(taskdata[1])) do input_key
+        imap(keys(taskdata)) do input_key
             if in(input_key, invalid_sources) ||
                (!in(key, upd_keys) && !in(input_key, upd_keys)) ||
                !_check_group_type(field_info[input_key].type, field_info[key].type) ||
-               any(!haskey(task, input_key) for task in taskdata) ||
-               all(length(task[input_key]) <= 1 for task in taskdata)
+               any(ismissing(input_value) for input_value in taskdata[input_key]) ||
+               all(length(input_value) <= 1 for input_value in taskdata[input_key])
                 return []
             end
             matching_groups = []
-            for task_data in taskdata
-                if !haskey(task_data, input_key)
-                    return []
-                end
-                input_value = task_data[input_key]
-                out_value = task_data[key]
+            for (input_value, out_value) in zip(taskdata[input_key], taskdata[key])
                 if !check_matching_group(input_value, out_value, matching_groups)
                     return []
-
                 end
             end
             imap(unroll_groups(matching_groups)) do group_keys
@@ -64,7 +53,7 @@ function _get_matching_transformers(
                 to_abs = MapValues(
                     key_name,
                     "output",
-                    Dict(task_data["output"] => value for (task_data, value) in zip(taskdata, group_keys)),
+                    Dict(output_value => value for (output_value, value) in zip(taskdata["output"], group_keys)),
                 )
                 from_abs = Abstractor(SelectGroup(), true, [input_key, key_name], [key, key * "|rejected"], String[])
                 return (to_abstract = to_abs, from_abstract = from_abs)

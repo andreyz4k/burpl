@@ -1,8 +1,6 @@
 export Solutions
 module Solutions
 
-export validate_solution
-
 using ..Operations: Operation, Project, get_sorting_keys
 
 struct Block
@@ -88,7 +86,7 @@ _is_valid_value(val) = true
 _is_valid_value(val::Union{Array,Dict}) = !isempty(val)
 
 struct Solution
-    taskdata::Vector{TaskData}
+    taskdata::TaskData
     field_info::Dict{String,FieldInfo}
     blocks::Vector{Block}
     unfilled_fields::Set{String}
@@ -113,21 +111,17 @@ struct Solution
         input_transformed_fields,
         complexity_score::Float64,
     )
-        inp_val_hashes = Set{UInt64}[]
-        out_val_hashes = Set{UInt64}[]
-        for task_data in taskdata
-            inp_vals = Set{UInt64}()
-            out_vals = Set{UInt64}()
-            for (key, value) in task_data
+        inp_val_hashes = fill(Set{UInt64}(), length(taskdata["input"]))
+        out_val_hashes = fill(Set{UInt64}(), length(taskdata["input"]))
+        for (key, values) in taskdata
+            for (i, value) in enumerate(values)
                 if in(key, transformed_fields) || in(key, filled_fields) || in(key, unfilled_fields)
-                    push!(out_vals, hash(value))
+                    push!(out_val_hashes[i], hash(value))
                 end
                 if in(key, unused_fields) || in(key, used_fields) || in(key, input_transformed_fields)
-                    push!(inp_vals, hash(value))
+                    push!(inp_val_hashes[i], hash(value))
                 end
             end
-            push!(inp_val_hashes, inp_vals)
-            push!(out_val_hashes, out_vals)
         end
         new(
             taskdata,
@@ -147,12 +141,16 @@ struct Solution
     end
 end
 
-function Solution(taskdata)
+function Solution(task_info)
     Solution(
-        [TaskData(task, Dict{String,Any}(), Set{String}()) for task in taskdata],
+        TaskData(
+            Dict("input" => [task["input"] for task in task_info], "output" => [task["output"] for task in task_info]),
+            Dict{String,Any}(),
+            Set{String}(),
+        ),
         Dict(
-            "input" => FieldInfo(taskdata[1]["input"], "input", [], [["input"]]),
-            "output" => FieldInfo(taskdata[1]["output"], "input", [], [Set()]),
+            "input" => FieldInfo(task_info[1]["input"], "input", [], [["input"]]),
+            "output" => FieldInfo(task_info[1]["output"], "input", [], [Set()]),
         ),
         [Block()],
         Set(["output"]),
@@ -166,7 +164,7 @@ function Solution(taskdata)
 end
 
 persist_updates(solution::Solution) = Solution(
-    [persist_data(task) for task in solution.taskdata],
+    persist_data(solution.taskdata),
     solution.field_info,
     solution.blocks,
     solution.unfilled_fields,
@@ -206,17 +204,14 @@ function move_to_next_block(solution::Solution)::Solution
 
     blocks[end] = Block(reverse(prev_block_ops))
 
-    last_block_output = [
-        blocks[end](
-            filter(
-                keyval -> !in(keyval[1], solution.unfilled_fields) && !in(keyval[1], solution.transformed_fields),
-                task,
-            ),
-        ) for task in solution.taskdata
-    ]
+    last_block_output = blocks[end](
+        filter(
+            keyval -> !in(keyval[1], solution.unfilled_fields) && !in(keyval[1], solution.transformed_fields),
+            solution.taskdata,
+        ),
+    )
 
-    taskdata =
-        [merge(task_data, block_output) for (task_data, block_output) in zip(solution.taskdata, last_block_output)]
+    taskdata = merge(solution.taskdata, last_block_output)
 
     field_info = solution.field_info
     for op in blocks[end].operations
@@ -225,10 +220,10 @@ function move_to_next_block(solution::Solution)::Solution
                 input_field_info = [field_info[k] for k in op.input_keys if haskey(field_info, k)]
                 i = argmin([length(info.derived_from) for info in input_field_info])
                 dependent_key = input_field_info[i].derived_from
-                for task in taskdata
-                    if haskey(task, key) && _is_valid_value(task[key])
+                for val in taskdata[key]
+                    if !ismissing(val) && _is_valid_value(val)
                         field_info[key] = FieldInfo(
-                            task[key],
+                            val,
                             dependent_key,
                             vcat([info.precursor_types for info in input_field_info]...),
                             [(field_info[k].previous_fields for k in op.input_keys)..., [key]],
@@ -268,24 +263,27 @@ function move_to_next_block(solution::Solution)::Solution
         i = argmin([length(info.derived_from) for info in input_field_info])
         dependent_key = input_field_info[i].derived_from
 
-        projected_output = [project_op(block_output) for block_output in last_block_output]
+        projected_output = project_op(last_block_output)
 
-        taskdata = [filter(keyval -> !startswith(keyval[1], "projected|"), task_data) for task_data in taskdata]
+        taskdata = filter(keyval -> !startswith(keyval[1], "projected|"), taskdata)
         unused_fields = filter(key -> !startswith(key, "projected|"), solution.unused_fields)
         field_info = filter(keyval -> !startswith(keyval[1], "|projected"), field_info)
 
         for key in project_op.output_keys
-            for (observed_task, output) in zip(taskdata, projected_output)
-                if haskey(output, key)
-                    observed_task[key] = output[key]
-                    push!(unused_fields, key)
-                    if !haskey(field_info, key) && _is_valid_value(output[key])
-                        field_info[key] = FieldInfo(
-                            output[key],
-                            dependent_key,
-                            vcat([info.precursor_types for info in input_field_info]...),
-                            [(field_info[k].previous_fields for k in project_op.input_keys)..., [key]],
-                        )
+            if haskey(projected_output, key)
+                taskdata[key] = projected_output[key]
+                push!(unused_fields, key)
+                if !haskey(field_info, key)
+                    for val in projected_output[key]
+                        if _is_valid_value(val)
+                            field_info[key] = FieldInfo(
+                                val,
+                                dependent_key,
+                                vcat([info.precursor_types for info in input_field_info]...),
+                                [(field_info[k].previous_fields for k in project_op.input_keys)..., [key]],
+                            )
+                            break
+                        end
                     end
                 end
             end
@@ -293,9 +291,7 @@ function move_to_next_block(solution::Solution)::Solution
     end
 
     if isempty(solution.unfilled_fields)
-        for (task, block_output) in zip(taskdata, last_block_output)
-            task["projected|output"] = block_output["output"]
-        end
+        taskdata["projected|output"] = last_block_output["output"]
     end
 
     if !isempty(new_block.operations)
@@ -517,7 +513,7 @@ function insert_operation(
     try
         op = isnothing(reversed_op) ? operation : reversed_op
 
-        taskdata = [op(task) for task in solution.taskdata]
+        taskdata = op(solution.taskdata)
 
         if isnothing(reversed_op) && !no_wrap
             taskdata, operation = wrap_operation(taskdata, operation)
@@ -558,10 +554,10 @@ function insert_operation(
                 out_dependent_key = input_field_info[i].derived_from
             end
             for key in new_input_fields
-                for task in taskdata
-                    if haskey(task, key) && _is_valid_value(task[key])
+                for val in taskdata[key]
+                    if !ismissing(val) && _is_valid_value(val)
                         field_info[key] = FieldInfo(
-                            task[key],
+                            val,
                             get_source_key(operation, out_dependent_key),
                             vcat([info.precursor_types for info in output_field_info]...),
                             [Set()],
@@ -595,10 +591,10 @@ function insert_operation(
                 end
             else
                 push!(unused_fields, key)
-                for task in taskdata
-                    if haskey(task, key) && _is_valid_value(task[key])
+                for val in taskdata[key]
+                    if !ismissing(val) && _is_valid_value(val)
                         field_info[key] = FieldInfo(
-                            task[key],
+                            val,
                             inp_dependent_key,
                             vcat([info.precursor_types for info in input_field_info]...),
                             [(field_info[k].previous_fields for k in operation.input_keys)..., [key]],
@@ -678,7 +674,7 @@ Base.show(io::IO, s::Solution) = print(
     "Dict(\n",
     (vcat(
         (
-            ["\t\t", keyval, ",\n"] for keyval in s.field_info if haskey(s.taskdata[1], keyval[1]) && (
+            ["\t\t", keyval, ",\n"] for keyval in s.field_info if haskey(s.taskdata, keyval[1]) && (
                 in(keyval[1], s.unfilled_fields) ||
                 in(keyval[1], s.unused_fields) ||
                 in(keyval[1], s.input_transformed_fields) ||
@@ -691,33 +687,40 @@ Base.show(io::IO, s::Solution) = print(
     "\n)",
 )
 
-function (solution::Solution)(input_grid::Array{Int,2})::Array{Int,2}
-    observed_data = TaskData(Dict{String,Any}("input" => input_grid), Dict{String,Any}(), Set())
+function (solution::Solution)(input_grids::Vector{Array{Int,2}})::Array{Int,2}
+    observed_data = TaskData(Dict{String,Vector}("input" => input_grids), Dict{String,Any}(), Set())
     for block in solution.blocks
         observed_data = block(observed_data)
     end
-    get(observed_data, "output", Array{Int}(undef, 0, 0))
+    get(observed_data, "output", fill(Array{Int}(undef, 0, 0), length(input_grids)))
 end
 
 Base.:(==)(a::Solution, b::Solution)::Bool = a.blocks == b.blocks
 
 Base.hash(s::Solution, h::UInt64) = hash(s.blocks, h)
 
-function check_task(solution::Solution, input_grid::Array{Int,2}, target::Array{Int,2})
-    out = solution(input_grid)
-    compare_grids(target, out)
+function check_task(solution::Solution, input_grids::Vector{Array{Int,2}}, targets::Vector{Array{Int,2}})
+    out = solution(input_grids)
+    compare_grids(targets, out)
 end
 
-function compare_grids(target::Array{Int,2}, output::Array{Int,2})
-    if size(target) != size(output)
-        return reduce(*, size(target))
+function compare_grids(targets::Vector{Array{Int,2}}, outputs::Vector{Array{Int,2}})
+    result = 0
+    for (target, output) in zip(targets, outputs)
+        if size(target) != size(output)
+            result += reduce(*, size(target))
+        else
+            result += sum(output .!= target)
+        end
     end
-    sum(output .!= target)
+    return result
 end
 
-function get_score(taskdata, complexity_score)::Int
-    score =
-        sum(compare_grids(task["output"], get(task, "projected|output", Array{Int}(undef, 0, 0))) for task in taskdata)
+function get_score(taskdata::TaskData, complexity_score)::Int
+    score = compare_grids(
+        taskdata["output"],
+        get(taskdata, "projected|output", fill(Array{Int}(undef, 0, 0), length(taskdata["output"]))),
+    )
     # if complexity_score > 100
     #     score += floor(complexity_score)
     # end
@@ -727,39 +730,40 @@ end
 using ..Complexity: get_complexity
 
 function get_unmatched_complexity_score(solution::Solution)
-    unmatched_data_score = [
-        sum(Float64[get_complexity(value) for (key, value) in task_data if in(key, solution.unfilled_fields)]) for
-        task_data in solution.taskdata
-    ]
-    transformed_data_score = [
-        sum(Float64[get_complexity(value) / 10 for (key, value) in task_data if in(key, solution.transformed_fields)]) for task_data in solution.taskdata
-    ]
-    unused_data_score = [
-        sum(
-            Float64[
-                startswith(key, "projected|") ? get_complexity(value) / 6 : get_complexity(value) for
-                (key, value) in task_data if in(key, solution.unused_fields)
-            ],
-        ) for task_data in solution.taskdata
-    ]
-    inp_transformed_data_score = [
-        sum(
-            Float64[
-                get_complexity(value) / 3 for (key, value) in task_data if in(key, solution.input_transformed_fields)
-            ],
-        ) for task_data in solution.taskdata
-    ]
-    return (
-        sum(unmatched_data_score) +
-        # sum(transformed_data_score) +
-        sum(unused_data_score) +
-        sum(inp_transformed_data_score) +
-        solution.complexity_score
-    ) / length(solution.taskdata)
-end
+    unmatched_data_score = sum(
+        Float64[
+            sum(Float64[get_complexity(value) for value in values]) for
+            (key, values) in solution.taskdata if in(key, solution.unfilled_fields)
+        ],
+    )
+    transformed_data_score = sum(
+        Float64[
+            sum(Float64[get_complexity(value) / 10 for value in values]) for
+            (key, values) in solution.taskdata if in(key, solution.transformed_fields)
+        ],
+    )
+    unused_data_score = sum(
+        Float64[
+            sum(
+                Float64[
+                    startswith(key, "projected|") ? get_complexity(value) / 6 : get_complexity(value) for
+                    value in values
+                ],
+            ) for (key, values) in solution.taskdata if in(key, solution.unused_fields)
+        ],
+    )
 
-function validate_solution(solution, taskdata)
-    sum(check_task(solution, task["input"], task["output"]) for task in taskdata)
+    inp_transformed_data_score = sum(
+        Float64[
+            sum(Float64[get_complexity(value) / 3 for value in values]) for
+            (key, values) in solution.taskdata if in(key, solution.input_transformed_fields)
+        ],
+    )
+    return (unmatched_data_score +
+            # transformed_data_score +
+            unused_data_score +
+            inp_transformed_data_score +
+            solution.complexity_score) / length(solution.taskdata["input"])
 end
 
 end

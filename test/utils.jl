@@ -5,7 +5,6 @@ using .DataTransformers: match_fields
 using .Abstractors: create
 using .Taskdata: TaskData
 
-make_sample_taskdata(len) = fill(Dict("input" => Array{Int}(undef, 0, 0), "output" => Array{Int}(undef, 0, 0)), len)
 
 struct FakeOperation <: Operation
     input_keys::Any
@@ -15,11 +14,12 @@ end
 
 (op::FakeOperation)(task_data) = task_data
 
-make_taskdata(tasks) = [make_taskdata(task) for task in tasks]
+make_taskdata(tasks) =
+    TaskData(Dict{String,Vector}(), Dict(key => [task[key] for task in tasks] for key in keys(tasks[1])), Set())
 
-make_taskdata(task::Dict) = TaskData(Dict{String,Any}(), task, Set())
+make_taskdata(task::Dict) = TaskData(Dict{String,Vector}(), Dict(key => [val] for (key, val) in task), Set())
 
-make_field_info(taskdata) = Dict(key => FieldInfo(val, "input", [], [Set()]) for (key, val) in taskdata[1])
+make_field_info(taskdata) = Dict(key => FieldInfo(vals[1], "input", [], [Set()]) for (key, vals) in taskdata)
 
 function make_dummy_solution(data, unfilled = [])
     unused = Set(filter(k -> !in(k, unfilled) && k != "input" && k != "output", keys(data[1])))

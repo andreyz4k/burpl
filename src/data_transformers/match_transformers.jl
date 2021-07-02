@@ -2,7 +2,7 @@
 using IterTools: imap
 using Base.Iterators: flatten
 
-function get_match_transformers(taskdata::Array{TaskData}, field_info, invalid_sources, key)
+function get_match_transformers(taskdata::TaskData, field_info, invalid_sources, key)
     find_matches_funcs = [
         find_const,
         find_dependent_key,
@@ -39,7 +39,7 @@ function match_fields(solution::Solution)
         try
             matched_results = Dict()
             valid_solutions_count =
-                prod(length(unpack_value(task[key])) for task in solution.taskdata if haskey(task, key))
+                prod(length(unpack_value(value)) for value in solution.taskdata[key] if !ismissing(value))
             iter = find_matched_fields(key, solution)
             state = ()
             counter = 0
@@ -50,9 +50,8 @@ function match_fields(solution::Solution)
                 end
                 counter += 1
                 new_solution, state = next
-                key_result = [task[key] for task in new_solution.taskdata]
-                if !haskey(matched_results, key_result)
-                    matched_results[key_result] = new_solution
+                if !haskey(matched_results, new_solution.taskdata[key])
+                    matched_results[new_solution.taskdata[key]] = new_solution
                 end
             end
             if !isempty(matched_results)
@@ -69,7 +68,7 @@ end
 
 
 function find_matching_for_key(
-    taskdata::Vector{TaskData},
+    taskdata::TaskData,
     field_info,
     invalid_sources::AbstractSet{String},
     key::String,
@@ -82,26 +81,24 @@ function find_matching_for_key(
     end
     upd_keys = updated_keys(taskdata)
     flatten(
-        imap(keys(taskdata[1])) do input_key
+        imap(keys(taskdata)) do input_key
             if in(input_key, invalid_sources) ||
                field_info[key].type != field_info[input_key].type ||
                (!in(key, upd_keys) && !in(input_key, upd_keys))
                 return []
             end
             candidates = []
-            for task_data in taskdata
-                if !haskey(task_data, input_key)
+            for (input_value, out_value) in zip(taskdata[input_key], taskdata[key])
+                if ismissing(input_value)
                     return []
                 end
-                if !haskey(task_data, key)
+                if ismissing(out_value)
                     continue
                 end
-                input_value = task_data[input_key]
-                out_value = task_data[key]
                 if isempty(candidates)
                     candidates = init_func(input_value, out_value)
                 end
-                filter!(candidate -> filter_func(candidate, input_value, out_value, task_data), candidates)
+                filter!(candidate -> filter_func(candidate, input_value, out_value), candidates)
                 if isempty(candidates)
                     return []
                 end
@@ -112,7 +109,7 @@ function find_matching_for_key(
 end
 
 function find_matching_for_key(
-    taskdata::Vector{TaskData},
+    taskdata::TaskData,
     field_info,
     invalid_sources::AbstractSet{String},
     key::String,
@@ -126,38 +123,41 @@ function find_matching_for_key(
     end
     upd_keys = updated_keys(taskdata)
     flatten(
-        imap(keys(taskdata[1])) do input_key
+        imap(keys(taskdata)) do input_key
             if in(input_key, invalid_sources) || field_info[key].type != field_info[input_key].type
                 return []
             end
             need_updated_candidates = !in(key, upd_keys) && !in(input_key, upd_keys)
-            candidates = []
-            for task_data in taskdata
-                if !haskey(task_data, input_key)
-                    return []
-                end
-                if isempty(candidates)
-                    candidates = init_func(input_key, field_info, task_data, invalid_sources)
-                    if need_updated_candidates
-                        candidates = filter(k -> in(k, upd_keys), candidates)
+            candidates = init_func(input_key, field_info, taskdata, invalid_sources)
+            if need_updated_candidates
+                candidates = filter(k -> in(k, upd_keys), candidates)
+            end
+            if isempty(candidates)
+                return []
+            end
+            res = []
+            for candidate in candidates
+                valid = true
+                for (input_value, out_value, cand_value) in
+                    zip(taskdata[input_key], taskdata[key], taskdata[candidate])
+                    if ismissing(input_value)
+                        return []
+                    end
+                    if ismissing(out_value)
+                        continue
+                    end
+                    if ismissing(cand_value) || !filter_func(cand_value, input_value, out_value)
+                        valid = false
+                        break
                     end
                 end
-                if isempty(candidates)
-                    return []
-                end
-                if !haskey(task_data, key)
-                    continue
-                end
-                out_value = task_data[key]
-                input_value = task_data[input_key]
-                filter!(candidate -> filter_func(candidate, input_value, out_value, task_data), candidates)
-                if isempty(candidates)
-                    return []
+                if valid
+                    push!(res, candidate)
                 end
             end
             return [
                 transformer_class(key, input_key, candidate) for
-                candidate in candidates if candidate_checker(candidate, input_key, taskdata)
+                candidate in res if candidate_checker(candidate, input_key, taskdata)
             ]
         end,
     )

@@ -25,20 +25,20 @@ _check_matcher(value::AbstractDict) = any(_check_matcher(v) for v in values(valu
 _check_matcher(value::AbstractVector) = any(_check_matcher(v) for v in value)
 
 _filter_unmatched_keys(keys, taskdata) =
-    filter(key -> any(_check_matcher(task[key]) for task in taskdata if haskey(task, key)), keys)
+    filter(key -> any(_check_matcher(val) for val in taskdata[key] if !ismissing(val)), keys)
 
 function wrap_operation(taskdata, operation)
     unmatched_keys = _filter_unmatched_keys(operation.output_keys, taskdata)
     if isempty(unmatched_keys)
         return taskdata, operation
     end
-    for key in unmatched_keys, task in taskdata
-        if haskey(task, key) && !haskey(task, key * "|unfilled")
-            task[key*"|unfilled"] = task[key]
+    for key in unmatched_keys
+        if !haskey(taskdata, key * "|unfilled")
+            taskdata[key*"|unfilled"] = taskdata[key]
         end
     end
-    for key in operation.output_keys, task in taskdata
-        delete!(task, key)
+    for key in operation.output_keys
+        delete!(taskdata, key)
     end
     return taskdata,
     WrapMatcher(
