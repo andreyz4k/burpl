@@ -82,7 +82,8 @@ using .Abstractors: UniteTouching
         )
         abstractor = UniteTouching("input|spatial_objects|grouped", true)
         @test abstractor(task_data) == Dict(
-            "input|spatial_objects|grouped" => Dict{Any,Any}(
+            "input|spatial_objects|grouped" => [
+                Dict{Any,Any}(
                 2 => Set([
                     Object([2], (1, 13)),
                     Object(
@@ -154,7 +155,9 @@ using .Abstractors: UniteTouching
                     Object([8], (21, 14)),
                 ]),
             ),
-            "input|spatial_objects|grouped|united_touch" => Dict(
+            ],
+            "input|spatial_objects|grouped|united_touch" => [
+                Dict(
                 2 => Set([
                     Object(
                         [
@@ -214,6 +217,7 @@ using .Abstractors: UniteTouching
                     ),
                 ]),
             ),
+            ],
         )
         task_data = make_taskdata(
             Dict(
@@ -287,7 +291,8 @@ using .Abstractors: UniteTouching
             ),
         )
         @test abstractor(task_data) == Dict(
-            "input|spatial_objects|grouped" => Dict{Any,Any}(
+            "input|spatial_objects|grouped" => [
+                Dict{Any,Any}(
                 2 => Set([
                     Object(
                         [
@@ -347,7 +352,9 @@ using .Abstractors: UniteTouching
                     Object([3], (18, 18)),
                 ]),
             ),
-            "input|spatial_objects|grouped|united_touch" => Dict(
+            ],
+            "input|spatial_objects|grouped|united_touch" => [
+                Dict(
                 2 => Set([
                     Object(
                         [
@@ -407,10 +414,12 @@ using .Abstractors: UniteTouching
                     ),
                 ]),
             ),
+            ],
         )
         next_abstrractor = UniteTouching("input|spatial_objects|grouped|united_touch", true)
         @test next_abstrractor(abstractor(task_data)) == Dict(
-            "input|spatial_objects|grouped" => Dict{Any,Any}(
+            "input|spatial_objects|grouped" => [
+                Dict{Any,Any}(
                 2 => Set([
                     Object(
                         [
@@ -470,7 +479,9 @@ using .Abstractors: UniteTouching
                     Object([3], (18, 18)),
                 ]),
             ),
-            "input|spatial_objects|grouped|united_touch" => Dict(
+            ],
+            "input|spatial_objects|grouped|united_touch" => [
+                Dict(
                 2 => Set([
                     Object(
                         [
@@ -530,7 +541,9 @@ using .Abstractors: UniteTouching
                     ),
                 ]),
             ),
-            "input|spatial_objects|grouped|united_touch|united_touch" => Dict(
+            ],
+            "input|spatial_objects|grouped|united_touch|united_touch" => [
+                Dict(
                 2 => Set([
                     Object(
                         [
@@ -590,6 +603,7 @@ using .Abstractors: UniteTouching
                     ),
                 ]),
             ),
+            ],
         )
         task_data = make_taskdata(
             Dict(
@@ -663,7 +677,8 @@ using .Abstractors: UniteTouching
             ),
         )
         @test abstractor(task_data) == Dict(
-            "input|spatial_objects|grouped" => Dict{Any,Any}(
+            "input|spatial_objects|grouped" => [
+                Dict{Any,Any}(
                 4 => Set([
                     Object(
                         [
@@ -730,7 +745,9 @@ using .Abstractors: UniteTouching
                     Object([1], (17, 18)),
                 ]),
             ),
-            "input|spatial_objects|grouped|united_touch" => Dict(
+            ],
+            "input|spatial_objects|grouped|united_touch" => [
+                Dict(
                 4 => Set([
                     Object(
                         [
@@ -788,9 +805,11 @@ using .Abstractors: UniteTouching
                     ),
                 ]),
             ),
+            ],
         )
         @test next_abstrractor(abstractor(task_data)) == Dict(
-            "input|spatial_objects|grouped" => Dict{Any,Any}(
+            "input|spatial_objects|grouped" => [
+                Dict{Any,Any}(
                 4 => Set([
                     Object(
                         [
@@ -857,7 +876,9 @@ using .Abstractors: UniteTouching
                     Object([1], (17, 18)),
                 ]),
             ),
-            "input|spatial_objects|grouped|united_touch" => Dict(
+            ],
+            "input|spatial_objects|grouped|united_touch" => [
+                Dict(
                 4 => Set([
                     Object(
                         [
@@ -915,7 +936,9 @@ using .Abstractors: UniteTouching
                     ),
                 ]),
             ),
-            "input|spatial_objects|grouped|united_touch|united_touch" => Dict(
+            ],
+            "input|spatial_objects|grouped|united_touch|united_touch" => [
+                Dict(
                 4 => Set([
                     Object(
                         [
@@ -973,6 +996,7 @@ using .Abstractors: UniteTouching
                     ),
                 ]),
             ),
+            ],
         )
     end
 end

@@ -46,15 +46,16 @@ function Abstractor(cls::AbstractorClass, key::String, to_abs::Bool, found_aux_k
 end
 
 
-function (p::Abstractor)(task_data)
-    out_data = copy(task_data)
+function (p::Abstractor)(taskdata)
+    out_data = copy(taskdata)
     input_values = fetch_input_values(p, out_data)
     if p.to_abstract
         func = to_abstract_value
     else
         func = from_abstract_value
     end
-    merge!(out_data, wrap_func_call_value_root(p, func, input_values...))
+    updated_values = [wrap_func_call_value_root(p, func, inputs...) for inputs in zip(input_values...)]
+    merge!(out_data, Dict(key => [values[key] for values in updated_values] for key in p.output_keys))
     return out_data
 end
 
@@ -296,24 +297,33 @@ function create(
     solution,
     key,
 )::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{Abstractor,Abstractor}}},1}
-    if any(haskey(solution.taskdata[1], k) for k in abs_keys(cls, key))
+    if any(haskey(solution.taskdata, k) for k in abs_keys(cls, key))
         return []
     end
-    found_aux_keys = [aux_keys(cls, key, task) for task in solution.taskdata]
-    if !all(all(length(keys) == length(aux_keys(cls))) && keys == found_aux_keys[1] for keys in found_aux_keys)
+    found_aux_keys = aux_keys(cls, key, solution.taskdata)
+    if length(found_aux_keys) != length(aux_keys(cls))
         return []
     end
     data = init_create_check_data(cls, key, solution)
 
+    if any(ismissing(value) for value in solution.taskdata[key])
+        return []
+    end
+    aux_values = get_aux_values_for_task(cls, solution.taskdata, key, solution)
+    if isempty(aux_values)
+        aux_values = fill([], length(solution.taskdata[key]))
+    else
+        aux_values = zip(aux_values...)
+    end
+
     if !all(
-        haskey(task_data, key) &&
-        wrap_check_task_value(cls, task_data[key], data, get_aux_values_for_task(cls, task_data, key, solution)) for
-        task_data in solution.taskdata
+        wrap_check_task_value(cls, value, data, aux_vals) for
+        (value, aux_vals) in zip(solution.taskdata[key], aux_values)
     )
         return []
     end
     output = []
-    for (priority, abstractor) in create_abstractors(cls, data, key, found_aux_keys[1])
+    for (priority, abstractor) in create_abstractors(cls, data, key, found_aux_keys)
         push!(output, (priority * (1.1^(length(split(key, '|')) - 1)), abstractor))
     end
     output
@@ -333,11 +343,12 @@ using ..PatternMatching: Matcher, unwrap_matcher
 wrap_check_task_value(cls::AbstractorClass, value::Matcher, data, aux_values) =
     all(wrap_check_task_value(cls, v, data, aux_values) for v in unwrap_matcher(value))
 
-get_aux_values_for_task(cls::AbstractorClass, task_data, key, solution) =
-    [task_data[k] for k in aux_keys(cls, key, task_data)]
+get_aux_values_for_task(cls::AbstractorClass, taskdata, key, solution) =
+    [taskdata[k] for k in aux_keys(cls, key, taskdata)]
 
 function create_abstractors(cls::AbstractorClass, data, key, found_aux_keys)
     if haskey(data, "effective") && data["effective"] == false
+        @info 6
         return []
     end
     [(
