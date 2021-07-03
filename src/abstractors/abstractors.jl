@@ -81,7 +81,7 @@ Base.:(==)(a::Abstractor, b::Abstractor) =
 
 
 fetch_input_values(p::Abstractor, task_data) = [
-    in(k, needed_input_keys(p)) ? task_data[k] : get(task_data, k, fill(nothing, length(task_data["input"]))) for
+    in(k, needed_input_keys(p)) ? task_data[k] : get(task_data, k, fill(nothing, task_data.num_examples)) for
     k in p.input_keys
 ]
 

@@ -111,8 +111,8 @@ struct Solution
         input_transformed_fields,
         complexity_score::Float64,
     )
-        inp_val_hashes = fill(Set{UInt64}(), length(taskdata["input"]))
-        out_val_hashes = fill(Set{UInt64}(), length(taskdata["input"]))
+        inp_val_hashes = fill(Set{UInt64}(), taskdata.num_examples)
+        out_val_hashes = fill(Set{UInt64}(), taskdata.num_examples)
         for (key, values) in taskdata
             for (i, value) in enumerate(values)
                 if in(key, transformed_fields) || in(key, filled_fields) || in(key, unfilled_fields)
@@ -721,7 +721,7 @@ end
 function get_score(taskdata::TaskData, complexity_score)::Int
     score = compare_grids(
         taskdata["output"],
-        get(taskdata, "projected|output", fill(Array{Int}(undef, 0, 0), length(taskdata["output"]))),
+        get(taskdata, "projected|output", fill(Array{Int}(undef, 0, 0), taskdata.num_examples)),
     )
     # if complexity_score > 100
     #     score += floor(complexity_score)

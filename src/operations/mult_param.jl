@@ -17,5 +17,5 @@ Base.hash(op::MultParam, h::UInt64) = hash(op.output_keys, h) + hash(op.input_ke
 function (op::MultParam)(taskdata::TaskData)
     output_value = [apply_func(val, (a, b) -> a .* b, op.factor) for val in taskdata[op.input_keys[1]]]
     data = update_value(taskdata, op.output_keys[1], output_value)
-    update_value(data, op.output_keys[2], fill(op.factor, length(taskdata["input"])))
+    update_value(data, op.output_keys[2], fill(op.factor, taskdata.num_examples))
 end

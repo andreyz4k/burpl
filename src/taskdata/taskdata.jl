@@ -5,6 +5,13 @@ struct TaskData <: AbstractDict{String,Any}
     persistent_data::Dict{String,Vector}
     updated_values::Dict{String,Vector}
     keys_to_delete::Set{String}
+    num_examples::Int
+    TaskData(persistent_data, updated_values, keys_to_delete) = new(
+        persistent_data,
+        updated_values,
+        keys_to_delete,
+        length(first(isempty(persistent_data) ? updated_values : persistent_data)[2]),
+    )
 end
 
 Base.show(io::IO, t::TaskData) =
