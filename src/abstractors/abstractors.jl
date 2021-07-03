@@ -55,7 +55,12 @@ function (p::Abstractor)(taskdata)
         func = from_abstract_value
     end
     updated_values = [wrap_func_call_value_root(p, func, inputs...) for inputs in zip(input_values...)]
-    merge!(out_data, Dict(key => [values[key] for values in updated_values] for key in p.output_keys))
+    for key in p.output_keys
+        if all(!haskey(values, key) for values in updated_values)
+            continue
+        end
+        out_data[key] = Any[values[key] for values in updated_values]
+    end
     return out_data
 end
 
@@ -75,8 +80,10 @@ Base.:(==)(a::Abstractor, b::Abstractor) =
     a.cls == b.cls && a.to_abstract == b.to_abstract && a.input_keys == b.input_keys && a.output_keys == b.output_keys
 
 
-fetch_input_values(p::Abstractor, task_data) =
-    [in(k, needed_input_keys(p)) ? task_data[k] : get(task_data, k, nothing) for k in p.input_keys]
+fetch_input_values(p::Abstractor, task_data) = [
+    in(k, needed_input_keys(p)) ? task_data[k] : get(task_data, k, fill(nothing, length(task_data["input"]))) for
+    k in p.input_keys
+]
 
 using DataStructures: DefaultDict
 
@@ -348,7 +355,6 @@ get_aux_values_for_task(cls::AbstractorClass, taskdata, key, solution) =
 
 function create_abstractors(cls::AbstractorClass, data, key, found_aux_keys)
     if haskey(data, "effective") && data["effective"] == false
-        @info 6
         return []
     end
     [(

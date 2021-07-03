@@ -689,8 +689,8 @@ Base.show(io::IO, s::Solution) = print(
     "\n)",
 )
 
-function (solution::Solution)(input_grids::Vector{Array{Int,2}})::Array{Int,2}
-    observed_data = TaskData(Dict{String,Vector}("input" => input_grids), Dict{String,Any}(), Set())
+function (solution::Solution)(input_grids::Vector{Array{Int,2}})::Vector{Array{Int,2}}
+    observed_data = TaskData(Dict{String,Vector}("input" => input_grids), Dict{String,Vector}(), Set())
     for block in solution.blocks
         observed_data = block(observed_data)
     end

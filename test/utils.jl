@@ -77,6 +77,7 @@ end
 using .FindSolution: validate_results
 
 function test_solution(solution, test_data)
-    answer = [solution(task["input"]) for task in test_data]
+    test_input = [task["input"] for task in test_data]
+    answer = solution(test_input)
     validate_results(test_data, [answer])
 end
