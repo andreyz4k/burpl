@@ -79,9 +79,10 @@ Base.show(io::IO, p::Abstractor) = print(
 Base.:(==)(a::Abstractor, b::Abstractor) =
     a.cls == b.cls && a.to_abstract == b.to_abstract && a.input_keys == b.input_keys && a.output_keys == b.output_keys
 
+using ..Taskdata: num_examples
 
 fetch_input_values(p::Abstractor, task_data) = [
-    in(k, needed_input_keys(p)) ? task_data[k] : get(task_data, k, fill(nothing, task_data.num_examples)) for
+    in(k, needed_input_keys(p)) ? task_data[k] : get(task_data, k, fill(nothing, num_examples(task_data))) for
     k in p.input_keys
 ]
 

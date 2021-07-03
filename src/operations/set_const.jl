@@ -14,4 +14,4 @@ Base.hash(op::SetConst, h::UInt64) = hash(op.output_keys, h) + hash(op.value, h)
 
 
 (op::SetConst)(taskdata::TaskData) =
-    update_value(taskdata, op.output_keys[1], fill(op.value, taskdata.num_examples))
+    update_value(taskdata, op.output_keys[1], fill(op.value, num_examples(taskdata)))
