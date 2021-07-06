@@ -97,8 +97,8 @@ struct Solution
     input_transformed_fields::Set{String}
     complexity_score::Float64
     score::Int
-    inp_val_hashes::Vector{Set{UInt64}}
-    out_val_hashes::Vector{Set{UInt64}}
+    inp_val_hashes::Dict{String,UInt64}
+    out_val_hashes::Dict{String,UInt64}
     function Solution(
         taskdata,
         field_info,
@@ -111,16 +111,14 @@ struct Solution
         input_transformed_fields,
         complexity_score::Float64,
     )
-        inp_val_hashes = fill(Set{UInt64}(), num_examples(taskdata))
-        out_val_hashes = fill(Set{UInt64}(), num_examples(taskdata))
+        inp_val_hashes = Dict{String,UInt64}()
+        out_val_hashes = Dict{String,UInt64}()
         for (key, values) in taskdata
-            for (i, value) in enumerate(values)
-                if in(key, transformed_fields) || in(key, filled_fields) || in(key, unfilled_fields)
-                    push!(out_val_hashes[i], hash(value))
-                end
-                if in(key, unused_fields) || in(key, used_fields) || in(key, input_transformed_fields)
-                    push!(inp_val_hashes[i], hash(value))
-                end
+            if in(key, transformed_fields) || in(key, filled_fields) || in(key, unfilled_fields)
+                out_val_hashes[key] = hash(values)
+            end
+            if in(key, unused_fields) || in(key, used_fields) || in(key, input_transformed_fields)
+                inp_val_hashes[key] = hash(values)
             end
         end
         new(
@@ -706,7 +704,7 @@ function check_task(solution::Solution, input_grids::Vector{Array{Int,2}}, targe
     compare_grids(targets, out)
 end
 
-function compare_grids(targets::Vector, outputs::Vector)
+function compare_grids(targets::AbstractVector, outputs::AbstractVector)
     result = 0
     for (target, output) in zip(targets, outputs)
         if size(target) != size(output)

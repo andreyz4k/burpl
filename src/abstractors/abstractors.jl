@@ -312,7 +312,6 @@ function create(
     if length(found_aux_keys) != length(aux_keys(cls))
         return []
     end
-    data = init_create_check_data(cls, key, solution)
 
     if any(ismissing(value) for value in solution.taskdata[key])
         return []
@@ -324,6 +323,7 @@ function create(
         aux_values = zip(aux_values...)
     end
 
+    data = init_create_check_data(cls, key, solution)
     if !all(
         wrap_check_task_value(cls, value, data, aux_vals) for
         (value, aux_vals) in zip(solution.taskdata[key], aux_values)

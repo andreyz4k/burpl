@@ -31,6 +31,7 @@ function create(
     solution,
     key,
 )::Array{Tuple{Float64,NamedTuple{(:to_abstract, :from_abstract),Tuple{Abstractor,Abstractor}}},1}
+    return []
     data = init_create_check_data(cls, key, solution)
 
     if !all(!ismissing(val) && check_task_value(cls, val, data, []) for val in solution.taskdata[key])

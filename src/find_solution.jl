@@ -108,11 +108,13 @@ function is_subsolution(old_sol::Solution, new_sol::Solution)::Bool
     if !issetequal(keys(new_sol.taskdata), keys(old_sol.taskdata))
         equals = false
     end
-    for (new_inp_vals, new_out_vals, old_inp_vals, old_out_vals) in
-        zip(new_sol.inp_val_hashes, new_sol.out_val_hashes, old_sol.inp_val_hashes, old_sol.out_val_hashes)
-        if !issubset(new_out_vals, old_out_vals) || !issubset(new_inp_vals, old_inp_vals)
-            return false
-        end
+    new_inp_vals = Set(values(new_sol.inp_val_hashes))
+    new_out_vals = Set(values(new_sol.out_val_hashes))
+    old_inp_vals = Set(values(old_sol.inp_val_hashes))
+    old_out_vals = Set(values(old_sol.out_val_hashes))
+
+    if !issubset(new_out_vals, old_out_vals) || !issubset(new_inp_vals, old_inp_vals)
+        return false
     end
     if equals && old_sol != new_sol
         return false

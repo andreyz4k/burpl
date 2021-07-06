@@ -29,7 +29,7 @@ function update_value(data::TaskData, path_keys::Array, value, ::Any)::TaskData
     data
 end
 
-function update_value(data::TaskData, path_keys::Array, value, current_value::Vector)::TaskData
+function update_value(data::TaskData, path_keys::Array, value, current_value::AbstractVector)::TaskData
     for (i, val) in enumerate(value)
         data = update_value(data, vcat(path_keys, [i]), val, current_value[i])
     end
