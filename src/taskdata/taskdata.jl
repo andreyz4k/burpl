@@ -2,10 +2,12 @@ export Taskdata
 module Taskdata
 
 struct TaskData <: AbstractDict{String,Any}
-    persistent_data::Dict{String,Any}
-    updated_values::Dict{String,Any}
+    persistent_data::Dict{String,Vector}
+    updated_values::Dict{String,Vector}
     keys_to_delete::Set{String}
 end
+
+num_examples(taskdata::TaskData) = isempty(taskdata) ? 0 : length(first(taskdata)[2])
 
 Base.show(io::IO, t::TaskData) =
     print(io, "TaskData(", t.persistent_data, ", ", t.updated_values, ", ", t.keys_to_delete, ")")
@@ -102,10 +104,6 @@ end
 
 function updated_keys(t::TaskData)
     return filter(k -> !in(k, t.keys_to_delete), keys(t.updated_values))
-end
-
-function updated_keys(taskdata::Vector{TaskData})
-    union((updated_keys(task) for task in taskdata)...)
 end
 
 end

@@ -105,20 +105,16 @@ end
 
 function is_subsolution(old_sol::Solution, new_sol::Solution)::Bool
     equals = true
-    for (new_inp_vals, new_out_vals, old_inp_vals, old_out_vals, new_task_data, old_task_data) in zip(
-        new_sol.inp_val_hashes,
-        new_sol.out_val_hashes,
-        old_sol.inp_val_hashes,
-        old_sol.out_val_hashes,
-        new_sol.taskdata,
-        old_sol.taskdata,
-    )
-        if !issubset(new_out_vals, old_out_vals) || !issubset(new_inp_vals, old_inp_vals)
-            return false
-        end
-        if !issetequal(keys(new_task_data), keys(old_task_data))
-            equals = false
-        end
+    if !issetequal(keys(new_sol.taskdata), keys(old_sol.taskdata))
+        equals = false
+    end
+    new_inp_vals = Set(values(new_sol.inp_val_hashes))
+    new_out_vals = Set(values(new_sol.out_val_hashes))
+    old_inp_vals = Set(values(old_sol.inp_val_hashes))
+    old_out_vals = Set(values(old_sol.out_val_hashes))
+
+    if !issubset(new_out_vals, old_out_vals) || !issubset(new_inp_vals, old_inp_vals)
+        return false
     end
     if equals && old_sol != new_sol
         return false
@@ -162,8 +158,8 @@ function pop_solution(queue, visited, border)
     end
 end
 
-function generate_solutions(taskdata::Array, debug::Bool)
-    init_solution = Solution(taskdata)
+function generate_solutions(task_info::Array, debug::Bool)
+    init_solution = Solution(task_info)
     queue = PriorityQueue()
     visited = Set()
     border = Set()
@@ -206,8 +202,10 @@ end
 
 function solve_task(task_info::Dict, debug::Bool, early_stop = true::Bool)
     answers = []
+    test_input = [task["input"] for task in task_info["test"]]
+    test_output = [task["output"] for task in task_info["test"]]
     for solution in generate_solutions(task_info["train"], debug)
-        answer = [solution(task["input"]) for task in task_info["test"]]
+        answer = solution(test_input)
         if !in(answer, answers)
             @info("found")
             @info(solution)
@@ -216,20 +214,17 @@ function solve_task(task_info::Dict, debug::Bool, early_stop = true::Bool)
         if length(answers) >= 3
             break
         end
-        if early_stop
-            if all(
-                compare_grids(target["output"], out_grid) == 0 for (out_grid, target) in zip(answer, task_info["test"])
-            )
-                break
-            end
+        if early_stop && compare_grids(test_output, answer) == 0
+            break
         end
     end
     return answers
 end
 
 function validate_results(test_info::Vector, answers::Vector)::Bool
+    test_output = [task["output"] for task in test_info]
     for answer in answers
-        if all(compare_grids(target["output"], out_grid) == 0 for (out_grid, target) in zip(answer, test_info))
+        if compare_grids(test_output, answer) == 0
             return true
         end
     end

@@ -17,19 +17,23 @@ import .ObjectPrior: Object, Color
         grouper = GroupObjectsByColor("key", true)
         out_data = grouper(source_data)
         @test out_data == Dict(
-            "key" => Set([
-                Object([1], (1, 1)),
-                Object([1 1], (2, 4)),
-                Object([2], (2, 2)),
-                Object([3], (9, 1)),
-                Object([2], (1, 3)),
-            ]),
-            "key|grouped" => Dict(
-                Color(1) => Set([Object([1], (1, 1)), Object([1 1], (2, 4))]),
-                Color(2) => Set([Object([2], (2, 2)), Object([2], (1, 3))]),
-                Color(3) => Set([Object([3], (9, 1))]),
-            ),
-            "key|group_keys" => Set([Color(1), Color(2), Color(3)]),
+            "key" => [
+                Set([
+                    Object([1], (1, 1)),
+                    Object([1 1], (2, 4)),
+                    Object([2], (2, 2)),
+                    Object([3], (9, 1)),
+                    Object([2], (1, 3)),
+                ]),
+            ],
+            "key|grouped" => [
+                Dict(
+                    Color(1) => Set([Object([1], (1, 1)), Object([1 1], (2, 4))]),
+                    Color(2) => Set([Object([2], (2, 2)), Object([2], (1, 3))]),
+                    Color(3) => Set([Object([3], (9, 1))]),
+                ),
+            ],
+            "key|group_keys" => [Set([Color(1), Color(2), Color(3)])],
         )
         delete!(out_data, "key")
         ungrouper = GroupObjectsByColor("key", false)

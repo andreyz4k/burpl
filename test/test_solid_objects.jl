@@ -101,15 +101,19 @@ using .ObjectPrior: Object
         )
         out_data = abs(data)
         @test out_data == Dict(
-            "input|bgr_grid|spatial_objects" => Either([
-                Option(Set{Object}([Object([2 2; 2 2], (2, 2))]), 6951943934144298334),
-                Option(Set{Object}([Object([0 0 0; 0 -1 -1; 0 -1 -1], (1, 1))]), 73827427852322294),
-            ]),
-            "input|bgr_grid|grid_size" => (3, 3),
-            "input|bgr_grid" => Either([
-                Option([-1 -1 -1; -1 2 2; -1 2 2], 6951943934144298334),
-                Option([0 0 0; 0 -1 -1; 0 -1 -1], 73827427852322294),
-            ]),
+            "input|bgr_grid|spatial_objects" => [
+                Either([
+                    Option(Set{Object}([Object([2 2; 2 2], (2, 2))]), 6951943934144298334),
+                    Option(Set{Object}([Object([0 0 0; 0 -1 -1; 0 -1 -1], (1, 1))]), 73827427852322294),
+                ]),
+            ],
+            "input|bgr_grid|grid_size" => [(3, 3)],
+            "input|bgr_grid" => [
+                Either([
+                    Option([-1 -1 -1; -1 2 2; -1 2 2], 6951943934144298334),
+                    Option([0 0 0; 0 -1 -1; 0 -1 -1], 73827427852322294),
+                ]),
+            ],
         )
     end
 end

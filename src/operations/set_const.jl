@@ -13,7 +13,5 @@ Base.:(==)(a::SetConst, b::SetConst) = a.output_keys == b.output_keys && a.value
 Base.hash(op::SetConst, h::UInt64) = hash(op.output_keys, h) + hash(op.value, h)
 
 
-function (op::SetConst)(task_data)
-    data = update_value(task_data, op.output_keys[1], op.value)
-    data
-end
+(op::SetConst)(taskdata::TaskData) =
+    update_value(taskdata, op.output_keys[1], fill(op.value, num_examples(taskdata)))

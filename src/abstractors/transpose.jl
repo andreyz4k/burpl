@@ -13,25 +13,25 @@ function check_task_value(::Transpose, value::AbstractArray{Int,2}, data, aux_va
 end
 
 
-get_aux_values_for_task(::Transpose, task_data, key, solution) =
+get_aux_values_for_task(::Transpose, taskdata, key, solution) =
     in(key, solution.unfilled_fields) ?
     values(
         filter(
             kv ->
-                isa(kv[2], Array{Int,2}) &&
+                isa(kv[2][1], Array{Int,2}) &&
                     kv[1] != key &&
                     (in(kv[1], solution.unfilled_fields) || in(kv[1], solution.transformed_fields)),
-            task_data,
+            taskdata,
         ),
     ) :
     values(
         filter(
             kv ->
-                isa(kv[2], Array{Int,2}) &&
+                isa(kv[2][1], Array{Int,2}) &&
                     kv[1] != key &&
                     !in(kv[1], solution.unfilled_fields) &&
                     !in(kv[1], solution.transformed_fields),
-            task_data,
+            taskdata,
         ),
     )
 

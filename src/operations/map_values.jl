@@ -19,12 +19,10 @@ Base.:(==)(a::MapValues, b::MapValues) =
     a.output_keys == b.output_keys && a.input_keys == b.input_keys && a.match_pairs == b.match_pairs
 Base.hash(op::MapValues, h::UInt64) = hash(op.output_keys, h) + hash(op.input_keys, h) + hash(op.match_pairs, h)
 
-function (op::MapValues)(task_data)
-    input_value = task_data[op.input_keys[1]]
-    if isa(input_value, Dict)
-        output_value = Dict(key => op.match_pairs[value] for (key, value) in input_value)
-    else
-        output_value = op.match_pairs[input_value]
-    end
-    update_value(task_data, op.output_keys[1], output_value)
+function (op::MapValues)(taskdata::TaskData)
+    output_value = [
+        isa(input_value, Dict) ? Dict(key => op.match_pairs[value] for (key, value) in input_value) :
+        op.match_pairs[input_value] for input_value in taskdata[op.input_keys[1]]
+    ]
+    update_value(taskdata, op.output_keys[1], output_value)
 end

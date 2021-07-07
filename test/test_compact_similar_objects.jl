@@ -9,9 +9,9 @@ using .PatternMatching: ObjectShape, common_value
         reshaper = CompactSimilarObjects("key", true)
         out_data = reshaper(source_data)
         @test out_data == Dict(
-            "key" => Set([Object([1], (1, 1)), Object([1], (2, 3))]),
-            "key|common_shape" => ObjectShape(Object([1], (1, 1))),
-            "key|positions" => Set([(1, 1), (2, 3)]),
+            "key" => [Set([Object([1], (1, 1)), Object([1], (2, 3))])],
+            "key|common_shape" => [ObjectShape(Object([1], (1, 1)))],
+            "key|positions" => [Set([(1, 1), (2, 3)])],
         )
         delete!(out_data, "key")
         reshaper = CompactSimilarObjects("key", false)

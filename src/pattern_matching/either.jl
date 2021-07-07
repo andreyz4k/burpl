@@ -93,36 +93,42 @@ update_value(data::TaskData, path_keys::Array, value::Either, current_value::Eit
     invoke(update_value, Tuple{TaskData,Array,Any,Any}, data, path_keys, value, current_value)
 
 function update_value(data::TaskData, path_keys::Array, value, current_value::Either)::TaskData
-    data = _update_value(data, value, current_value)
+    data = _update_value(data, path_keys[2], value, current_value)
     return invoke(update_value, Tuple{TaskData,Array,Any,Any}, data, path_keys, value, current_value)
 end
 
-function _update_value(data::TaskData, value, current_value::Either)::TaskData
+function _update_value(data::TaskData, example_num, value, current_value::Either)::TaskData
+    hashes_to_del = Set()
+    matched_options = []
     for option in current_value.options
         if isnothing(common_value(value, option.value))
             if !isnothing(option.option_hash)
-                hashes_to_del = Set([option.option_hash])
-                while !isempty(hashes_to_del)
-                    data, hashes_to_del = drop_hashes(data, hashes_to_del)
-                end
+                push!(hashes_to_del, option.option_hash)
             end
         else
-            data = _update_value(data, value, option.value)
+            push!(matched_options, option)
         end
+    end
+    while !isempty(hashes_to_del)
+        data, hashes_to_del = drop_hashes(data, example_num, hashes_to_del)
+    end
+    for option in matched_options
+        data = _update_value(data, example_num, value, option.value)
     end
     return data
 end
 
-_update_value(data::TaskData, value, current_value) = data
+_update_value(data::TaskData, example_num, value, current_value) = data
 
 
-function drop_hashes(data::TaskData, hashes)
+function drop_hashes(data::TaskData, example_num, hashes)
     data = copy(data)
     new_hashes = Set()
     for (key, value) in data
-        modified, effective, mod_hashes = _drop_hashes(value, hashes)
+        modified, effective, mod_hashes = _drop_hashes(value[example_num], hashes)
         if effective
-            data[key] = modified
+            data[key] = copy(value)
+            data[key][example_num] = modified
             union!(new_hashes, mod_hashes)
         end
     end

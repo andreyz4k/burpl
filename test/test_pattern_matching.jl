@@ -54,7 +54,7 @@ using .Abstractors: iter_source_either_values
     end
 
     @testset "fix value" begin
-        keys = ["spatial_objects|grouped|0|first|splitted|first", 1]
+        keys = ["spatial_objects|grouped|0|first|splitted|first", 1, 1]
         value = Object([1], (0, 5))
         task_data = make_taskdata(
             Dict(
@@ -102,18 +102,18 @@ using .Abstractors: iter_source_either_values
         new_task_data = update_value(task_data, keys, value)
 
         @test Dict(new_task_data) == Dict(
-            "spatial_objects|grouped|0|step" => Dict(1 => (0, 6), 3 => (0, 6)),
-            "spatial_objects|grouped|0|first|splitted|first" => Dict(
+            "spatial_objects|grouped|0|step" => [Dict(1 => (0, 6), 3 => (0, 6))],
+            "spatial_objects|grouped|0|first|splitted|first" =>[Dict(
                 1 => Object([1], (0, 5)),
                 3 => Either([
                     Option(Object([3], (0, 8)), 8357411015276601514),
                     Option(Object([3], (6, 8)), -6298199269447202670),
                 ]),
-            ),
-            "spatial_objects|grouped|0|first|splitted|step" => Dict(
+            ),],
+            "spatial_objects|grouped|0|first|splitted|step" => [Dict(
                 1 => (1, 0),
                 3 => Either([Option((-1, 0), -6298199269447202670), Option((1, 0), 8357411015276601514)]),
-            ),
+            ),],
         )
 
         task_data = make_taskdata(
@@ -152,18 +152,18 @@ using .Abstractors: iter_source_either_values
         )
         new_task_data = update_value(task_data, keys, value)
         @test Dict(new_task_data) == Dict(
-            "spatial_objects|grouped|0|step" => Dict(1 => (0, 6), 3 => (0, 6)),
-            "spatial_objects|grouped|0|first|splitted|first" => Dict(
+            "spatial_objects|grouped|0|step" => [Dict(1 => (0, 6), 3 => (0, 6))],
+            "spatial_objects|grouped|0|first|splitted|first" => [Dict(
                 1 => Object([1], (0, 5)),
                 3 => Either([
                     Option(Object([3], (0, 8)), 8357411015276601514),
                     Option(Object([3], (6, 8)), -6298199269447202670),
                 ]),
-            ),
-            "spatial_objects|grouped|0|first|splitted|step" => Dict(
+            ),],
+            "spatial_objects|grouped|0|first|splitted|step" => [Dict(
                 1 => Either([Option((-1, 0)), Option((1, 0))]),
                 3 => Either([Option((-1, 0), -6298199269447202670), Option((1, 0), 8357411015276601514)]),
-            ),
+            ),],
         )
     end
 
@@ -587,9 +587,9 @@ using .Abstractors: iter_source_either_values
                 ]),
             ),
         )
-        new_data = update_value(taskdata, "vert_kernel|horz_kernel|splitted|step", (-1, -1))
+        new_data = update_value(taskdata, "vert_kernel|horz_kernel|splitted|step", [(-1, -1)])
         @test new_data == Dict(
-            "vert_kernel|horz_kernel|splitted|first" => Either([
+            "vert_kernel|horz_kernel|splitted|first" => Any[Either([
                 Option(
                     Either([
                         Option(Object([0], (2, 2)), 9066318667632083547),
@@ -606,17 +606,17 @@ using .Abstractors: iter_source_either_values
                     895491277412430600,
                 ),
                 Option(Object([0], (3, 2)), 1062607700805768252),
-            ]),
-            "vert_kernel|horz_kernel|splitted|step" => (-1, -1),
-            "vert_is_left" => AuxValue(
+            ])],
+            "vert_kernel|horz_kernel|splitted|step" => Any[(-1, -1)],
+            "vert_is_left" => Any[AuxValue(
                 Either([
                     Option(true, 895491277412430600),
                     Option(true, 14914076444286691944),
                     Option(false, 1062607700805768252),
                     Option(false, 15081192867680029596),
                 ]),
-            ),
-            "vert_kernel|horz_is_top" => Either([
+            )],
+            "vert_kernel|horz_is_top" => Any[Either([
                 Option(
                     AuxValue(Either([Option(true, 9066318667632083547), Option(false, 2841229356805458503)])),
                     14914076444286691944,
@@ -627,7 +627,7 @@ using .Abstractors: iter_source_either_values
                     895491277412430600,
                 ),
                 Option(AuxValue(true), 1062607700805768252),
-            ]),
+            ])],
         )
     end
 end

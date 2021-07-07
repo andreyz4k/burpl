@@ -42,16 +42,20 @@ using .PatternMatching: Either, Option
         repeater = RepeatObjectInfinite("input|key", true, source_data)
         out_data = repeater(source_data)
         @test out_data == Dict(
-            "input|key" => Set([Object([1], (1, 1)), Object([1], (2, 2)), Object([1], (3, 3))]),
-            "input|key|first" => Either([
-                Option(Object([1], (1, 1)), hash((Object([1], (1, 1)), (1, 1)))),
-                Option(Object([1], (3, 3)), hash((Object([1], (3, 3)), (-1, -1)))),
-            ]),
-            "input|key|step" => Either([
-                Option((1, 1), hash((Object([1], (1, 1)), (1, 1)))),
-                Option((-1, -1), hash((Object([1], (3, 3)), (-1, -1)))),
-            ]),
-            "input|grid_size" => (3, 3),
+            "input|key" => [Set([Object([1], (1, 1)), Object([1], (2, 2)), Object([1], (3, 3))])],
+            "input|key|first" => [
+                Either([
+                    Option(Object([1], (1, 1)), hash((Object([1], (1, 1)), (1, 1)))),
+                    Option(Object([1], (3, 3)), hash((Object([1], (3, 3)), (-1, -1)))),
+                ]),
+            ],
+            "input|key|step" => [
+                Either([
+                    Option((1, 1), hash((Object([1], (1, 1)), (1, 1)))),
+                    Option((-1, -1), hash((Object([1], (3, 3)), (-1, -1)))),
+                ]),
+            ],
+            "input|grid_size" => [(3, 3)],
         )
         delete!(out_data, "input|key")
         abs_data = make_taskdata(

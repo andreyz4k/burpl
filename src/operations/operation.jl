@@ -11,6 +11,7 @@ get_sorting_keys(operation::Operation) = operation.output_keys
 needed_input_keys(operation::Operation) = operation.input_keys
 
 using ..PatternMatching: update_value, apply_func
+using ..Taskdata: TaskData, num_examples
 
 include("set_const.jl")
 include("copy_param.jl")
