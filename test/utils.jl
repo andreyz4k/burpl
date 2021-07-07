@@ -37,6 +37,8 @@ function make_dummy_solution(data, unfilled = [])
         Set(),
         Set(),
         0.0,
+        [],
+        [],
     )
 end
 

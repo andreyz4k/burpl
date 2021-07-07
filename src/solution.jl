@@ -87,6 +87,7 @@ end
 _is_valid_value(val) = true
 _is_valid_value(val::Union{Array,Dict}) = !isempty(val)
 
+using ..Taskdata: get_value_hash
 
 struct Solution
     taskdata::Vector{TaskData}
@@ -100,6 +101,8 @@ struct Solution
     input_transformed_fields::Set{String}
     complexity_score::Float64
     score::Int
+    inp_val_hashes::Vector{Set{UInt64}}
+    out_val_hashes::Vector{Set{UInt64}}
     function Solution(
         taskdata,
         field_info,
@@ -111,6 +114,8 @@ struct Solution
         used_fields,
         input_transformed_fields,
         complexity_score::Float64,
+        inp_val_hashes,
+        out_val_hashes,
     )
         new(
             taskdata,
@@ -124,6 +129,8 @@ struct Solution
             input_transformed_fields,
             complexity_score,
             get_score(taskdata, complexity_score),
+            inp_val_hashes,
+            out_val_hashes,
         )
     end
 end
@@ -147,22 +154,48 @@ function Solution(taskdata)
         Set(),
         Set(),
         0.0,
+        [],
+        [],
     )
 end
 
-persist_updates(solution::Solution) = Solution(
-    [persist_data(task) for task in solution.taskdata],
-    solution.field_info,
-    solution.blocks,
-    solution.unfilled_fields,
-    solution.filled_fields,
-    solution.transformed_fields,
-    solution.unused_fields,
-    solution.used_fields,
-    solution.input_transformed_fields,
-    solution.complexity_score,
-)
-
+function persist_updates(solution::Solution)
+    taskdata = [persist_data(task) for task in solution.taskdata]
+    inp_val_hashes = Set{UInt64}[]
+    out_val_hashes = Set{UInt64}[]
+    for task_data in taskdata
+        inp_vals = Set{UInt64}()
+        out_vals = Set{UInt64}()
+        for key in keys(task_data)
+            if in(key, solution.transformed_fields) ||
+               in(key, solution.filled_fields) ||
+               in(key, solution.unfilled_fields)
+                push!(out_vals, get_value_hash(task_data, key))
+            end
+            if in(key, solution.unused_fields) ||
+               in(key, solution.used_fields) ||
+               in(key, solution.input_transformed_fields)
+                push!(inp_vals, get_value_hash(task_data, key))
+            end
+        end
+        push!(inp_val_hashes, inp_vals)
+        push!(out_val_hashes, out_vals)
+    end
+    Solution(
+        taskdata,
+        solution.field_info,
+        solution.blocks,
+        solution.unfilled_fields,
+        solution.filled_fields,
+        solution.transformed_fields,
+        solution.unused_fields,
+        solution.used_fields,
+        solution.input_transformed_fields,
+        solution.complexity_score,
+        inp_val_hashes,
+        out_val_hashes,
+    )
+end
 
 function move_to_next_block(solution::Solution)::Solution
     blocks = copy(solution.blocks)
@@ -298,6 +331,8 @@ function move_to_next_block(solution::Solution)::Solution
         solution.used_fields,
         solution.input_transformed_fields,
         solution.complexity_score,
+        solution.inp_val_hashes,
+        solution.out_val_hashes,
     )
 end
 
@@ -621,6 +656,8 @@ function insert_operation(
             used_fields,
             input_transformed_fields,
             solution.complexity_score + added_complexity,
+            solution.inp_val_hashes,
+            solution.out_val_hashes,
         )
         if !isempty(filter(k -> !startswith(k, "projected|"), fields_to_mark))
             return move_to_next_block(new_solution)
