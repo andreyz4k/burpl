@@ -149,7 +149,7 @@ end
 
 function Solution(taskdata)
     Solution(
-        [TaskData(task, Dict{String,Any}(), Set{String}()) for task in taskdata],
+        [persist_data(TaskData(Dict{String,Any}(), task, Set{String}(), Dict{String,Float64}())) for task in taskdata],
         Dict(
             "input" => FieldInfo(taskdata[1]["input"], "input", [], [["input"]]),
             "output" => FieldInfo(taskdata[1]["output"], "input", [], [Set()]),
@@ -692,7 +692,7 @@ Base.show(io::IO, s::Solution) = print(
 )
 
 function (solution::Solution)(input_grid::Array{Int,2})::Array{Int,2}
-    observed_data = TaskData(Dict{String,Any}("input" => input_grid), Dict{String,Any}(), Set())
+    observed_data = TaskData(Dict{String,Any}("input" => input_grid), Dict{String,Any}(), Set(), Dict{String,Float64}())
     for block in solution.blocks
         observed_data = block(observed_data)
     end
@@ -724,38 +724,43 @@ function get_score(taskdata, complexity_score)::Int
     score
 end
 
-using ..Complexity: get_complexity
+using ..Taskdata: get_value_complexity
 
 function get_unmatched_complexity_score(solution::Solution)
-    unmatched_data_score = [
-        sum(Float64[get_complexity(value) for (key, value) in task_data if in(key, solution.unfilled_fields)]) for
-        task_data in solution.taskdata
-    ]
-    transformed_data_score = [
-        sum(Float64[get_complexity(value) / 10 for (key, value) in task_data if in(key, solution.transformed_fields)]) for task_data in solution.taskdata
-    ]
-    unused_data_score = [
-        sum(
-            Float64[
-                startswith(key, "projected|") ? get_complexity(value) / 6 : get_complexity(value) for
-                (key, value) in task_data if in(key, solution.unused_fields)
-            ],
-        ) for task_data in solution.taskdata
-    ]
-    inp_transformed_data_score = [
-        sum(
-            Float64[
-                get_complexity(value) / 3 for (key, value) in task_data if in(key, solution.input_transformed_fields)
-            ],
-        ) for task_data in solution.taskdata
-    ]
-    return (
-        sum(unmatched_data_score) +
-        # sum(transformed_data_score) +
-        sum(unused_data_score) +
-        sum(inp_transformed_data_score) +
-        solution.complexity_score
-    ) / length(solution.taskdata)
+    unmatched_data_score = sum(
+        (
+            get_value_complexity(task_data, key) for task_data in solution.taskdata for
+            key in keys(task_data) if in(key, solution.unfilled_fields)
+        ),
+        init = 0.0,
+    )
+    # transformed_data_score = sum(
+    #     (
+    #         get_value_complexity(task_data, key) / 10 for task_data in solution.taskdata for
+    #         key in keys(task_data) if in(key, solution.transformed_fields)
+    #     ),
+    #     init = 0.0,
+    # )
+    unused_data_score = sum(
+        (
+            startswith(key, "projected|") ? get_value_complexity(task_data, key) / 6 :
+            get_value_complexity(task_data, key) for task_data in solution.taskdata for
+            key in keys(task_data) if in(key, solution.unused_fields)
+        ),
+        init = 0.0,
+    )
+    inp_transformed_data_score = sum(
+        (
+            get_value_complexity(task_data, key) / 3 for task_data in solution.taskdata for
+            key in keys(task_data) if in(key, solution.input_transformed_fields)
+        ),
+        init = 0.0,
+    )
+    return (unmatched_data_score +
+            # transformed_data_score +
+            unused_data_score +
+            inp_transformed_data_score +
+            solution.complexity_score) / length(solution.taskdata)
 end
 
 function validate_solution(solution, taskdata)
