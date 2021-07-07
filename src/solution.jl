@@ -87,6 +87,8 @@ end
 _is_valid_value(val) = true
 _is_valid_value(val::Union{Array,Dict}) = !isempty(val)
 
+using ..Taskdata: get_value_hash
+
 struct Solution
     taskdata::Vector{TaskData}
     field_info::Dict{String,FieldInfo}
@@ -118,12 +120,12 @@ struct Solution
         for task_data in taskdata
             inp_vals = Set{UInt64}()
             out_vals = Set{UInt64}()
-            for (key, value) in task_data
+            for key in keys(task_data)
                 if in(key, transformed_fields) || in(key, filled_fields) || in(key, unfilled_fields)
-                    push!(out_vals, hash(value))
+                    push!(out_vals, get_value_hash(task_data, key))
                 end
                 if in(key, unused_fields) || in(key, used_fields) || in(key, input_transformed_fields)
-                    push!(inp_vals, hash(value))
+                    push!(inp_vals, get_value_hash(task_data, key))
                 end
             end
             push!(inp_val_hashes, inp_vals)
@@ -149,7 +151,11 @@ end
 
 function Solution(taskdata)
     Solution(
-        [persist_data(TaskData(Dict{String,Any}(), task, Set{String}(), Dict{String,Float64}())) for task in taskdata],
+        [
+            persist_data(
+                TaskData(Dict{String,Any}(), task, Set{String}(), Dict{String,Float64}(), Dict{String,UInt64}()),
+            ) for task in taskdata
+        ],
         Dict(
             "input" => FieldInfo(taskdata[1]["input"], "input", [], [["input"]]),
             "output" => FieldInfo(taskdata[1]["output"], "input", [], [Set()]),
@@ -692,7 +698,13 @@ Base.show(io::IO, s::Solution) = print(
 )
 
 function (solution::Solution)(input_grid::Array{Int,2})::Array{Int,2}
-    observed_data = TaskData(Dict{String,Any}("input" => input_grid), Dict{String,Any}(), Set(), Dict{String,Float64}())
+    observed_data = TaskData(
+        Dict{String,Any}("input" => input_grid),
+        Dict{String,Any}(),
+        Set(),
+        Dict{String,Float64}(),
+        Dict{String,UInt64}(),
+    )
     for block in solution.blocks
         observed_data = block(observed_data)
     end

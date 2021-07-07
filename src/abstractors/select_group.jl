@@ -115,7 +115,7 @@ function to_abstract_value(p::Abstractor{SelectGroup}, source_value::AbstractDic
     rejected = copy(source_value)
     delete!(rejected, selected_key)
     out = update_value(
-        TaskData(Dict{String,Any}(), Dict{String,Any}(), Set(), Dict{String,Float64}()),
+        TaskData(Dict{String,Any}(), Dict{String,Any}(), Set(), Dict{String,Float64}(), Dict{String,UInt64}()),
         p.output_keys[1],
         source_value[selected_key],
     )

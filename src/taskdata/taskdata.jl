@@ -6,30 +6,39 @@ struct TaskData <: AbstractDict{String,Any}
     updated_values::Dict{String,Any}
     keys_to_delete::Set{String}
     complexity_scores::Dict{String,Float64}
+    value_hashes::Dict{String,UInt64}
 end
 
 Base.show(io::IO, t::TaskData) =
     print(io, "TaskData(", t.persistent_data, ", ", t.updated_values, ", ", t.keys_to_delete, ")")
 
-Base.copy(t::TaskData) =
-    TaskData(t.persistent_data, copy(t.updated_values), copy(t.keys_to_delete), copy(t.complexity_scores))
+Base.copy(t::TaskData) = TaskData(
+    t.persistent_data,
+    copy(t.updated_values),
+    copy(t.keys_to_delete),
+    copy(t.complexity_scores),
+    copy(t.value_hashes),
+)
 
 using ..Complexity: get_complexity
 
 function persist_data(taskdata::TaskData)
     persistent_data = copy(taskdata.persistent_data)
     complexity_scores = copy(taskdata.complexity_scores)
+    value_hashes = copy(taskdata.value_hashes)
     for key in taskdata.keys_to_delete
         delete!(persistent_data, key)
         delete!(complexity_scores, key)
+        delete!(value_hashes, key)
     end
     for (key, value) in taskdata.updated_values
         if !in(key, taskdata.keys_to_delete)
             persistent_data[key] = value
             complexity_scores[key] = get_complexity(value)
+            value_hashes[key] = hash(value)
         end
     end
-    TaskData(persistent_data, Dict{String,Any}(), Set{String}(), complexity_scores)
+    TaskData(persistent_data, Dict{String,Any}(), Set{String}(), complexity_scores, value_hashes)
 end
 
 function get_value_complexity(taskdata::TaskData, key)::Float64
@@ -37,6 +46,13 @@ function get_value_complexity(taskdata::TaskData, key)::Float64
         return get_complexity(taskdata[key])
     end
     return taskdata.complexity_scores[key]
+end
+
+function get_value_hash(taskdata::TaskData, key)::Float64
+    if haskey(taskdata.updated_values, key) || !haskey(taskdata.value_hashes, key)
+        return hash(taskdata[key])
+    end
+    return taskdata.value_hashes[key]
 end
 
 function Base.setindex!(t::TaskData, v, k)
@@ -107,6 +123,7 @@ Base.merge(t::TaskData, others::AbstractDict...) = TaskData(
     merge(t.updated_values, others...),
     setdiff(t.keys_to_delete, [keys(o) for o in others]...),
     t.complexity_scores,
+    t.value_hashes,
 )
 
 Base.filter(f::Function, t::TaskData) = TaskData(
@@ -114,6 +131,7 @@ Base.filter(f::Function, t::TaskData) = TaskData(
     filter(f, t.updated_values),
     union(t.keys_to_delete, keys(filter(!f, t.persistent_data))),
     t.complexity_scores,
+    t.value_hashes,
 )
 
 function Base.delete!(t::TaskData, key)
@@ -127,5 +145,7 @@ end
 function updated_keys(taskdata::Vector{TaskData})
     union((updated_keys(task) for task in taskdata)...)
 end
+
+Base.keys(t::TaskData) = filter(k -> !in(k, t.keys_to_delete), union(keys(t.updated_values), keys(t.persistent_data)))
 
 end

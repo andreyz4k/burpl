@@ -17,7 +17,7 @@ end
 
 make_taskdata(tasks) = [make_taskdata(task) for task in tasks]
 
-make_taskdata(task::Dict) = TaskData(Dict{String,Any}(), task, Set(), Dict{String,Float64}())
+make_taskdata(task::Dict) = TaskData(Dict{String,Any}(), task, Set(), Dict{String,Float64}(), Dict{String,UInt64}())
 
 make_field_info(taskdata) = Dict(key => FieldInfo(val, "input", [], [Set()]) for (key, val) in taskdata[1])
 
