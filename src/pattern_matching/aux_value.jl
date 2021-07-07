@@ -22,7 +22,7 @@ unpack_value(p::AuxValue) = isa(p.value, Matcher) ? [] : unpack_value(p.value)
 unwrap_matcher(p::AuxValue) = [p.value]
 
 
-_update_value(data::TaskData, value, current_value::AuxValue) = _update_value(data, value, current_value.value)
+_update_value(data::TaskData, example_num, value, current_value::AuxValue) = _update_value(data, example_num, value, current_value.value)
 
 function _drop_hashes(data::AuxValue, hashes)
     modified, effective, mod_hashes = _drop_hashes(data.value, hashes)
