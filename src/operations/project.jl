@@ -14,7 +14,7 @@ Base.:(==)(a::Project, b::Project) = a.operations == b.operations
 
 function _get_keys_for_items(items, out_keys)
     input_keys = []
-    output_keys = []
+    output_keys = Set()
     aux_keys = []
     for item in items
         new_inp_keys = filter(k -> !in(k, output_keys), item.input_keys)
@@ -22,7 +22,7 @@ function _get_keys_for_items(items, out_keys)
         if hasproperty(item, :aux_keys)
             append!(aux_keys, filter(k -> !in(k, output_keys), item.aux_keys))
         end
-        append!(output_keys, item.output_keys)
+        union!(output_keys, item.output_keys)
     end
     input_keys, ["projected|" * key for key in output_keys if in(key, out_keys)], aux_keys
 end

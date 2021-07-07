@@ -98,17 +98,22 @@ function update_value(data::TaskData, path_keys::Array, value, current_value::Ei
 end
 
 function _update_value(data::TaskData, value, current_value::Either)::TaskData
+    hashes_to_del = Set()
+    matched_options = []
     for option in current_value.options
         if isnothing(common_value(value, option.value))
             if !isnothing(option.option_hash)
-                hashes_to_del = Set([option.option_hash])
-                while !isempty(hashes_to_del)
-                    data, hashes_to_del = drop_hashes(data, hashes_to_del)
-                end
+                push!(hashes_to_del, option.option_hash)
             end
         else
-            data = _update_value(data, value, option.value)
+            push!(matched_options, option)
         end
+    end
+    while !isnothing(hashes_to_del) && !isempty(hashes_to_del)
+        data, hashes_to_del = drop_hashes(data, hashes_to_del)
+    end
+    for option in matched_options
+        data = _update_value(data, value, option.value)
     end
     return data
 end
@@ -118,12 +123,16 @@ _update_value(data::TaskData, value, current_value) = data
 
 function drop_hashes(data::TaskData, hashes)
     data = copy(data)
-    new_hashes = Set()
+    new_hashes = nothing
     for (key, value) in data
         modified, effective, mod_hashes = _drop_hashes(value, hashes)
         if effective
             data[key] = modified
-            union!(new_hashes, mod_hashes)
+            if isnothing(new_hashes)
+                new_hashes = mod_hashes
+            else
+                union!(new_hashes, mod_hashes)
+            end
         end
     end
     data, new_hashes
@@ -132,23 +141,26 @@ end
 function _drop_hashes(data::Dict, hashes)
     effective = false
     result = nothing
-    new_hashes = Set()
+    new_hashes = nothing
     past_keys = []
     for (key, value) in data
         modified, eff, mod_hashes = _drop_hashes(value, hashes)
-        if !effective && eff
-            result = Dict{Any,Any}(k => data[k] for k in past_keys)
-            effective = true
-        end
-        if effective
+        if !effective
+            if eff
+                result = Dict{Any,Any}(k => data[k] for k in past_keys)
+                result[key] = modified
+                new_hashes = mod_hashes
+                effective = true
+            else
+                push!(past_keys, key)
+            end
+        else
             if eff
                 result[key] = modified
                 union!(new_hashes, mod_hashes)
             else
                 result[key] = value
             end
-        else
-            push!(past_keys, key)
         end
     end
     if effective
@@ -161,14 +173,17 @@ end
 function _drop_hashes(data::Vector, hashes)
     effective = false
     result = nothing
-    new_hashes = Set()
+    new_hashes = nothing
     for (i, value) in enumerate(data)
         modified, eff, mod_hashes = _drop_hashes(value, hashes)
-        if !effective && eff
-            result = data[1:i-1]
-            effective = true
-        end
-        if effective
+        if !effective
+            if eff
+                result = data[1:i-1]
+                effective = true
+                new_hashes = mod_hashes
+                push!(result, modified)
+            end
+        else
             if eff
                 push!(result, modified)
                 union!(new_hashes, mod_hashes)
@@ -187,21 +202,28 @@ end
 function _drop_hashes(data::Either, hashes)
     new_options = nothing
     effective = false
-    new_hashes = Set()
+    new_hashes = nothing
     for (i, option) in enumerate(data.options)
         if in(option.option_hash, hashes)
             if !effective
                 new_options = data.options[1:i-1]
+                new_hashes = _all_hashes(option.value)
+                effective = true
+            else
+                union!(new_hashes, _all_hashes(option.value))
             end
-            union!(new_hashes, _all_hashes(option.value))
-            effective = true
         else
             modified, eff, mod_hashes = _drop_hashes(option.value, hashes)
-            if !effective && eff
-                new_options = data.options[1:i-1]
-                effective = true
-            end
-            if effective
+            if !effective
+                if eff
+                    new_options = data.options[1:i-1]
+                    effective = true
+                    new_hashes = mod_hashes
+                    if !isnothing(modified)
+                        push!(new_options, Option(modified, option.option_hash))
+                    end
+                end
+            else
                 if eff
                     union!(new_hashes, mod_hashes)
                     if !isnothing(modified)
@@ -223,7 +245,7 @@ function _drop_hashes(data::Either, hashes)
     end
 end
 
-_drop_hashes(data, hashes) = data, false, Set()
+_drop_hashes(data, hashes) = data, false, nothing
 
 function _all_hashes(data::Either)
     result = Set()
