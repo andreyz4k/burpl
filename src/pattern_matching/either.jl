@@ -16,16 +16,17 @@ Base.show(io::IO, op::Option{T}) where {T} =
 struct Either{T} <: Matcher{T}
     options::Array{Option{T}}
     function Either(options::AbstractVector{Option{T}}) where {T}
+        if length(options) == 1
+            return first(options).value
+        end
         all_values = Set()
         for item in options
             push!(all_values, item.value)
         end
         if length(all_values) == 1
-            for value in all_values
-                return value
-            end
+            return first(all_values)
         end
-        return new{T}(unique(options))
+        return new{T}(options)
     end
 end
 
@@ -130,51 +131,96 @@ end
 
 function _drop_hashes(data::Dict, hashes)
     effective = false
-    result = Dict()
+    result = nothing
     new_hashes = Set()
+    past_keys = []
     for (key, value) in data
         modified, eff, mod_hashes = _drop_hashes(value, hashes)
-        result[key] = modified
-        effective |= eff
-        union!(new_hashes, mod_hashes)
+        if !effective && eff
+            result = Dict{Any,Any}(k => data[k] for k in past_keys)
+            effective = true
+        end
+        if effective
+            if eff
+                result[key] = modified
+                union!(new_hashes, mod_hashes)
+            else
+                result[key] = value
+            end
+        else
+            push!(past_keys, key)
+        end
     end
-    result, effective, new_hashes
+    if effective
+        return result, effective, new_hashes
+    else
+        return data, effective, new_hashes
+    end
 end
 
 function _drop_hashes(data::Vector, hashes)
     effective = false
-    result = []
+    result = nothing
     new_hashes = Set()
-    for value in data
+    for (i, value) in enumerate(data)
         modified, eff, mod_hashes = _drop_hashes(value, hashes)
-        push!(result, modified)
-        effective |= eff
-        union!(new_hashes, mod_hashes)
+        if !effective && eff
+            result = data[1:i-1]
+            effective = true
+        end
+        if effective
+            if eff
+                push!(result, modified)
+                union!(new_hashes, mod_hashes)
+            else
+                push!(result, value)
+            end
+        end
     end
-    return result, effective, new_hashes
+    if effective
+        return result, effective, new_hashes
+    else
+        return data, effective, new_hashes
+    end
 end
 
 function _drop_hashes(data::Either, hashes)
-    new_options = Option[]
+    new_options = nothing
     effective = false
     new_hashes = Set()
-    for option in data.options
+    for (i, option) in enumerate(data.options)
         if in(option.option_hash, hashes)
+            if !effective
+                new_options = data.options[1:i-1]
+            end
             union!(new_hashes, _all_hashes(option.value))
             effective = true
         else
             modified, eff, mod_hashes = _drop_hashes(option.value, hashes)
-            effective |= eff
-            union!(new_hashes, mod_hashes)
-            if !isnothing(modified)
-                push!(new_options, Option(modified, option.option_hash))
+            if !effective && eff
+                new_options = data.options[1:i-1]
+                effective = true
+            end
+            if effective
+                if eff
+                    union!(new_hashes, mod_hashes)
+                    if !isnothing(modified)
+                        push!(new_options, Option(modified, option.option_hash))
+                    end
+                else
+                    push!(new_options, option)
+                end
             end
         end
     end
-    if isempty(new_options)
-        return nothing, true, new_hashes
+    if effective
+        if isempty(new_options)
+            return nothing, true, new_hashes
+        end
+        return Either(new_options), effective, new_hashes
+    else
+        return data, effective, new_hashes
     end
-    return Either(new_options), effective, new_hashes
 end
 
 _drop_hashes(data, hashes) = data, false, Set()

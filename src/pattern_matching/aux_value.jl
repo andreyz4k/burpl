@@ -29,7 +29,11 @@ function _drop_hashes(data::AuxValue, hashes)
     if isnothing(modified)
         return nothing, effective, mod_hashes
     end
-    AuxValue(modified), effective, mod_hashes
+    if effective
+        AuxValue(modified), effective, mod_hashes
+    else
+        data, effective, mod_hashes
+    end
 end
 
 _all_hashes(data::AuxValue) = _all_hashes(data.value)
