@@ -87,7 +87,6 @@ end
 _is_valid_value(val) = true
 _is_valid_value(val::Union{Array,Dict}) = !isempty(val)
 
-using ..Taskdata: get_value_hash
 
 struct Solution
     taskdata::Vector{TaskData}
@@ -101,8 +100,6 @@ struct Solution
     input_transformed_fields::Set{String}
     complexity_score::Float64
     score::Int
-    inp_val_hashes::Vector{Set{UInt64}}
-    out_val_hashes::Vector{Set{UInt64}}
     function Solution(
         taskdata,
         field_info,
@@ -115,22 +112,6 @@ struct Solution
         input_transformed_fields,
         complexity_score::Float64,
     )
-        inp_val_hashes = Set{UInt64}[]
-        out_val_hashes = Set{UInt64}[]
-        for task_data in taskdata
-            inp_vals = Set{UInt64}()
-            out_vals = Set{UInt64}()
-            for key in keys(task_data)
-                if in(key, transformed_fields) || in(key, filled_fields) || in(key, unfilled_fields)
-                    push!(out_vals, get_value_hash(task_data, key))
-                end
-                if in(key, unused_fields) || in(key, used_fields) || in(key, input_transformed_fields)
-                    push!(inp_vals, get_value_hash(task_data, key))
-                end
-            end
-            push!(inp_val_hashes, inp_vals)
-            push!(out_val_hashes, out_vals)
-        end
         new(
             taskdata,
             field_info,
@@ -143,8 +124,6 @@ struct Solution
             input_transformed_fields,
             complexity_score,
             get_score(taskdata, complexity_score),
-            inp_val_hashes,
-            out_val_hashes,
         )
     end
 end

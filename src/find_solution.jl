@@ -103,16 +103,29 @@ function get_new_solutions(solution::Solution, debug::Bool)::Array{Tuple{Float64
 end
 
 
+using ..Taskdata: get_value_hash
+
+function get_in_out_hashes(task_data, solution)
+    inp_vals = Set{UInt64}()
+    out_vals = Set{UInt64}()
+    for key in keys(task_data)
+        if in(key, solution.transformed_fields) || in(key, solution.filled_fields) || in(key, solution.unfilled_fields)
+            push!(out_vals, get_value_hash(task_data, key))
+        end
+        if in(key, solution.unused_fields) ||
+           in(key, solution.used_fields) ||
+           in(key, solution.input_transformed_fields)
+            push!(inp_vals, get_value_hash(task_data, key))
+        end
+    end
+    inp_vals, out_vals
+end
+
 function is_subsolution(old_sol::Solution, new_sol::Solution)::Bool
     equals = true
-    for (new_inp_vals, new_out_vals, old_inp_vals, old_out_vals, new_task_data, old_task_data) in zip(
-        new_sol.inp_val_hashes,
-        new_sol.out_val_hashes,
-        old_sol.inp_val_hashes,
-        old_sol.out_val_hashes,
-        new_sol.taskdata,
-        old_sol.taskdata,
-    )
+    for (new_task_data, old_task_data) in zip(new_sol.taskdata, old_sol.taskdata)
+        new_inp_vals, new_out_vals = get_in_out_hashes(new_task_data, new_sol)
+        old_inp_vals, old_out_vals = get_in_out_hashes(old_task_data, old_sol)
         if !issubset(new_out_vals, old_out_vals) || !issubset(new_inp_vals, old_inp_vals)
             return false
         end
