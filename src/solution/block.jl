@@ -1,7 +1,9 @@
 using ..Operations: Operation
 
-struct Block
-    operations::Array{Operation}
+mutable struct Block
+    operations::Vector{Operation}
+    hash_value::Union{UInt64,Nothing}
+    Block(operations) = new(operations, nothing)
 end
 
 Block() = Block([])
@@ -50,4 +52,9 @@ end
 
 Base.:(==)(a::Block, b::Block) = a.operations == b.operations
 
-Base.hash(b::Block, h::UInt64) = hash(b.operations, h)
+function Base.hash(b::Block, h::UInt64)
+    if isnothing(b.hash_value)
+        b.hash_value = hash(b.operations)
+    end
+    b.hash_value - 3h
+end

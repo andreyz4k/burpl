@@ -8,7 +8,7 @@ include("field_info.jl")
 
 using ..Taskdata: get_value_hash
 
-struct Solution
+mutable struct Solution
     taskdata::Vector{TaskData}
     field_info::Dict{String,FieldInfo}
     blocks::Vector{Block}
@@ -22,6 +22,7 @@ struct Solution
     score::Int
     inp_val_hashes::Vector{Set{UInt64}}
     out_val_hashes::Vector{Set{UInt64}}
+    hash_value::Union{UInt64,Nothing}
     function Solution(
         taskdata,
         field_info,
@@ -50,6 +51,7 @@ struct Solution
             get_score(taskdata, complexity_score),
             inp_val_hashes,
             out_val_hashes,
+            nothing,
         )
     end
 end
@@ -175,8 +177,12 @@ end
 
 Base.:(==)(a::Solution, b::Solution)::Bool = a.blocks == b.blocks
 
-Base.hash(s::Solution, h::UInt64) = hash(s.blocks, h)
-
+function Base.hash(s::Solution, h::UInt64)
+    if isnothing(s.hash_value)
+        s.hash_value = hash(s.blocks)
+    end
+    s.hash_value - 3h
+end
 
 include("insert_operation.jl")
 
