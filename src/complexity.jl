@@ -14,11 +14,11 @@ get_complexity(value::AbstractVector)::Float64 =
     5 + sum(Float64[get_complexity(v) for v in value]) * (0.5 + 0.5 * 0.95^(length(value) - 1))
 
 get_complexity(value::AbstractArray{Int,2})::Float64 =
-    5 + sum(value .!= -1) * 4 * (0.5 + 0.5 * 0.95^(sum(value .!= -1) - 1))
+    5 + sum(value .!= -1) * 8 * (0.5 + 0.5 * 0.95^(sum(value .!= -1) - 1))
 
 get_complexity(value::String)::Float64 = length(value)
 
-get_complexity(value::Object)::Float64 = get_complexity(value.shape) + get_complexity(value.position)
+get_complexity(value::Object)::Float64 = get_complexity(value.shape) / 2 + get_complexity(value.position)
 
 get_complexity(value::Color)::Float64 = 1
 

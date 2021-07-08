@@ -218,13 +218,13 @@ function get_unmatched_complexity_score(solution::Solution)
         ),
         init = 0.0,
     )
-    # transformed_data_score = sum(
-    #     (
-    #         get_value_complexity(task_data, key) / 10 for task_data in solution.taskdata for
-    #         key in keys(task_data) if in(key, solution.transformed_fields)
-    #     ),
-    #     init = 0.0,
-    # )
+    transformed_data_score = sum(
+        (
+            get_value_complexity(task_data, key) / 10 for task_data in solution.taskdata for
+            key in keys(task_data) if in(key, solution.transformed_fields)
+        ),
+        init = 0.0,
+    )
     unused_data_score = sum(
         (
             startswith(key, "projected|") ? get_value_complexity(task_data, key) / 6 :
@@ -241,7 +241,7 @@ function get_unmatched_complexity_score(solution::Solution)
         init = 0.0,
     )
     return (unmatched_data_score +
-            # transformed_data_score +
+            transformed_data_score +
             unused_data_score +
             inp_transformed_data_score +
             solution.complexity_score) / length(solution.taskdata)

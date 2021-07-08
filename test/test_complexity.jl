@@ -1,12 +1,14 @@
 using .Solutions: get_unmatched_complexity_score
 using .Complexity: get_complexity
 using .ObjectPrior: Object
+using .PatternMatching: ObjectShape
+using .DataTransformers: match_fields
 
 @testset "Complexity" begin
     @testset "ideal solution" begin
-        @test get_unmatched_complexity_score(
-            make_dummy_solution([Dict("input" => zeros(Int, 1, 1), "output" => zeros(Int, 1, 1))], []),
-        ) == 0
+        solution = make_dummy_solution([Dict("input" => zeros(Int, 1, 1), "output" => zeros(Int, 1, 1))], ["output"])
+        solution = match_fields(solution)[1]
+        @test get_unmatched_complexity_score(solution) == 13
     end
 
     @testset "simple value" begin
@@ -26,8 +28,8 @@ using .ObjectPrior: Object
     end
 
     @testset "shape" begin
-        @test get_complexity(fill(0, 1, 1)) == 9
-        @test get_complexity(fill(0, 1, 2)) == 12.8
+        @test get_complexity(fill(0, 1, 1)) == 13
+        @test get_complexity(fill(0, 1, 2)) == 20.6
         @test get_complexity(
             [
                 0 0 0 0 0 0 0 0 0 0
@@ -56,37 +58,37 @@ using .ObjectPrior: Object
                 8 8 8 8 8 8 8 8 8 8
                 0 0 0 0 0 0 0 0 0 0
             ],
-        ) == 505.0014195402831
+        ) == 1005.0028390805662
     end
 
     @testset "object" begin
-        @test get_complexity(Object([0], (1, 1))) == 13.95
-        @test get_complexity(Object([0 1], (1, 1))) == 17.75
+        @test get_complexity(Object([0], (1, 1))) == 11.45
+        @test get_complexity(Object([0 1], (1, 1))) == 15.25
     end
 
     @testset "reshape" begin
         val1 = [Object([0], (1, 1)), Object([0], (2, 1))]
-        val2 = fill(0, 1, 1)
+        val2 = ObjectShape(Object([0], (1, 1)))
         val3 = [(1, 1), (2, 1)]
-        @test get_complexity(val1) == 32.2025
-        @test get_complexity(val2) == 9
+        @test get_complexity(val1) == 27.327499999999997
+        @test get_complexity(val2) == 11.45
         @test get_complexity(val3) == 14.6525
         @test get_complexity(val1) > get_complexity(val2) + get_complexity(val3)
 
         val1 = [Object([0], (1, 1))]
-        val2 = fill(0, 1, 1)
+        val2 = ObjectShape(Object([0], (1, 1)))
         val3 = [(1, 1)]
-        @test get_complexity(val1) == 18.95
-        @test get_complexity(val2) == 9
+        @test get_complexity(val1) == 16.45
+        @test get_complexity(val2) == 11.45
         @test get_complexity(val3) == 9.95
-        @test get_complexity(val1) == get_complexity(val2) + get_complexity(val3)
+        @test get_complexity(val1) < get_complexity(val2) + get_complexity(val3)
     end
 
     @testset "dict" begin
         data = Dict("a" => 12, "b" => 10)
         @test get_complexity(data) == 5
         data = Dict("a" => Object([0], (1, 1)), "b" => Object([0], (2, 1)))
-        @test get_complexity(data) == 30.9
+        @test get_complexity(data) == 25.9
     end
 
     @testset "group" begin
@@ -105,7 +107,7 @@ using .ObjectPrior: Object
         a = [Object([1], (1, 3)), Object([-1 0 -1; 0 0 0; 0 0 0], (1, 1)), Object([1], (1, 1))]
         b = [Object([-1 0 -1; 0 0 0; 0 0 0], (1, 1)), Object([1], (1, 3)), Object([1], (1, 1))]
         @test get_complexity(a) == get_complexity(b)
-        @test get_complexity(a) == 64.11189875339844
+        @test get_complexity(a) == 56.97752375339843
     end
 
 end

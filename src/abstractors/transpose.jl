@@ -3,7 +3,7 @@ struct Transpose <: AbstractorClass end
 
 Transpose(key, to_abs) = Abstractor(Transpose(), key, to_abs)
 abs_keys(::Transpose) = ["transposed"]
-priority(::Transpose) = 10
+priority(::Transpose) = 15
 
 init_create_check_data(::Transpose, key, solution) = Dict("effective" => false)
 

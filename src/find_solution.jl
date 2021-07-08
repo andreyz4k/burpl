@@ -22,16 +22,16 @@ function get_new_solutions_for_input_key(solution, key)
         k in solution.unfilled_fields
     )
 
-    # required_types = union([vcat([[t, Dict{Int64,t}] for t in solution.field_info[k].precursor_types]...) for k in solution.unfilled_fields]...)
+    required_types = union([vcat([[t, Dict{Int64,t}] for t in solution.field_info[k].precursor_types]...) for k in solution.unfilled_fields]...)
 
     for (priority, abstractor) in get_next_operations(solution, key)
         new_solution = insert_operation(solution, abstractor.to_abstract)
 
-        # if any(haskey(new_solution.field_info, k) for k in abstractor.to_abstract.output_keys) &&
-        #     !any(in(new_solution.field_info[k].type, required_types)
-        #          for k in abstractor.to_abstract.output_keys if haskey(new_solution.field_info, k))
-        #     priority *= 4
-        # end
+        if any(haskey(new_solution.field_info, k) for k in abstractor.to_abstract.output_keys) &&
+            !any(in(new_solution.field_info[k].type, required_types)
+                 for k in abstractor.to_abstract.output_keys if haskey(new_solution.field_info, k))
+            priority *= 4
+        end
 
         if !interesting_source
             priority *= 8
@@ -249,7 +249,7 @@ using JSON
 
 get_taskdef(fname) = convert_grids(JSON.parsefile(fname))
 
-function solve_and_check(fname::String, debug = false)::Bool
+function solve_and_check(fname::String; debug = false)::Bool
     @info(split(split(fname, '/')[end], '.')[1])
     task_info = get_taskdef(fname)
     answers = solve_task(task_info, debug)
