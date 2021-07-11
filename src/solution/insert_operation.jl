@@ -337,6 +337,7 @@ function prune_unnneeded_operations(key, blocks, transformed_fields, unfilled_fi
     for operation in blocks[end].operations[end:-1:1]
         if any(in(key, operation.output_keys) for key in target_output_fields)
             for k in operation.input_keys
+                # TODO: check if used_fields are no longer used and delete them safely
                 if in(k, transformed_fields)
                     push!(target_output_fields, k)
                     delete!(transformed_fields, k)
