@@ -11,6 +11,11 @@ import ..Abstractors
 get_next_operations(solution, key) =
     reduce(vcat, (Abstractors.create(op_class, solution, key) for op_class in Abstractors.classes), init = [])
 
+validate_type(t::Type, required_types) = in(t, required_types)
+
+validate_type(t::Type{T}, required_types) where {T<:Dict{K,V}} where {K,V} =
+    in(t, required_types) || in(K, required_types) || in(V, required_types)
+
 function get_new_solutions_for_input_key(solution, key)
     output = []
     if !haskey(solution.field_info, key)
@@ -22,14 +27,16 @@ function get_new_solutions_for_input_key(solution, key)
         k in solution.unfilled_fields
     )
 
-    required_types = union([vcat([[t, Dict{Int64,t}] for t in solution.field_info[k].precursor_types]...) for k in solution.unfilled_fields]...)
+    required_types = Set(flatten(solution.field_info[k].precursor_types for k in solution.unfilled_fields))
 
     for (priority, abstractor) in get_next_operations(solution, key)
         new_solution = insert_operation(solution, abstractor.to_abstract)
 
         if any(haskey(new_solution.field_info, k) for k in abstractor.to_abstract.output_keys) &&
-            !any(in(new_solution.field_info[k].type, required_types)
-                 for k in abstractor.to_abstract.output_keys if haskey(new_solution.field_info, k))
+           !any(
+            validate_type(new_solution.field_info[k].type, required_types) for
+            k in abstractor.to_abstract.output_keys if haskey(new_solution.field_info, k)
+        )
             priority *= 4
         end
 
