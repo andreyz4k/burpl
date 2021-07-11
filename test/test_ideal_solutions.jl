@@ -87,15 +87,37 @@ using .FindSolution: get_taskdef
             (BackgroundColor(), "output", false),
             (BackgroundColor(), "input", true),
             (SolidObjects(), "output|bgr_grid", false),
+            (UniteTouching(), "output|bgr_grid|spatial_objects", false),
+            (UnwrapSingleList(), "output|bgr_grid|spatial_objects|united_touch", false),
+            (GetPosition(), "output|bgr_grid|spatial_objects|united_touch|single_value", false),
             (SolidObjects(), "input|bgr_grid", true),
             (GroupObjectsByColor(), "input|bgr_grid|spatial_objects", true),
             (UniteTouching(), "input|bgr_grid|spatial_objects|grouped", true),
             (CompactSimilarObjects(), "input|bgr_grid|spatial_objects|grouped|united_touch", true),
             (CountObjects(), "input|bgr_grid|spatial_objects|grouped|united_touch|positions", true),
             (GroupMax(), "input|bgr_grid|spatial_objects|grouped|united_touch|positions|length", true),
+        ]
+        solution = create_solution(task_info["train"], operations)
+        @test test_solution(solution, task_info["test"])
+    end
+
+    @testset "39a8645d_transformed" begin
+        fname = "../data/training/39a8645d.json"
+        task_info = get_taskdef(fname)
+        operations = [
+            (BackgroundColor(), "output", false),
+            (BackgroundColor(), "input", true),
+            (SolidObjects(), "output|bgr_grid", false),
             (UniteTouching(), "output|bgr_grid|spatial_objects", false),
             (UnwrapSingleList(), "output|bgr_grid|spatial_objects|united_touch", false),
             (GetPosition(), "output|bgr_grid|spatial_objects|united_touch|single_value", false),
+            (HorisontalSymmetry(), "output|bgr_grid|spatial_objects|united_touch|single_value|shape", false),
+            (SolidObjects(), "input|bgr_grid", true),
+            (GroupObjectsByColor(), "input|bgr_grid|spatial_objects", true),
+            (UniteTouching(), "input|bgr_grid|spatial_objects|grouped", true),
+            (CompactSimilarObjects(), "input|bgr_grid|spatial_objects|grouped|united_touch", true),
+            (CountObjects(), "input|bgr_grid|spatial_objects|grouped|united_touch|positions", true),
+            (GroupMax(), "input|bgr_grid|spatial_objects|grouped|united_touch|positions|length", true),
         ]
         solution = create_solution(task_info["train"], operations)
         @test test_solution(solution, task_info["test"])
