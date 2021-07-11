@@ -21,6 +21,8 @@ unpack_value(p::AuxValue) = isa(p.value, Matcher) ? [] : unpack_value(p.value)
 
 unwrap_matcher(p::AuxValue) = [p.value]
 
+update_value(data::TaskData, path_keys::Array, value, current_value::AuxValue) =
+    update_value(data, path_keys, value, current_value.value)
 
 _update_value(data::TaskData, value, current_value::AuxValue) = _update_value(data, value, current_value.value)
 
