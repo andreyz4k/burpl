@@ -35,7 +35,17 @@ end
 
 
 function match_fields(solution::Solution)
-    for key in solution.unfilled_fields
+    _match_fields(solution::Solution, Set())
+end
+
+function _match_fields(solution::Solution, matched_keys)
+    if isempty(solution.unfilled_fields)
+        return [solution]
+    end
+    for key in flatten([solution.unfilled_fields, solution.transformed_fields])
+        if in(key, matched_keys)
+            continue
+        end
         try
             matched_results = Dict()
             valid_solutions_count =
@@ -56,7 +66,11 @@ function match_fields(solution::Solution)
                 end
             end
             if !isempty(matched_results)
-                return reduce(vcat, (match_fields(new_solution) for (_, new_solution) in matched_results), init = [])
+                return reduce(
+                    vcat,
+                    (_match_fields(new_solution, union(matched_keys, [key])) for (_, new_solution) in matched_results),
+                    init = [],
+                )
             end
         catch
             @info(solution)

@@ -32,7 +32,7 @@ function make_dummy_solution(data, unfilled = [])
         [Block([FakeOperation(unfilled, ["output"], [])])],
         Set(unfilled),
         Set(),
-        Set(["output"]),
+        Set(),
         unused,
         Set(),
         Set(),

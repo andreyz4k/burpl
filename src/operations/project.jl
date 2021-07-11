@@ -8,7 +8,7 @@ struct Project <: Operation
     Project(operations, out_keys) = new(copy(operations), _get_keys_for_items(operations, out_keys)...)
 end
 
-Base.show(io::IO, p::Project) = print(io, "Project(", (vcat(([op, ", "] for op in p.operations)...))..., ")")
+Base.show(io::IO, p::Project) = print(io, "Project([", (vcat(([op, ", "] for op in p.operations)...))..., "], ", p.output_keys, ")")
 
 Base.:(==)(a::Project, b::Project) = a.operations == b.operations
 

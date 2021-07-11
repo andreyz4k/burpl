@@ -331,6 +331,35 @@ function get_source_key(operation, source_key)
 end
 
 
+function prune_unnneeded_operations(key, blocks, transformed_fields, unfilled_fields, taskdata, field_info)
+    target_output_fields = [key]
+    output_ops = []
+    for operation in blocks[end].operations[end:-1:1]
+        if any(in(key, operation.output_keys) for key in target_output_fields)
+            for k in operation.input_keys
+                if in(k, transformed_fields)
+                    push!(target_output_fields, k)
+                    delete!(transformed_fields, k)
+                    for task_data in taskdata
+                        delete!(task_data, k)
+                    end
+                    delete!(field_info, k)
+                elseif in(k, unfilled_fields)
+                    delete!(unfilled_fields, k)
+                    for task_data in taskdata
+                        delete!(task_data, k)
+                    end
+                    delete!(field_info, k)
+                end
+            end
+        else
+            push!(output_ops, operation)
+        end
+    end
+    blocks[end] = Block(reverse(output_ops))
+end
+
+
 function insert_operation(
     solution::Solution,
     operation::Operation;
@@ -339,14 +368,6 @@ function insert_operation(
     no_wrap = false,
 )::Solution
     try
-        op = isnothing(reversed_op) ? operation : reversed_op
-
-        taskdata = [op(task) for task in solution.taskdata]
-
-        if isnothing(reversed_op) && !no_wrap
-            taskdata, operation = wrap_operation(taskdata, operation)
-        end
-
         unfilled_fields = copy(solution.unfilled_fields)
         transformed_fields = copy(solution.transformed_fields)
         filled_fields = copy(solution.filled_fields)
@@ -354,10 +375,30 @@ function insert_operation(
         used_fields = copy(solution.used_fields)
         input_transformed_fields = copy(solution.input_transformed_fields)
 
+        field_info = copy(solution.field_info)
         blocks = copy(solution.blocks)
+
+        transformed_filled_fields = filter(k -> in(k, transformed_fields), operation.output_keys)
+
+        if !isempty(transformed_filled_fields)
+            taskdata = [copy(task) for task in solution.taskdata]
+            for key in transformed_filled_fields
+                prune_unnneeded_operations(key, blocks, transformed_fields, unfilled_fields, taskdata, field_info)
+            end
+        else
+            taskdata = solution.taskdata
+        end
+
+        op = isnothing(reversed_op) ? operation : reversed_op
+
+        taskdata = [op(task) for task in taskdata]
+
+        if isnothing(reversed_op) && !no_wrap
+            taskdata, operation = wrap_operation(taskdata, operation)
+        end
+
         blocks[end], index = insert_operation(blocks, operation)
 
-        field_info = copy(solution.field_info)
         input_field_info = [field_info[key] for key in operation.input_keys if haskey(field_info, key)]
         output_field_info = [field_info[key] for key in operation.output_keys if haskey(field_info, key)]
 
@@ -414,6 +455,10 @@ function insert_operation(
             if in(key, unfilled_fields)
                 delete!(unfilled_fields, key)
                 push!(transformed_fields, key)
+                if isempty(new_input_fields)
+                    push!(fields_to_mark, key)
+                end
+            elseif in(key, transformed_fields)
                 if isempty(new_input_fields)
                     push!(fields_to_mark, key)
                 end
