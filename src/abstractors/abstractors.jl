@@ -256,8 +256,8 @@ function wrap_func_call_shape_value(p::Abstractor, func::Function, wrappers::Abs
         for (key, value) in wrap_func_call_value_root(p, func, unwrapped_values...)
             if isa(value, Object)
                 outputs[key] = ObjectShape(value)
-            elseif isa(value, AbstractVector{Object})
-                outputs[key] = [ObjectShape(v) for v in value]
+            elseif isa(value, Set{Object}) || isa(value, Matcher{Set{Object}})
+                outputs[key] = ObjectsGroup(value)
             else
                 outputs[key] = value
             end
@@ -279,8 +279,10 @@ function wrap_func_call_obj_group_value(
         outputs = Dict()
         unwrapped_values = [isa(v, ObjectsGroup) ? v.objects : v for v in source_values]
         for (key, value) in wrap_func_call_value_root(p, func, unwrapped_values...)
-            if isa(value, Set{Object})
+            if isa(value, Set{Object}) || isa(value, Matcher{Set{Object}})
                 outputs[key] = ObjectsGroup(value)
+            elseif isa(value, Object) || (isa(value, Matcher{Object}) && !isa(value, ObjectShape))
+                outputs[key] = ObjectShape(value)
             else
                 outputs[key] = value
             end

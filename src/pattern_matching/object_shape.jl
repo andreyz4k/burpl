@@ -2,11 +2,11 @@
 using ..ObjectPrior: Object
 
 struct ObjectShape{Object} <: Matcher{Object}
-    object::Object
+    object::Union{Object,Matcher{Object}}
 end
 
 struct ObjectsGroup <: Matcher{Set{Object}}
-    objects::Set{Object}
+    objects::Union{Set{Object},Matcher{Set{Object}}}
 end
 
 Base.:(==)(a::ObjectShape, b::ObjectShape) = a.object == b.object
@@ -42,7 +42,7 @@ _common_value(::Matcher, ::ObjectShape) = nothing
 _common_value(::Any, ::ObjectsGroup) = nothing
 
 function _common_value(val1::Set{Object}, val2::ObjectsGroup)
-    val2 = val2.objects
+    val2 = unpack_value(val2.objects)[1]
 
     function _inner(val1, val2, stride)
         if isempty(val1) && !isempty(val2)
