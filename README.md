@@ -1,6 +1,7 @@
 # burpl
 
 [![CI](https://github.com/andreyz4k/burpl/actions/workflows/main.yml/badge.svg)](https://github.com/andreyz4k/burpl/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/andreyz4k/burpl/branch/master/graph/badge.svg?token=KKB33V1XQ4)](https://codecov.io/gh/andreyz4k/burpl)
 
 An attempt to create a system that can solve problems from the [ARC](https://github.com/fchollet/ARC) benchmark.
 
