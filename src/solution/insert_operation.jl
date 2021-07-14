@@ -279,7 +279,10 @@ function mark_used_fields_for_input(blocks, unfilled_fields, filled_fields, tran
                     field_info[k] = FieldInfo(
                         field_info[k].type,
                         field_info[k].derived_from,
-                        unique([vcat([info.precursor_types for info in input_field_info]...)..., field_info[k].type]),
+                        unique([
+                            vcat([info.precursor_types for info in input_field_info]...)...,
+                            field_info[k].type,
+                        ]),
                         union([(field_info[pk].previous_fields for pk in op.input_keys)..., [k]]...),
                     )
                 end
@@ -301,10 +304,10 @@ function mark_used_fields(
     taskdata,
     field_info,
 )
-    output_chain = ["output"]
+    output_chain = Set(["output"])
     for block in blocks[end:-1:1], op in block.operations[end:-1:1]
         if any(in(k, output_chain) for k in op.output_keys)
-            append!(output_chain, op.input_keys)
+            union!(output_chain, op.input_keys)
         end
     end
     if in(key, output_chain)
@@ -331,33 +334,89 @@ function get_source_key(operation, source_key)
 end
 
 
-function prune_unnneeded_operations(key, blocks, transformed_fields, unfilled_fields, taskdata, field_info)
-    target_output_fields = [key]
-    output_ops = []
-    for operation in blocks[end].operations[end:-1:1]
-        if any(in(key, operation.output_keys) for key in target_output_fields)
-            for k in operation.input_keys
-                # TODO: check if used_fields are no longer used and delete them safely
-                if in(k, transformed_fields)
-                    push!(target_output_fields, k)
-                    delete!(transformed_fields, k)
-                    for task_data in taskdata
-                        delete!(task_data, k)
+function prune_unnneeded_operations(
+    keys,
+    blocks,
+    taskdata,
+    field_info,
+    transformed_fields,
+    unfilled_fields,
+    used_fields,
+    filled_fields,
+)
+    overwritten_fields = Set(keys)
+    output_chain = in("output", keys) ? Set() : Set(["output"])
+    for (i, block) in enumerate(blocks[end:-1:1])
+        output_ops = []
+        if i > 1
+            old_project = block.operations[end]
+            new_outs = filter(
+                k -> !in(k, overwritten_fields) || in(k, keys),
+                [replace(k, "projected|" => "") for k in old_project.output_keys],
+            )
+            project_op = Project(filter(op -> in(op, blocks[end-i+2].operations), old_project.operations), new_outs)
+            block.operations[end] = project_op
+        end
+        for operation in block.operations[end:-1:1]
+            if any(in(k, output_chain) for k in operation.output_keys)
+                union!(output_chain, filter(k -> !in(k, overwritten_fields), operation.input_keys))
+                push!(output_ops, operation)
+            elseif any(in(key, overwritten_fields) for key in operation.output_keys)
+                for k in operation.input_keys
+                    if in(k, transformed_fields)
+                        push!(overwritten_fields, k)
+                        delete!(transformed_fields, k)
+                    elseif in(k, unfilled_fields)
+                        delete!(unfilled_fields, k)
+                    elseif !in("input", field_info[k].previous_fields)
+                        delete!(used_fields, k)
+                        delete!(filled_fields, k)
+                        push!(overwritten_fields, k)
                     end
-                    delete!(field_info, k)
-                elseif in(k, unfilled_fields)
-                    delete!(unfilled_fields, k)
-                    for task_data in taskdata
-                        delete!(task_data, k)
-                    end
-                    delete!(field_info, k)
                 end
+            else
+                push!(output_ops, operation)
             end
-        else
-            push!(output_ops, operation)
+        end
+        blocks[end-i+1] = Block(reverse(output_ops))
+    end
+    for k in overwritten_fields
+        if !in(k, keys)
+            for task in taskdata
+                delete!(task, k)
+            end
+            delete!(field_info, k)
         end
     end
-    blocks[end] = Block(reverse(output_ops))
+end
+
+
+function check_prune_unneeded_operations(
+    operation,
+    blocks,
+    taskdata,
+    field_info,
+    transformed_fields,
+    unfilled_fields,
+    used_fields,
+    filled_fields,
+)
+    transformed_filled_fields = filter(k -> in(k, transformed_fields), operation.output_keys)
+
+    if !isempty(transformed_filled_fields)
+        taskdata = [copy(task) for task in taskdata]
+        prune_unnneeded_operations(
+            transformed_filled_fields,
+            blocks,
+            taskdata,
+            field_info,
+            transformed_fields,
+            unfilled_fields,
+            used_fields,
+            filled_fields,
+        )
+    end
+    taskdata
 end
 
 
@@ -378,22 +437,21 @@ function insert_operation(
 
         field_info = copy(solution.field_info)
         blocks = copy(solution.blocks)
+        taskdata = solution.taskdata
 
-        transformed_filled_fields = filter(k -> in(k, transformed_fields), operation.output_keys)
-
-        if !isempty(transformed_filled_fields)
-            taskdata = [copy(task) for task in solution.taskdata]
-            for key in transformed_filled_fields
-                prune_unnneeded_operations(key, blocks, transformed_fields, unfilled_fields, taskdata, field_info)
-            end
-        else
-            taskdata = solution.taskdata
-        end
+        taskdata = check_prune_unneeded_operations(
+            operation,
+            blocks,
+            taskdata,
+            field_info,
+            transformed_fields,
+            unfilled_fields,
+            used_fields,
+            filled_fields,
+        )
 
         op = isnothing(reversed_op) ? operation : reversed_op
-
         taskdata = [op(task) for task in taskdata]
-
         if isnothing(reversed_op) && !no_wrap
             taskdata, operation = wrap_operation(taskdata, operation)
         end

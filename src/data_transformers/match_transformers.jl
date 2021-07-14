@@ -69,7 +69,7 @@ function _match_fields(solution::Solution, matched_keys)
                 return reduce(
                     vcat,
                     (_match_fields(new_solution, union(matched_keys, [key])) for (_, new_solution) in matched_results),
-                    init = [],
+                    init = in(key, solution.transformed_fields) ? collect(values(matched_results)) : [],
                 )
             end
         catch
