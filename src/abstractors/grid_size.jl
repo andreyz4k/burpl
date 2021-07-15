@@ -7,7 +7,7 @@ priority(::GridSize) = 6
 
 init_create_check_data(::GridSize, key, solution) = Dict("effective" => false)
 
-function check_task_value(::GridSize, value::AbstractArray{Int,2}, data, aux_values)
+function check_task_value(::GridSize, value::AbstractArray{OInt,2}, data, aux_values)
     data["effective"] |= !any(val == size(value) for val in aux_values)
     true
 end
@@ -38,11 +38,13 @@ get_aux_values_for_task(::GridSize, task_data, key, solution) =
 
 needed_input_keys(p::Abstractor{GridSize}) = p.to_abstract ? p.input_keys : p.input_keys[1:1]
 
-to_abstract_value(p::Abstractor{GridSize}, source_value::AbstractArray{Int,2}) =
-    Dict(p.output_keys[2] => source_value, p.output_keys[1] => size(source_value))
+to_abstract_value(p::Abstractor{GridSize}, source_value::AbstractArray{OInt,2}) = Dict(
+    p.output_keys[2] => source_value,
+    p.output_keys[1] => (OInt(size(source_value)[1]), OInt(size(source_value)[2])),
+)
 
 function from_abstract_value(p::Abstractor{GridSize}, grid_size, grid)
-    new_grid = fill(0, grid_size)
+    new_grid = fill(OInt(0), grid_size)
     if !isnothing(grid)
         intersection = 1:min(grid_size[1], size(grid)[1]), 1:min(grid_size[2], size(grid)[2])
         new_grid[intersection...] = grid[intersection...]

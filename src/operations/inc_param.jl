@@ -2,7 +2,7 @@
 struct IncParam <: Operation
     input_keys::Array{String}
     output_keys::Array{String}
-    shift::Union{Int64,Tuple{Int64,Int64}}
+    shift::Union{OInt,Tuple{OInt,OInt}}
     complexity::Float64
     IncParam(key, inp_key, shift) = new([inp_key], [key, key * "|inc_shift"], shift, 1)
 end

@@ -3,6 +3,8 @@ module Solutions
 
 export validate_solution
 
+using burpl: OInt
+
 include("block.jl")
 include("field_info.jl")
 
@@ -161,7 +163,7 @@ Base.show(io::IO, s::Solution) = print(
     "\n)",
 )
 
-function (solution::Solution)(input_grid::Array{Int,2})::Array{Int,2}
+function (solution::Solution)(input_grid::Array{OInt,2})::Array{OInt,2}
     observed_data = TaskData(
         Dict{String,Any}("input" => input_grid),
         Dict{String,Any}(),
@@ -172,7 +174,7 @@ function (solution::Solution)(input_grid::Array{Int,2})::Array{Int,2}
     for block in solution.blocks
         observed_data = block(observed_data)
     end
-    get(observed_data, "output", Array{Int}(undef, 0, 0))
+    get(observed_data, "output", Array{OInt}(undef, 0, 0))
 end
 
 Base.:(==)(a::Solution, b::Solution)::Bool = a.blocks == b.blocks
@@ -187,12 +189,12 @@ end
 include("insert_operation.jl")
 
 
-function check_task(solution::Solution, input_grid::Array{Int,2}, target::Array{Int,2})
+function check_task(solution::Solution, input_grid::Array{OInt,2}, target::Array{OInt,2})
     out = solution(input_grid)
     compare_grids(target, out)
 end
 
-function compare_grids(target::Array{Int,2}, output::Array{Int,2})
+function compare_grids(target::Array{OInt,2}, output::Array{OInt,2})
     if size(target) != size(output)
         return reduce(*, size(target))
     end
@@ -201,7 +203,7 @@ end
 
 function get_score(taskdata, complexity_score)::Int
     score =
-        sum(compare_grids(task["output"], get(task, "projected|output", Array{Int}(undef, 0, 0))) for task in taskdata)
+        sum(compare_grids(task["output"], get(task, "projected|output", Array{OInt}(undef, 0, 0))) for task in taskdata)
     # if complexity_score > 100
     #     score += floor(complexity_score)
     # end

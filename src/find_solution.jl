@@ -5,6 +5,7 @@ export solve_and_check
 using ..DataTransformers: match_fields
 using ..Solutions: Solution, get_unmatched_complexity_score, insert_operation, persist_updates, compare_grids
 
+using burpl: OInt
 
 import ..Abstractors
 
@@ -245,10 +246,18 @@ end
 
 function convert_grids(taskdef)
     Dict(
-        "train" =>
-            [Dict("input" => hcat(task["input"]...), "output" => hcat(task["output"]...)) for task in taskdef["train"]],
-        "test" =>
-            [Dict("input" => hcat(task["input"]...), "output" => hcat(task["output"]...)) for task in taskdef["test"]],
+        "train" => [
+            Dict(
+                "input" => convert(Matrix{OInt}, hcat(task["input"]...)),
+                "output" => convert(Matrix{OInt}, hcat(task["output"]...)),
+            ) for task in taskdef["train"]
+        ],
+        "test" => [
+            Dict(
+                "input" => convert(Matrix{OInt}, hcat(task["input"]...)),
+                "output" => convert(Matrix{OInt}, hcat(task["output"]...)),
+            ) for task in taskdef["test"]
+        ],
     )
 end
 

@@ -91,7 +91,7 @@ function find_matching_for_key(
     filter_func,
     transformer_class,
 )
-    if !check_type(field_info[key].type, Union{Int64,Tuple{Int64,Int64}})
+    if !check_type(field_info[key].type, Union{OInt,Tuple{OInt,OInt}})
         return []
     end
     upd_keys = updated_keys(taskdata)
@@ -135,7 +135,7 @@ function find_matching_for_key(
     transformer_class,
     candidate_checker,
 )
-    if !check_type(field_info[key].type, Union{Int64,Tuple{Int64,Int64}})
+    if !check_type(field_info[key].type, Union{OInt,Tuple{OInt,OInt}})
         return []
     end
     upd_keys = updated_keys(taskdata)

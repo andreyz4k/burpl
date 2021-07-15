@@ -2,7 +2,7 @@
 struct MultParam <: Operation
     input_keys::Array{String}
     output_keys::Array{String}
-    factor::Int64
+    factor::OInt
     complexity::Float64
     MultParam(key, inp_key, factor) = new([inp_key], [key, key * "|mult_factor"], factor, 1)
 end

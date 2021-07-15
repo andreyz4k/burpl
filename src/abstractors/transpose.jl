@@ -7,7 +7,7 @@ priority(::Transpose) = 15
 
 init_create_check_data(::Transpose, key, solution) = Dict("effective" => false)
 
-function check_task_value(::Transpose, value::AbstractArray{Int,2}, data, aux_values)
+function check_task_value(::Transpose, value::AbstractArray{OInt,2}, data, aux_values)
     data["effective"] |= !any(val == transpose(value) for val in aux_values)
     true
 end
@@ -18,7 +18,7 @@ get_aux_values_for_task(::Transpose, task_data, key, solution) =
     values(
         filter(
             kv ->
-                isa(kv[2], Array{Int,2}) &&
+                isa(kv[2], Array{OInt,2}) &&
                     kv[1] != key &&
                     (in(kv[1], solution.unfilled_fields) || in(kv[1], solution.transformed_fields)),
             task_data,
@@ -27,7 +27,7 @@ get_aux_values_for_task(::Transpose, task_data, key, solution) =
     values(
         filter(
             kv ->
-                isa(kv[2], Array{Int,2}) &&
+                isa(kv[2], Array{OInt,2}) &&
                     kv[1] != key &&
                     !in(kv[1], solution.unfilled_fields) &&
                     !in(kv[1], solution.transformed_fields),
@@ -35,7 +35,7 @@ get_aux_values_for_task(::Transpose, task_data, key, solution) =
         ),
     )
 
-to_abstract_value(p::Abstractor{Transpose}, source_value::AbstractArray{Int,2}) =
+to_abstract_value(p::Abstractor{Transpose}, source_value::AbstractArray{OInt,2}) =
     Dict(p.output_keys[1] => collect(transpose(source_value)))
 
 from_abstract_value(p::Abstractor{Transpose}, source_value) = Dict(p.output_keys[1] => collect(transpose(source_value)))

@@ -3,6 +3,7 @@ module Abstractors
 
 
 using ..Operations: Operation, OperationClass
+using burpl: OInt
 
 abstract type AbstractorClass <: OperationClass end
 

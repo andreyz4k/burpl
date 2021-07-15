@@ -9,7 +9,7 @@ using ..ObjectPrior: find_objects, draw_object!, get_color
 
 init_create_check_data(::SolidObjects, key, solution) = Dict("effective" => false)
 
-function check_task_value(::SolidObjects, value::AbstractArray{Int,2}, data, aux_values)
+function check_task_value(::SolidObjects, value::AbstractArray{OInt,2}, data, aux_values)
     data["effective"] |= length(unique(value)) > 1
     return true
 end
@@ -18,21 +18,26 @@ end
 needed_input_keys(p::Abstractor{SolidObjects}) = p.to_abstract ? p.input_keys : []
 
 
-to_abstract_value(p::Abstractor{SolidObjects}, source_value::AbstractArray{Int,2}) =
-    Dict(p.output_keys[1] => find_objects(source_value), p.output_keys[2] => size(source_value))
+to_abstract_value(p::Abstractor{SolidObjects}, source_value::AbstractArray{OInt,2}) = Dict(
+    p.output_keys[1] => find_objects(source_value),
+    p.output_keys[2] => (OInt(size(source_value)[1]), OInt(size(source_value)[2])),
+)
 
 function from_abstract_value(p::Abstractor{SolidObjects}, objects, grid_size)
     if isnothing(grid_size)
         if isnothing(objects)
             return Dict()
         end
-        grid_size =
-            reduce((a, b) -> max.(a, b), (obj.position .+ size(obj.shape) .- (1, 1) for obj in objects), init = (0, 0))
+        grid_size = reduce(
+            (a, b) -> max.(a, b),
+            (obj.position .+ size(obj.shape) .- (1, 1) for obj in objects),
+            init = (OInt(0), OInt(0)),
+        )
     elseif isnothing(objects)
         objects = Set()
     end
 
-    grid = fill(-1, grid_size...)
+    grid = fill(OInt(-1), grid_size...)
     for obj in objects
         draw_object!(grid, obj)
     end

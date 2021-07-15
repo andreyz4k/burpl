@@ -14,12 +14,12 @@ check_task_value(p::Symmetry, value::AbstractVector, data, aux_values) =
 
 check_task_value(p::Symmetry, value::Object, data, aux_values) = check_task_value(p, value.shape, data, aux_values)
 
-function check_task_value(::VerticalSymmetry, value::AbstractArray{Int,2}, data, aux_values)
+function check_task_value(::VerticalSymmetry, value::AbstractArray{OInt,2}, data, aux_values)
     data["effective"] |= size(value)[1] > 1
     value[end:-1:1, :] == value
 end
 
-function check_task_value(::HorisontalSymmetry, value::AbstractArray{Int,2}, data, aux_values)
+function check_task_value(::HorisontalSymmetry, value::AbstractArray{OInt,2}, data, aux_values)
     data["effective"] |= size(value)[2] > 1
     value[:, end:-1:1] == value
 end
@@ -82,7 +82,7 @@ function to_abstract_value(p::Abstractor{VerticalSymmetry}, source_value::Object
     )
 end
 
-function to_abstract_value(p::Abstractor{VerticalSymmetry}, source_value::AbstractArray{Int,2})
+function to_abstract_value(p::Abstractor{VerticalSymmetry}, source_value::AbstractArray{OInt,2})
     anchor = ((size(source_value)[1] - 1) / 2) + 1
     keep_pivot_point = anchor % 1 == 0
     return _wrap_aux_values(
@@ -131,7 +131,7 @@ function to_abstract_value(p::Abstractor{HorisontalSymmetry}, source_value::Obje
     )
 end
 
-function to_abstract_value(p::Abstractor{HorisontalSymmetry}, source_value::AbstractArray{Int,2})
+function to_abstract_value(p::Abstractor{HorisontalSymmetry}, source_value::AbstractArray{OInt,2})
     anchor = ((size(source_value)[2] - 1) / 2) + 1
     keep_pivot_point = anchor % 1 == 0
     return _wrap_aux_values(
@@ -149,12 +149,12 @@ end
 
 function from_abstract_value(
     p::Abstractor{VerticalSymmetry},
-    source_value::AbstractArray{Int,2},
+    source_value::AbstractArray{OInt,2},
     is_left::Bool,
     keep_pivot_point::Bool,
 )
     height = size(source_value)[1] * 2 - keep_pivot_point
-    res = Array{Int}(undef, height, size(source_value)[2])
+    res = Array{OInt}(undef, height, size(source_value)[2])
     if is_left
         res[1:size(source_value)[1], :] = source_value
         res[end:-1:end-size(source_value)[1]+1, :] = source_value
@@ -181,12 +181,12 @@ end
 
 function from_abstract_value(
     p::Abstractor{HorisontalSymmetry},
-    source_value::AbstractArray{Int,2},
+    source_value::AbstractArray{OInt,2},
     is_top::Bool,
     keep_pivot_point::Bool,
 )
     width = size(source_value)[2] * 2 - keep_pivot_point
-    res = Array{Int}(undef, size(source_value)[1], width)
+    res = Array{OInt}(undef, size(source_value)[1], width)
     if is_top
         res[:, 1:size(source_value)[2]] = source_value
         res[:, end:-1:end-size(source_value)[2]+1] = source_value

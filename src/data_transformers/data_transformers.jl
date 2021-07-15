@@ -5,6 +5,7 @@ module DataTransformers
 using ..Complexity: get_complexity
 using ..PatternMatching: update_value, unpack_value, common_value, check_type, apply_func, check_match
 using ..Taskdata: TaskData, updated_keys
+using burpl: OInt
 
 include("find_const.jl")
 include("find_dependent_key.jl")

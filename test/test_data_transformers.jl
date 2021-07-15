@@ -21,41 +21,41 @@ using .Solutions: FieldInfo
     @testset "find const" begin
         taskdata = make_taskdata([Dict("background" => 1), Dict("background" => 1)])
 
-        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") ==
+        @test find_const(taskdata, Dict("background" => FieldInfo(OInt(1), "input", [], [Set()])), [], "background") ==
               [SetConst("background", 1)]
 
         taskdata = make_taskdata([Dict("background" => 1), Dict("background" => Either([1, 2]))])
 
-        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") ==
+        @test find_const(taskdata, Dict("background" => FieldInfo(OInt(1), "input", [], [Set()])), [], "background") ==
               [SetConst("background", 1)]
 
         taskdata = make_taskdata([Dict("background" => Either([1, 2])), Dict("background" => 1)])
 
-        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") ==
+        @test find_const(taskdata, Dict("background" => FieldInfo(OInt(1), "input", [], [Set()])), [], "background") ==
               [SetConst("background", 1)]
 
         taskdata = make_taskdata([Dict("background" => Either([1, 2])), Dict("background" => Either([1, 3]))])
 
-        @test find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background") ==
+        @test find_const(taskdata, Dict("background" => FieldInfo(OInt(1), "input", [], [Set()])), [], "background") ==
               [SetConst("background", 1)]
 
         taskdata = make_taskdata([Dict("background" => Either([1, 2])), Dict("background" => Either([1, 2]))])
 
         @test issetequal(
-            find_const(taskdata, Dict("background" => FieldInfo(1, "input", [], [Set()])), [], "background"),
+            find_const(taskdata, Dict("background" => FieldInfo(OInt(1), "input", [], [Set()])), [], "background"),
             [SetConst("background", 1), SetConst("background", 2)],
         )
     end
 
     @testset "match dicts" begin
         taskdata = make_taskdata([Dict("key" => Dict(1 => 1, 2 => 2)), Dict("key" => Dict(1 => 1, 2 => 2))])
-        @test find_const(taskdata, Dict("key" => FieldInfo(1, "input", [], [Set()])), [], "key") ==
-              [SetConst("key", Dict(2 => 2, 1 => 1))]
+        @test find_const(taskdata, Dict("key" => FieldInfo(OInt(1), "input", [], [Set()])), [], "key") ==
+              [SetConst("key", _wrap_ints(Dict(2 => 2, 1 => 1)))]
 
         taskdata =
             make_taskdata([Dict("key" => Dict(1 => 1, 2 => 2)), Dict("key" => Dict(1 => Either([1, 3]), 2 => 2))])
-        @test find_const(taskdata, Dict("key" => FieldInfo(1, "input", [], [Set()])), [], "key") ==
-              [SetConst("key", Dict(1 => 1, 2 => 2))]
+        @test find_const(taskdata, Dict("key" => FieldInfo(OInt(1), "input", [], [Set()])), [], "key") ==
+              [SetConst("key", _wrap_ints(Dict(1 => 1, 2 => 2)))]
     end
 
     @testset "match data" begin
@@ -63,7 +63,7 @@ using .Solutions: FieldInfo
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 1
         new_solution = new_solutions[1]
-        @test filtered_ops(new_solution) == [SetConst("background", 1)]
+        @test filtered_ops(new_solution) == [SetConst("background", OInt(1))]
     end
 
     @testset "match either" begin
@@ -73,13 +73,13 @@ using .Solutions: FieldInfo
         )
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 2
-        expected_operations = Set([[SetConst("background", 1)], [SetConst("background", 2)]])
+        expected_operations = Set([[SetConst("background", OInt(1))], [SetConst("background", OInt(2))]])
         _compare_operations(expected_operations, new_solutions)
         @test filtered_taskdata(new_solutions[1]) !=
-              [Dict("background" => Either([1, 2])), Dict("background" => Either([1, 2]))]
+              _wrap_ints([Dict("background" => Either([1, 2])), Dict("background" => Either([1, 2]))])
         @test new_solutions[1].taskdata != new_solutions[2].taskdata
         @test filtered_taskdata(solution) ==
-              [Dict("background" => Either([1, 2])), Dict("background" => Either([1, 2]))]
+              _wrap_ints([Dict("background" => Either([1, 2])), Dict("background" => Either([1, 2]))])
     end
 
     @testset "match two fields" begin
@@ -92,13 +92,16 @@ using .Solutions: FieldInfo
         )
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 3
-        expected_operations =
-            Set([[SetConst("background", 1)], [SetConst("background", 2)], [CopyParam("background", "background_in")]])
+        expected_operations = Set([
+            [SetConst("background", OInt(1))],
+            [SetConst("background", OInt(2))],
+            [CopyParam("background", "background_in")],
+        ])
         _compare_operations(expected_operations, new_solutions)
-        @test filtered_taskdata(solution) == [
+        @test filtered_taskdata(solution) == _wrap_ints([
             Dict("background" => Either([1, 2]), "key2" => 23, "background_in" => 1),
             Dict("background" => Either([1, 2]), "key2" => 32, "background_in" => 2),
-        ]
+        ])
     end
 
     @testset "either hash fix" begin
@@ -114,18 +117,20 @@ using .Solutions: FieldInfo
         )
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 2
-        expected_operations = Set([[SetConst("key2", 2), SetConst("key1", 1)], [SetConst("key2", 4)]])
+        expected_operations = Set([[SetConst("key2", OInt(2)), SetConst("key1", OInt(1))], [SetConst("key2", OInt(4))]])
         _compare_operations(expected_operations, new_solutions)
 
-        @test filtered_taskdata(new_solutions[1]) == [Dict("key1" => 1, "key2" => 2), Dict("key1" => 1, "key2" => 2)]
-        @test filtered_taskdata(new_solutions[2]) == [Dict("key1" => 3, "key2" => 4), Dict("key1" => 1, "key2" => 4)]
-        @test filtered_taskdata(solution) == [
+        @test filtered_taskdata(new_solutions[1]) ==
+              _wrap_ints([Dict("key1" => 1, "key2" => 2), Dict("key1" => 1, "key2" => 2)])
+        @test filtered_taskdata(new_solutions[2]) ==
+              _wrap_ints([Dict("key1" => 3, "key2" => 4), Dict("key1" => 1, "key2" => 4)])
+        @test filtered_taskdata(solution) == _wrap_ints([
             Dict(
                 "key1" => Either([Option(1, hash((1, 2))), Option(3, hash((3, 4)))]),
                 "key2" => Either([Option(2, hash((1, 2))), Option(4, hash((3, 4)))]),
             ),
             Dict("key1" => 1, "key2" => Either([Option(2, hash((1, 2))), Option(4, hash((3, 4)))])),
-        ]
+        ])
     end
 
     @testset "either hash fix 2" begin
@@ -153,12 +158,12 @@ using .Solutions: FieldInfo
         @test length(new_solutions) == 1
         @test filtered_ops(new_solutions[1]) == [CopyParam("key1", "key3")]
         @test issetequal(new_solutions[1].unfilled_fields, ["key2"])
-        @test filtered_taskdata(new_solutions[1]) == [
+        @test filtered_taskdata(new_solutions[1]) == _wrap_ints([
             Dict("key1" => 1, "key2" => 2, "key3" => 1),
             Dict("key1" => 6, "key2" => 7, "key3" => 6),
             Dict("key1" => 1, "key2" => 3, "key3" => 1),
-        ]
-        @test filtered_taskdata(solution) == [
+        ])
+        @test filtered_taskdata(solution) == _wrap_ints([
             Dict(
                 "key1" => Either([Option(1, hash((1, 2))), Option(3, hash((3, 4)))]),
                 "key2" => Either([Option(2, hash((1, 2))), Option(4, hash((3, 4)))]),
@@ -174,7 +179,7 @@ using .Solutions: FieldInfo
                 "key2" => Either([Option(3, hash((1, 3))), Option(4, hash((3, 4)))]),
                 "key3" => 1,
             ),
-        ]
+        ])
     end
 
     @testset "match nested either" begin
@@ -312,7 +317,7 @@ using .Solutions: FieldInfo
         new_solution = new_solutions[1]
         @test filtered_ops(new_solution) ==
               [CopyParam("spatial_objects|grouped|0|first|splitted|first", "spatial_objects|grouped|0")]
-        @test filtered_taskdata(new_solution) == [
+        @test filtered_taskdata(new_solution) == _wrap_ints([
             Dict(
                 "spatial_objects|grouped|0" => Dict(8 => Object([8], (9, 7)), 2 => Object([2], (0, 5))),
                 "spatial_objects|grouped|0|step" => Dict(2 => (0, 4), 8 => (0, 4)),
@@ -341,9 +346,9 @@ using .Solutions: FieldInfo
                     Dict(4 => Object([4], (7, 0)), 1 => Object([1], (11, 0))),
                 "spatial_objects|grouped|0|first|splitted|step" => Dict(4 => (0, 1), 1 => (0, 1)),
             ),
-        ]
+        ])
 
-        @test filtered_taskdata(solution) == [
+        @test filtered_taskdata(solution) == _wrap_ints([
             Dict(
                 "spatial_objects|grouped|0" => Dict(8 => Object([8], (9, 7)), 2 => Object([2], (0, 5))),
                 "spatial_objects|grouped|0|step" => Dict(2 => (0, 4), 8 => (0, 4)),
@@ -464,7 +469,7 @@ using .Solutions: FieldInfo
                     1 => Either([Option((0, -1), 6149872379558691894), Option((0, 1), 5497714720948989413)]),
                 ),
             ),
-        ]
+        ])
     end
 
     @testset "match nothing" begin
@@ -473,7 +478,7 @@ using .Solutions: FieldInfo
             find_dependent_key(
                 taskdata,
                 Dict(
-                    "key" => FieldInfo(1, "input", [], [Set()]),
+                    "key" => FieldInfo(OInt(1), "input", [], [Set()]),
                     "key_none" => FieldInfo(nothing, "input", [], [Set()]),
                 ),
                 Set(["key"]),
@@ -545,7 +550,7 @@ using .Solutions: FieldInfo
         )
         new_solutions = match_fields(solution)
         @test length(new_solutions) == 1
-        expected_operations = Set([[IncParam("key", "key1", 5)]])
+        expected_operations = Set([[IncParam("key", "key1", OInt(5))]])
         _compare_operations(expected_operations, new_solutions)
     end
 
@@ -801,7 +806,7 @@ using .Solutions: FieldInfo
                     "input|background" => 0,
                     "output|grid|bgr_grid|spatial_objects|positions" => [(1, 2), (1, 1), (7, 6), (9, 6)],
                     "input|bgr_grid|grid|spatial_objects|group_keys" => [2, 8],
-                    "output" => [1 2; 3 4],
+                    "output" => OInt[1 2; 3 4],
                 ),
                 Dict(
                     "input|bgr_grid|grid|spatial_objects|grouped" => Dict{Int64,Array{Object,1}}(
@@ -892,7 +897,7 @@ using .Solutions: FieldInfo
                     "input|background" => 0,
                     "output|grid|bgr_grid|spatial_objects|positions" => [(1, 1), (2, 6), (5, 3), (5, 1), (8, 7)],
                     "input|bgr_grid|grid|spatial_objects|group_keys" => [2, 3],
-                    "output" => [2 3; 4 5],
+                    "output" => OInt[2 3; 4 5],
                 ),
                 Dict(
                     "input|bgr_grid|grid|spatial_objects|grouped" => Dict{Int64,Array{Object,1}}(
@@ -980,7 +985,7 @@ using .Solutions: FieldInfo
                     "input|background" => 0,
                     "output|grid|bgr_grid|spatial_objects|positions" => [(1, 1), (4, 9), (6, 1), (6, 7), (6, 9)],
                     "input|bgr_grid|grid|spatial_objects|group_keys" => [1, 4],
-                    "output" => [3 4; 5 6],
+                    "output" => OInt[3 4; 5 6],
                 ),
             ],
             [

@@ -4,8 +4,24 @@ using .Operations: Operation, Project
 using .DataTransformers: match_fields
 using .Abstractors: create
 using .Taskdata: TaskData
+using .ObjectPrior: Object
+using .PatternMatching: Either, ObjectShape
+using burpl: OInt
 
-make_sample_taskdata(len) = fill(Dict("input" => Array{Int}(undef, 0, 0), "output" => Array{Int}(undef, 0, 0)), len)
+function Object(shape::Matrix{Int64}, position::Tuple{Int64,Int64})
+    new_shape = similar(shape, OInt)
+    for x = 1:size(shape)[1], y = 1:size(shape)[2]
+        new_shape[x, y] = OInt(shape[x, y])
+    end
+    Object(new_shape, (OInt(position[1]), OInt(position[2])))
+end
+
+function Object(shape::Vector{Int64}, position::Tuple{Int64,Int64})
+    Object([OInt(v) for v in shape], (OInt(position[1]), OInt(position[2])))
+end
+
+
+make_sample_taskdata(len) = fill(Dict("input" => Array{OInt}(undef, 0, 0), "output" => Array{OInt}(undef, 0, 0)), len)
 
 struct FakeOperation <: Operation
     input_keys::Any
@@ -17,14 +33,29 @@ end
 
 make_taskdata(tasks) = [make_taskdata(task) for task in tasks]
 
-make_taskdata(task::Dict) = TaskData(Dict{String,Any}(), task, Set(), Dict{String,Float64}(), Dict{String,UInt64}())
+_wrap_ints(v::Any) = v
+_wrap_ints(v::Int64) = OInt(v)
+_wrap_ints(val::Tuple) = tuple([_wrap_ints(v) for v in val]...)
+_wrap_ints(val::Vector) = [_wrap_ints(v) for v in val]
+function _wrap_ints(val::Matrix)
+    res = similar(val, OInt)
+    for x in 1:size(val)[1], y in 1:size(val)[2]
+        res[x, y] = _wrap_ints(val[x, y])
+    end
+    res
+end
+_wrap_ints(val::Dict) = Dict(_wrap_ints(kv[1]) => _wrap_ints(kv[2]) for kv in val)
+_wrap_ints(val::Either) = Either([Option(_wrap_ints(option.value), option.option_hash) for option in val.options])
+_wrap_ints(val::ObjectShape) = ObjectShape(_wrap_ints(val.object))
+
+make_taskdata(task::Dict) = TaskData(Dict{String,Any}(), _wrap_ints(task), Set(), Dict{String,Float64}(), Dict{String,UInt64}())
 
 make_field_info(taskdata) = Dict(key => FieldInfo(val, "input", [], [Set()]) for (key, val) in taskdata[1])
 
 function make_dummy_solution(data, unfilled = [])
     unused = Set(filter(k -> !in(k, unfilled) && k != "input" && k != "output", keys(data[1])))
     taskdata = make_taskdata([
-        merge(Dict("input" => Array{Int}(undef, 0, 0), "output" => Array{Int}(undef, 0, 0)), task) for task in data
+        merge(Dict("input" => Array{OInt}(undef, 0, 0), "output" => Array{OInt}(undef, 0, 0)), task) for task in data
     ])
     Solution(
         taskdata,

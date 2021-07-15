@@ -37,10 +37,10 @@ to_abstract_value(p::Abstractor{GetPosition}, objects::AbstractSet{Object}) = Di
     p.output_keys[1] => reduce((a, b) -> min.(a, b), (obj.position for obj in objects)) .- 1,
 )
 
-from_abstract_value(p::Abstractor{GetPosition}, position::Tuple{Int64,Int64}, object::Object) =
+from_abstract_value(p::Abstractor{GetPosition}, position::Tuple{OInt,OInt}, object::Object) =
     Dict(p.output_keys[1] => Object(object.shape, position))
 
-function from_abstract_value(p::Abstractor{GetPosition}, position::Tuple{Int64,Int64}, objects::AbstractSet{Object})
+function from_abstract_value(p::Abstractor{GetPosition}, position::Tuple{OInt,OInt}, objects::AbstractSet{Object})
     min_pos = reduce((a, b) -> min.(a, b), (obj.position for obj in objects)) .- 1
     Dict(p.output_keys[1] => Set([Object(o.shape, o.position .- min_pos .+ position) for o in objects]))
 end

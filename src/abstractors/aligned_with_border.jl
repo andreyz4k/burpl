@@ -7,7 +7,7 @@ priority(::AlignedWithBorder) = 8
 
 check_task_value(::AlignedWithBorder, ::Object, data, aux_values) = true
 
-function to_abstract_value(p::Abstractor{AlignedWithBorder}, source_value::Object, grid_size::Tuple{Int64,Int64})
+function to_abstract_value(p::Abstractor{AlignedWithBorder}, source_value::Object, grid_size::Tuple{OInt,OInt})
     x = 0
     if source_value.position[1] == 1
         x += 1
@@ -22,5 +22,5 @@ function to_abstract_value(p::Abstractor{AlignedWithBorder}, source_value::Objec
     if source_value.position[2] + size(source_value.shape)[2] - 1 == grid_size[2]
         y -= 1
     end
-    Dict(p.output_keys[1] => (x, y))
+    Dict(p.output_keys[1] => (OInt(x), OInt(y)))
 end

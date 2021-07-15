@@ -31,7 +31,7 @@ function wrap_func_call_prefix_value(
 end
 
 to_abstract_value(p::Abstractor{CountObjects}, source_value::AbstractSet) =
-    Dict(p.output_keys[2] => SubSet(source_value), p.output_keys[1] => length(source_value))
+    Dict(p.output_keys[2] => SubSet(source_value), p.output_keys[1] => OInt(length(source_value)))
 
 function from_abstract_value(p::Abstractor{CountObjects}, len, counted_items)
     if length(counted_items) > len
