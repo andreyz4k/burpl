@@ -10,29 +10,10 @@ check_task_value(::CountObjects, value::AbstractSet, data, aux_values) = !isempt
 
 using ..PatternMatching: SubSet
 
-function wrap_func_call_prefix_value(
-    p::Abstractor{CountObjects},
-    func::Function,
-    wrappers::AbstractVector{Function},
-    source_values...,
-)
-    if func == from_abstract_value
-        wrap_func_call_value(p, func, wrappers, source_values...)
-    else
-        invoke(
-            wrap_func_call_prefix_value,
-            Tuple{Abstractor,Function,AbstractVector{Function},Vararg{Any}},
-            p,
-            func,
-            wrappers,
-            source_values...,
-        )
-    end
-end
 
 function to_abstract_value(p::Abstractor{CountObjects}, source_value::AbstractSet)
     if p.from_output
-    Dict(p.output_keys[2] => SubSet(source_value), p.output_keys[1] => length(source_value))
+        Dict(p.output_keys[2] => SubSet(source_value), p.output_keys[1] => length(source_value))
     else
         Dict(p.output_keys[2] => source_value, p.output_keys[1] => length(source_value))
     end
