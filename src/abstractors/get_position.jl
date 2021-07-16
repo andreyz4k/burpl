@@ -29,13 +29,27 @@ function wrap_func_call_shape_value(
 end
 
 
-to_abstract_value(p::Abstractor{GetPosition}, object::Object) =
-    Dict(p.output_keys[2] => ObjectShape(object), p.output_keys[1] => object.position)
+function to_abstract_value(p::Abstractor{GetPosition}, object::Object)
+    if p.from_output
+        Dict(p.output_keys[2] => ObjectShape(object), p.output_keys[1] => object.position)
+    else
+        Dict(p.output_keys[2] => object, p.output_keys[1] => object.position)
+    end
+end
 
-to_abstract_value(p::Abstractor{GetPosition}, objects::AbstractSet{Object}) = Dict(
-    p.output_keys[2] => ObjectsGroup(objects),
-    p.output_keys[1] => reduce((a, b) -> min.(a, b), (obj.position for obj in objects)) .- 1,
-)
+function to_abstract_value(p::Abstractor{GetPosition}, objects::AbstractSet{Object})
+    if p.from_output
+        Dict(
+            p.output_keys[2] => ObjectsGroup(objects),
+            p.output_keys[1] => reduce((a, b) -> min.(a, b), (obj.position for obj in objects)) .- 1,
+        )
+    else
+        Dict(
+            p.output_keys[2] => objects,
+            p.output_keys[1] => reduce((a, b) -> min.(a, b), (obj.position for obj in objects)) .- 1,
+        )
+    end
+end
 
 from_abstract_value(p::Abstractor{GetPosition}, position::Tuple{Int64,Int64}, object::Object) =
     Dict(p.output_keys[1] => Object(object.shape, position))
