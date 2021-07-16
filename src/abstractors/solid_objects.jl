@@ -1,7 +1,7 @@
 
 struct SolidObjects <: AbstractorClass end
 
-SolidObjects(key, to_abs) = Abstractor(SolidObjects(), key, to_abs)
+SolidObjects(key, to_abs) = Abstractor(SolidObjects(), key, to_abs, !to_abs)
 abs_keys(::SolidObjects) = ["spatial_objects", "grid_size"]
 priority(::SolidObjects) = 6
 

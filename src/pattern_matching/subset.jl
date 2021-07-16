@@ -13,6 +13,7 @@ Base.:(==)(a::SubSet, b::SubSet) = a.value == b.value
 Base.hash(p::SubSet, h::UInt64) = hash(p.value, h)
 Base.show(io::IO, p::SubSet{T}) where {T} = print(io, "SubSet{", T, "}(", p.value, ")")
 
+get_complexity(s::SubSet)::Float64 = get_complexity(s.value) * 100
 
 _common_value(::Any, ::SubSet) = nothing
 

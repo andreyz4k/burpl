@@ -2,7 +2,7 @@
 struct BackgroundColor <: AbstractorClass end
 
 
-BackgroundColor(key, to_abs) = Abstractor(BackgroundColor(), key, to_abs)
+BackgroundColor(key, to_abs) = Abstractor(BackgroundColor(), key, to_abs, !to_abs)
 abs_keys(::BackgroundColor) = ["background", "bgr_grid"]
 priority(::BackgroundColor) = 7
 

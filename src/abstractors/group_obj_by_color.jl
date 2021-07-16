@@ -3,7 +3,7 @@ using ..ObjectPrior: Object, get_color
 
 struct GroupObjectsByColor <: AbstractorClass end
 
-GroupObjectsByColor(key, to_abs) = Abstractor(GroupObjectsByColor(), key, to_abs)
+GroupObjectsByColor(key, to_abs) = Abstractor(GroupObjectsByColor(), key, to_abs, !to_abs)
 abs_keys(::GroupObjectsByColor) = ["grouped", "group_keys"]
 
 init_create_check_data(::GroupObjectsByColor, key, solution) = Dict("effective" => false)

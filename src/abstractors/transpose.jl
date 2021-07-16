@@ -1,7 +1,7 @@
 
 struct Transpose <: AbstractorClass end
 
-Transpose(key, to_abs) = Abstractor(Transpose(), key, to_abs)
+Transpose(key, to_abs) = Abstractor(Transpose(), key, to_abs, !to_abs)
 abs_keys(::Transpose) = ["transposed"]
 priority(::Transpose) = 15
 

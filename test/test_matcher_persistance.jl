@@ -1,6 +1,6 @@
 
 using .ObjectPrior: Object
-using .Abstractors: CountObjects, UniteTouching, UnwrapSingleList
+using .Abstractors: CountObjects, UniteTouching, UnwrapSingleList, Abstractor
 using .PatternMatching: ObjectsGroup, SubSet, ObjectShape
 
 @testset "Matcher persistance" begin
@@ -20,7 +20,7 @@ using .PatternMatching: ObjectsGroup, SubSet, ObjectShape
                 ),
             ),
         )
-        op = CountObjects("output|bgr_grid|spatial_objects|shape", true)
+        op = Abstractor(CountObjects(), "output|bgr_grid|spatial_objects|shape", true, true)
         out_data = op(taskdata)
         @test out_data["output|bgr_grid|spatial_objects|shape|counted"] == ObjectsGroup(
             SubSet{Set{Object}}(

@@ -2,7 +2,7 @@
 
 struct SplitObject <: AbstractorClass end
 allow_concrete(::SplitObject) = false
-SplitObject(key, to_abs) = Abstractor(SplitObject(), key, to_abs)
+SplitObject(key, to_abs) = Abstractor(SplitObject(), key, to_abs, !to_abs)
 abs_keys(::SplitObject) = ["splitted"]
 
 init_create_check_data(::SplitObject, key, solution) = Dict("effective" => false)
