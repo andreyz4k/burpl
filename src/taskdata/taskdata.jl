@@ -146,6 +146,4 @@ function updated_keys(taskdata::Vector{TaskData})
     union((updated_keys(task) for task in taskdata)...)
 end
 
-Base.keys(t::TaskData) = filter(k -> !in(k, t.keys_to_delete), union(keys(t.updated_values), keys(t.persistent_data)))
-
 end

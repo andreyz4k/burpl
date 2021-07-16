@@ -11,7 +11,7 @@ find_neg_shifted_by_key(taskdata::Vector{TaskData}, field_info, invalid_sources:
         field_info,
         invalid_sources,
         key,
-        _init_shift_keys,
+        _init_param_keys,
         _shifted_neg_key_filter,
         DecByParam,
         _check_effective_shift_key,

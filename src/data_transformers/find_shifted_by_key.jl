@@ -1,16 +1,26 @@
 
 using ..Operations: IncByParam
 
-_init_shift_keys(input_key, field_info, task_data, invalid_sources) = [
-    key for (key, value) in task_data if !in(key, invalid_sources) && (
-        field_info[key].type == Int64 ||
-        field_info[key].type == Tuple{Int64,Int64} ||
-        (
-            field_info[key].type == field_info[input_key].type &&
-            (isa(value, Dict) ? keys(value) == keys(task_data[input_key]) : true)
-        )
-    )
-]
+_init_param_keys(input_key, field_info, task_data, invalid_sources) =
+    collect(skipmissing(imap(task_data) do (key, value)
+        if in(key, invalid_sources)
+            return missing
+        end
+        field_type = field_info[key].type
+        if field_type == Int64 || field_type == Tuple{Int64,Int64}
+            return key
+        end
+        if field_type == field_info[input_key].type
+            if field_type <: Dict
+                if keys(value) == keys(task_data[input_key])
+                    return key
+                end
+            else
+                return key
+            end
+        end
+        missing
+    end))
 
 _shifted_key_filter(shift_key, input_value, output_value, task_data) =
     haskey(task_data, shift_key) &&
@@ -28,7 +38,7 @@ function find_shifted_by_key(taskdata::Vector{TaskData}, field_info, invalid_sou
         field_info,
         invalid_sources,
         key,
-        _init_shift_keys,
+        _init_param_keys,
         _shifted_key_filter,
         IncByParam,
         _check_effective_shift_key,
