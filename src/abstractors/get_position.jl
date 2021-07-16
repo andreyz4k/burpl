@@ -7,6 +7,8 @@ abs_keys(::GetPosition) = ["position", "shape"]
 check_task_value(::GetPosition, value::Object, data, aux_values) = true
 check_task_value(::GetPosition, value::AbstractSet{Object}, data, aux_values) = !isempty(value)
 
+wrap_check_task_value(cls::GetPosition, value::ObjectShape, data, aux_values) = false
+wrap_check_task_value(cls::GetPosition, value::ObjectsGroup, data, aux_values) = false
 
 function wrap_func_call_shape_value(
     p::Abstractor{GetPosition},
