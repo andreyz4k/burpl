@@ -3,7 +3,7 @@ using ..PatternMatching: common_value
 
 struct CompactSimilarObjects <: AbstractorClass end
 
-CompactSimilarObjects(key, to_abs) = Abstractor(CompactSimilarObjects(), key, to_abs)
+CompactSimilarObjects(key, to_abs) = Abstractor(CompactSimilarObjects(), key, to_abs, !to_abs)
 abs_keys(::CompactSimilarObjects) = ["common_shape", "positions"]
 
 init_create_check_data(::CompactSimilarObjects, key, solution) = Dict("effective" => false)

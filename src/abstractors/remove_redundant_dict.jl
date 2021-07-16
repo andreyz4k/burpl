@@ -2,7 +2,7 @@
 
 struct RemoveRedundantDict <: AbstractorClass end
 
-RemoveRedundantDict(key, to_abs) = Abstractor(RemoveRedundantDict(), key, to_abs)
+RemoveRedundantDict(key, to_abs) = Abstractor(RemoveRedundantDict(), key, to_abs, !to_abs)
 abs_keys(::RemoveRedundantDict) = ["to_value", "group_keys"]
 
 wrap_check_task_value(cls::RemoveRedundantDict, value::AbstractDict, data, aux_values) =

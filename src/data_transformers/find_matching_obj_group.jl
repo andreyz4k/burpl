@@ -66,7 +66,8 @@ function _get_matching_transformers(
                     "output",
                     Dict(task_data["output"] => value for (task_data, value) in zip(taskdata, group_keys)),
                 )
-                from_abs = Abstractor(SelectGroup(), true, [input_key, key_name], [key, key * "|rejected"], String[])
+                from_abs =
+                    Abstractor(SelectGroup(), true, false, [input_key, key_name], [key, key * "|rejected"], String[])
                 return (to_abstract = to_abs, from_abstract = from_abs)
             end
         end,

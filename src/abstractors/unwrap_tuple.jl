@@ -1,7 +1,7 @@
 
 
 struct UnwrapTuple <: AbstractorClass end
-UnwrapTuple(key, to_abs) = Abstractor(UnwrapTuple(), key, to_abs)
+UnwrapTuple(key, to_abs) = Abstractor(UnwrapTuple(), key, to_abs, !to_abs)
 abs_keys(::UnwrapTuple) = ["unwrapped"]
 
 check_task_value(::UnwrapTuple, value::Tuple{Any}, data, aux_values) = true

@@ -2,7 +2,7 @@
 
 struct UniteInRect <: AbstractorClass end
 
-UniteInRect(key, to_abs) = Abstractor(UniteInRect(), key, to_abs)
+UniteInRect(key, to_abs) = Abstractor(UniteInRect(), key, to_abs, !to_abs)
 abs_keys(::UniteInRect) = ["united_rect"]
 priority(::UniteInRect) = 12
 

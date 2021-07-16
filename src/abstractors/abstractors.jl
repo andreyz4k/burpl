@@ -32,16 +32,37 @@ end
 struct Abstractor{T<:AbstractorClass} <: Operation
     cls::T
     to_abstract::Bool
+    from_output::Bool
     input_keys::Vector{String}
     output_keys::Vector{String}
     aux_keys::Vector{String}
 end
 
-function Abstractor(cls::AbstractorClass, key::String, to_abs::Bool, found_aux_keys::AbstractVector{String} = String[])
+function Abstractor(
+    cls::AbstractorClass,
+    key::String,
+    to_abs::Bool,
+    from_output::Bool,
+    found_aux_keys::AbstractVector{String} = String[],
+)
     if to_abs
-        return Abstractor(cls, true, vcat(detail_keys(cls, key), found_aux_keys), abs_keys(cls, key), found_aux_keys)
+        return Abstractor(
+            cls,
+            true,
+            from_output,
+            vcat(detail_keys(cls, key), found_aux_keys),
+            abs_keys(cls, key),
+            found_aux_keys,
+        )
     else
-        return Abstractor(cls, false, vcat(abs_keys(cls, key), found_aux_keys), detail_keys(cls, key), found_aux_keys)
+        return Abstractor(
+            cls,
+            false,
+            from_output,
+            vcat(abs_keys(cls, key), found_aux_keys),
+            detail_keys(cls, key),
+            found_aux_keys,
+        )
     end
 end
 
@@ -79,13 +100,8 @@ fetch_input_values(p::Abstractor, task_data) =
 
 using DataStructures: DefaultDict
 
-call_wrappers() = [
-    wrap_func_call_dict_value,
-    wrap_func_call_either_value,
-    wrap_func_call_prefix_value,
-    wrap_func_call_shape_value,
-    wrap_func_call_obj_group_value,
-]
+call_wrappers() =
+    [wrap_func_call_dict_value, wrap_func_call_either_value, wrap_func_call_shape_value, wrap_func_call_obj_group_value]
 
 function wrap_func_call_value_root(p::Abstractor, func::Function, source_values...)
     wrap_func_call_value(p, func, call_wrappers(), source_values...)
@@ -222,30 +238,19 @@ function wrap_func_call_either_value(
 end
 
 
-using ..PatternMatching: SubSet
-function wrap_func_call_prefix_value(
-    p::Abstractor,
-    func::Function,
-    wrappers::AbstractVector{Function},
-    source_values...,
-)
-    if any(isa(v, SubSet) for v in source_values)
-        outputs = Dict()
-        for (key, value) in
-            wrap_func_call_value_root(p, func, [isa(v, SubSet) ? unwrap_matcher(v)[1] : v for v in source_values]...)
-            if isa(value, AbstractSet)
-                outputs[key] = SubSet(value)
-            else
-                outputs[key] = value
-            end
-        end
-        return outputs
-    end
-    wrap_func_call_value(p, func, wrappers, source_values...)
-end
+using ..PatternMatching: ObjectShape, ObjectsGroup, Matcher
+using ..ObjectPrior: Object
 
+_propagate_object_shape(value::Any) = value
+_propagate_object_shape(value::Object) = ObjectShape(value)
+_propagate_object_shape(value::Matcher{Object}) = ObjectShape(value)  # expected to fail
+_propagate_object_shape(value::ObjectShape) = value
+_propagate_object_shape(value::Set{Object}) = ObjectsGroup(value)
+_propagate_object_shape(value::Matcher{Set{Object}}) = ObjectsGroup(value)
+_propagate_object_shape(value::ObjectsGroup) = value
+_propagate_object_shape(value::Either) =
+    Either([Option(_propagate_object_shape(option.value), option.option_hash) for option in value.options])
 
-using ..PatternMatching: ObjectShape
 function wrap_func_call_shape_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
     if any(isa(v, ObjectShape) || isa(v, AbstractVector{ObjectShape}) for v in source_values)
         outputs = Dict()
@@ -254,13 +259,7 @@ function wrap_func_call_shape_value(p::Abstractor, func::Function, wrappers::Abs
             v in source_values
         ]
         for (key, value) in wrap_func_call_value_root(p, func, unwrapped_values...)
-            if isa(value, Object)
-                outputs[key] = ObjectShape(value)
-            elseif isa(value, Set{Object}) || isa(value, Matcher{Set{Object}})
-                outputs[key] = ObjectsGroup(value)
-            else
-                outputs[key] = value
-            end
+            outputs[key] = _propagate_object_shape(value)
         end
         return outputs
     end
@@ -268,7 +267,6 @@ function wrap_func_call_shape_value(p::Abstractor, func::Function, wrappers::Abs
 end
 
 
-using ..PatternMatching: ObjectsGroup
 function wrap_func_call_obj_group_value(
     p::Abstractor,
     func::Function,
@@ -279,13 +277,7 @@ function wrap_func_call_obj_group_value(
         outputs = Dict()
         unwrapped_values = [isa(v, ObjectsGroup) ? v.objects : v for v in source_values]
         for (key, value) in wrap_func_call_value_root(p, func, unwrapped_values...)
-            if isa(value, Set{Object}) || isa(value, Matcher{Set{Object}})
-                outputs[key] = ObjectsGroup(value)
-            elseif isa(value, Object) || (isa(value, Matcher{Object}) && !isa(value, ObjectShape))
-                outputs[key] = ObjectShape(value)
-            else
-                outputs[key] = value
-            end
+            outputs[key] = _propagate_object_shape(value)
         end
         return outputs
     end
@@ -315,7 +307,8 @@ function create(
         return []
     end
     output = []
-    for (priority, abstractor) in create_abstractors(cls, data, key, found_aux_keys[1])
+    from_output = in(key, solution.unfilled_fields)
+    for (priority, abstractor) in create_abstractors(cls, from_output, data, key, found_aux_keys[1])
         push!(output, (priority * (1.1^(length(split(key, '|')) - 1)), abstractor))
     end
     output
@@ -335,18 +328,21 @@ using ..PatternMatching: Matcher, unwrap_matcher
 wrap_check_task_value(cls::AbstractorClass, value::Matcher, data, aux_values) =
     all(wrap_check_task_value(cls, v, data, aux_values) for v in unwrap_matcher(value))
 
+using ..PatternMatching: SubSet
+wrap_check_task_value(cls::AbstractorClass, value::SubSet, data, aux_values) = false
+
 get_aux_values_for_task(cls::AbstractorClass, task_data, key, solution) =
     [task_data[k] for k in aux_keys(cls, key, task_data)]
 
-function create_abstractors(cls::AbstractorClass, data, key, found_aux_keys)
+function create_abstractors(cls::AbstractorClass, from_output, data, key, found_aux_keys)
     if haskey(data, "effective") && data["effective"] == false
         return []
     end
     [(
         priority(cls),
         (
-            to_abstract = Abstractor(cls, key, true, found_aux_keys),
-            from_abstract = Abstractor(cls, key, false, found_aux_keys),
+            to_abstract = Abstractor(cls, key, true, from_output, found_aux_keys),
+            from_abstract = Abstractor(cls, key, false, from_output, found_aux_keys),
         ),
     )]
 end

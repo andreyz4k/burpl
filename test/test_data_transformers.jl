@@ -996,6 +996,7 @@ using .Solutions: FieldInfo
             Abstractor(
                 SelectGroup(),
                 true,
+                false,
                 [
                     "input|bgr_grid|grid|spatial_objects|grouped",
                     "output|grid|bgr_grid|spatial_objects|shapes|selected_group",

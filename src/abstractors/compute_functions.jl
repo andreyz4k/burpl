@@ -5,7 +5,7 @@ abstract type ComputeFunctionClass <: AbstractorClass end
 priority(::ComputeFunctionClass) = 10
 
 ComputeFunction(cls::ComputeFunctionClass, key::String, found_aux_keys::AbstractVector{String} = String[]) =
-    Abstractor(cls, key, true, found_aux_keys)
+    Abstractor(cls, key, true, false, found_aux_keys)
 
 function create(
     cls::ComputeFunctionClass,
@@ -19,9 +19,12 @@ function create(
 end
 
 
-create_abstractors(cls::ComputeFunctionClass, data, key, found_aux_keys) = [(
+create_abstractors(cls::ComputeFunctionClass, from_output, data, key, found_aux_keys) = [(
     priority(cls),
-    (to_abstract = ComputeFunction(cls, key, found_aux_keys), from_abstract = Abstractor(Noop(), key, false, String[])),
+    (
+        to_abstract = ComputeFunction(cls, key, found_aux_keys),
+        from_abstract = Abstractor(Noop(), key, false, false, String[]),
+    ),
 )]
 
 include("aligned_with_border.jl")

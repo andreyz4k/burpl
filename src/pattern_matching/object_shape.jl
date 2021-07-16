@@ -2,7 +2,7 @@
 using ..ObjectPrior: Object
 
 struct ObjectShape{Object} <: Matcher{Object}
-    object::Union{Object,Matcher{Object}}
+    object::Object
 end
 
 struct ObjectsGroup <: Matcher{Set{Object}}

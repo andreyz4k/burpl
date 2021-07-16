@@ -1,7 +1,7 @@
 
 struct GridSize <: AbstractorClass end
 
-GridSize(key, to_abs) = Abstractor(GridSize(), key, to_abs)
+GridSize(key, to_abs) = Abstractor(GridSize(), key, to_abs, !to_abs)
 abs_keys(::GridSize) = ["grid_size", "grid"]
 priority(::GridSize) = 6
 

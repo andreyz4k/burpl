@@ -2,7 +2,7 @@
 
 struct UniteTouching <: AbstractorClass end
 
-UniteTouching(key, to_abs) = Abstractor(UniteTouching(), key, to_abs)
+UniteTouching(key, to_abs) = Abstractor(UniteTouching(), key, to_abs, !to_abs)
 abs_keys(::UniteTouching) = ["united_touch"]
 priority(::UniteTouching) = 12
 
