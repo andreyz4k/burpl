@@ -2,7 +2,7 @@
 struct RepeatObjectInfinite <: AbstractorClass end
 
 RepeatObjectInfinite(key, to_abs, taskdata) =
-    Abstractor(RepeatObjectInfinite(), key, to_abs, aux_keys(RepeatObjectInfinite(), key, taskdata))
+    Abstractor(RepeatObjectInfinite(), key, to_abs, !to_abs, aux_keys(RepeatObjectInfinite(), key, taskdata))
 abs_keys(::RepeatObjectInfinite) = ["first", "step"]
 aux_keys(::RepeatObjectInfinite) = ["grid_size"]
 

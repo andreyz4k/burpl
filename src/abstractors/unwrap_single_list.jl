@@ -2,7 +2,7 @@
 
 struct UnwrapSingleList <: AbstractorClass end
 
-UnwrapSingleList(key, to_abs) = Abstractor(UnwrapSingleList(), key, to_abs)
+UnwrapSingleList(key, to_abs) = Abstractor(UnwrapSingleList(), key, to_abs, !to_abs)
 abs_keys(::UnwrapSingleList) = ["single_value"]
 
 check_task_value(::UnwrapSingleList, value::AbstractSet, data, aux_values) = length(value) == 1
