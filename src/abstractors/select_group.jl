@@ -14,10 +14,11 @@ SelectGroup(key, selector_key, to_abs) = Abstractor(SelectGroup(), key, selector
 
 function Abstractor(cls::SelectGroup, key::String, selector_key::String, to_abs::Bool)
     if to_abs
-        return Abstractor(cls, true, detail_keys(cls, key, selector_key), abs_keys(cls, key, selector_key), String[])
+        return Abstractor(cls, true, false, detail_keys(cls, key, selector_key), abs_keys(cls, key, selector_key), String[])
     else
         return Abstractor(
             cls,
+            false,
             false,
             vcat(abs_keys(cls, key, selector_key), detail_keys(cls, key, selector_key)[2:2]),
             detail_keys(cls, key, selector_key)[1:1],

@@ -32,16 +32,37 @@ end
 struct Abstractor{T<:AbstractorClass} <: Operation
     cls::T
     to_abstract::Bool
+    from_output::Bool
     input_keys::Vector{String}
     output_keys::Vector{String}
     aux_keys::Vector{String}
 end
 
-function Abstractor(cls::AbstractorClass, key::String, to_abs::Bool, found_aux_keys::AbstractVector{String} = String[])
+function Abstractor(
+    cls::AbstractorClass,
+    key::String,
+    to_abs::Bool,
+    from_output::Bool,
+    found_aux_keys::AbstractVector{String} = String[],
+)
     if to_abs
-        return Abstractor(cls, true, vcat(detail_keys(cls, key), found_aux_keys), abs_keys(cls, key), found_aux_keys)
+        return Abstractor(
+            cls,
+            true,
+            from_output,
+            vcat(detail_keys(cls, key), found_aux_keys),
+            abs_keys(cls, key),
+            found_aux_keys,
+        )
     else
-        return Abstractor(cls, false, vcat(abs_keys(cls, key), found_aux_keys), detail_keys(cls, key), found_aux_keys)
+        return Abstractor(
+            cls,
+            false,
+            from_output,
+            vcat(abs_keys(cls, key), found_aux_keys),
+            detail_keys(cls, key),
+            found_aux_keys,
+        )
     end
 end
 
@@ -315,7 +336,8 @@ function create(
         return []
     end
     output = []
-    for (priority, abstractor) in create_abstractors(cls, data, key, found_aux_keys[1])
+    from_output = in(key, solution.unfilled_fields)
+    for (priority, abstractor) in create_abstractors(cls, from_output, data, key, found_aux_keys[1])
         push!(output, (priority * (1.1^(length(split(key, '|')) - 1)), abstractor))
     end
     output
@@ -338,15 +360,15 @@ wrap_check_task_value(cls::AbstractorClass, value::Matcher, data, aux_values) =
 get_aux_values_for_task(cls::AbstractorClass, task_data, key, solution) =
     [task_data[k] for k in aux_keys(cls, key, task_data)]
 
-function create_abstractors(cls::AbstractorClass, data, key, found_aux_keys)
+function create_abstractors(cls::AbstractorClass, from_output, data, key, found_aux_keys)
     if haskey(data, "effective") && data["effective"] == false
         return []
     end
     [(
         priority(cls),
         (
-            to_abstract = Abstractor(cls, key, true, found_aux_keys),
-            from_abstract = Abstractor(cls, key, false, found_aux_keys),
+            to_abstract = Abstractor(cls, key, true, from_output, found_aux_keys),
+            from_abstract = Abstractor(cls, key, false, from_output, found_aux_keys),
         ),
     )]
 end
