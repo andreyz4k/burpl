@@ -77,7 +77,7 @@ using .FindSolution: get_taskdef
             (GroupMin(), "input|bgr_grid|spatial_objects|grouped|length", true),
         ]
         solution = create_solution(task_info["train"], operations)
-        @test_broken test_solution(solution, task_info["test"])
+        @test test_solution(solution, task_info["test"])
     end
 
     @testset "39a8645d" begin

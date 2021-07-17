@@ -279,10 +279,7 @@ function mark_used_fields_for_input(blocks, unfilled_fields, filled_fields, tran
                     field_info[k] = FieldInfo(
                         field_info[k].type,
                         field_info[k].derived_from,
-                        unique([
-                            vcat([info.precursor_types for info in input_field_info]...)...,
-                            field_info[k].type,
-                        ]),
+                        unique([vcat([info.precursor_types for info in input_field_info]...)..., field_info[k].type]),
                         union([(field_info[pk].previous_fields for pk in op.input_keys)..., [k]]...),
                     )
                 end
@@ -354,7 +351,16 @@ function prune_unnneeded_operations(
                 k -> !in(k, overwritten_fields) || in(k, keys),
                 [replace(k, "projected|" => "") for k in old_project.output_keys],
             )
-            project_op = Project(filter(op -> in(op, blocks[end-i+2].operations), old_project.operations), new_outs)
+            new_project_ops = []
+            used_projected_fields = Set(new_outs)
+            for op in reverse(old_project.operations)
+                if any(in(k, used_projected_fields) for k in op.output_keys)
+                    push!(new_project_ops, op)
+                    union!(used_projected_fields, op.input_keys)
+                end
+            end
+            project_op = Project(reverse(new_project_ops), new_outs)
+            setdiff!(overwritten_fields, project_op.input_keys)
             block.operations[end] = project_op
         end
         for operation in block.operations[end:-1:1]
