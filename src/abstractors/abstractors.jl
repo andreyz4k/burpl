@@ -367,6 +367,7 @@ include("select_group.jl")
 include("get_position.jl")
 include("separate_axis.jl")
 include("symmetry.jl")
+include("flip.jl")
 
 include("compute_functions.jl")
 
