@@ -39,17 +39,30 @@ FAILING_TASKS = [
 ]
 
 using burpl: solve_and_check
+using Base.Iterators: flatten
+using Base.Threads: @spawn
 
 @testset "Full tasks" begin
-    @testset "run task $fname" for fname in TASKS
+    futures = Dict()
+    @info("Numthreads: $(Threads.nthreads())")
+    asyncmap(flatten([TASKS, UNSOLVED_TASKS]), ntasks = Threads.nthreads()) do fname
         @time begin
-            @test solve_and_check(fname)
+            fut = @spawn solve_and_check(fname)
+            futures[fname] = fut
+            timedwait(() -> istaskdone(fut), 300)
+            if !istaskdone(fut)
+                schedule(fut, ErrorException("Timeout error"), error = true)
+        end
         end
     end
 
+    @testset "run task $fname" for fname in TASKS
+        fut = futures[fname]
+        @test istaskdone(fut) && fetch(fut)
+    end
+
     @testset "run task $fname" for fname in UNSOLVED_TASKS
-        @time begin
-            @test !solve_and_check(fname)
-        end
+        fut = futures[fname]
+        @test istaskdone(fut) && !fetch(fut)
     end
 end

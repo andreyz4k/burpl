@@ -18,6 +18,8 @@ jobs:
       - uses: julia-actions/julia-buildpkg@latest
       - name: Run Julia package tests
         uses: julia-actions/julia-runtest@latest
+        with:
+          prefix: JULIA_NUM_THREADS=$(getconf _NPROCESSORS_ONLN)
       - uses: julia-actions/julia-processcoverage@v1
         with:
           directories: src
