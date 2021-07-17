@@ -1,6 +1,7 @@
 
 
 using burpl: solve_and_check
+using Base.Threads: @spawn
 
 skip = [
     "../data/training/2dd70a9a.json",
@@ -14,12 +15,22 @@ skip = [
 @testset "Run all train tasks" begin
     return
     files = readdir("../data/training", join = true)
-    @testset "test file $fname" for fname in files[301:400]
-        if in(fname, skip)
-            continue
-        end
+
+    futures = Dict()
+    @info("Numthreads: $(Threads.nthreads())")
+    asyncmap(files, ntasks = Threads.nthreads()) do fname
         @time begin
-            @test solve_and_check(fname)
+            fut = @spawn solve_and_check(fname)
+            futures[fname] = fut
+            timedwait(() -> istaskdone(fut), 300)
+            if !istaskdone(fut)
+                schedule(fut, ErrorException("Timeout error"), error = true)
         end
+        end
+    end
+
+    @testset "run task $fname" for fname in files
+        fut = futures[fname]
+        @test istaskdone(fut) && fetch(fut)
     end
 end
