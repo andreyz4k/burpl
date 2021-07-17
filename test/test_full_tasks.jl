@@ -41,6 +41,8 @@ FAILING_TASKS = [
 using burpl: solve_and_check
 using Base.Iterators: flatten
 using Base.Threads: @spawn
+using GitHubActions: set_env
+using Test: Pass
 
 @testset "Full tasks" begin
     futures = Dict()
@@ -52,17 +54,24 @@ using Base.Threads: @spawn
             timedwait(() -> istaskdone(fut), 300)
             if !istaskdone(fut)
                 schedule(fut, ErrorException("Timeout error"), error = true)
-        end
+            end
         end
     end
 
+    success_count = 0
+
     @testset "run task $fname" for fname in TASKS
         fut = futures[fname]
-        @test istaskdone(fut) && fetch(fut)
+        test_result = @test istaskdone(fut) && fetch(fut)
+        if isa(test_result, Pass)
+            success_count += 1
+        end
     end
 
     @testset "run task $fname" for fname in UNSOLVED_TASKS
         fut = futures[fname]
         @test istaskdone(fut) && !fetch(fut)
     end
+    @info("Success count $success_count")
+    get(ENV, "GITHUB_ACTIONS", "false") == "true" && set_env("TRAIN_SOLVES", success_count)
 end

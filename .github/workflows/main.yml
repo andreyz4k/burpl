@@ -27,3 +27,13 @@ jobs:
         with:
           file: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
+      - if: ${{ github.ref == 'refs/heads/master' }}
+        name: Create the Badge
+        uses: schneegans/dynamic-badges-action@v1.0.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 26f1160aa330772a6c91c59bb5de7a4c
+          filename: burlp_train_solves.json
+          label: Train
+          message: ${{ env.TRAIN_SOLVES }}
+          color: green
