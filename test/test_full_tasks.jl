@@ -53,7 +53,11 @@ using Test: Pass
             futures[fname] = fut
             timedwait(() -> istaskdone(fut), 300)
             if !istaskdone(fut)
-                schedule(fut, ErrorException("Timeout error"), error = true)
+                try
+                    schedule(fut, ErrorException("Timeout error"), error = true)
+                catch ex
+                    @warn(ex)
+                end
             end
         end
     end

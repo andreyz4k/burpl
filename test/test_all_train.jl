@@ -24,8 +24,12 @@ skip = [
             futures[fname] = fut
             timedwait(() -> istaskdone(fut), 300)
             if !istaskdone(fut)
-                schedule(fut, ErrorException("Timeout error"), error = true)
-        end
+                try
+                    schedule(fut, ErrorException("Timeout error"), error = true)
+                catch ex
+                    @warn(ex)
+                end
+            end
         end
     end
 
