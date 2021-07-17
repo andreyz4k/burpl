@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/andreyz4k/burpl/actions/workflows/main.yml/badge.svg)](https://github.com/andreyz4k/burpl/actions/workflows/main.yml)
 [![codecov](https://codecov.io/gh/andreyz4k/burpl/branch/master/graph/badge.svg?token=KKB33V1XQ4)](https://codecov.io/gh/andreyz4k/burpl)
-[![Train solves](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/andreyz4k/26f1160aa330772a6c91c59bb5de7a4c/raw/burlp_train_solves.json)]
+![Train solves](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/andreyz4k/26f1160aa330772a6c91c59bb5de7a4c/raw/burlp_train_solves.json)
 
 
 An attempt to create a system that can solve problems from the [ARC](https://github.com/fchollet/ARC) benchmark.
