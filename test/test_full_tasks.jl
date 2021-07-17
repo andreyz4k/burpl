@@ -5,6 +5,8 @@ TASKS = [
     "../data/training/1cf80156.json",
     "../data/training/25ff71a9.json",
     "../data/training/39a8645d.json",
+    "../data/training/3af2c5a8.json",
+    "../data/training/3c9b0459.json",
     "../data/training/496994bd.json",
     "../data/training/4c4377d9.json",
     "../data/training/5582e5ca.json",
@@ -66,7 +68,7 @@ using Test: Pass
 
     @testset "run task $fname" for fname in TASKS
         fut = futures[fname]
-        test_result = @test istaskdone(fut) && fetch(fut)
+        test_result = @test !istaskfailed(fut) && fetch(fut)
         if isa(test_result, Pass)
             success_count += 1
         end
@@ -74,7 +76,7 @@ using Test: Pass
 
     @testset "run task $fname" for fname in UNSOLVED_TASKS
         fut = futures[fname]
-        @test istaskdone(fut) && !fetch(fut)
+        @test !istaskfailed(fut) && !fetch(fut)
     end
     @info("Success count $success_count")
     get(ENV, "GITHUB_ACTIONS", "false") == "true" && set_env("TRAIN_SOLVES", success_count)

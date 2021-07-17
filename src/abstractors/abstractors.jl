@@ -243,11 +243,11 @@ using ..ObjectPrior: Object
 
 _propagate_object_shape(value::Any) = value
 _propagate_object_shape(value::Object) = ObjectShape(value)
-_propagate_object_shape(value::Matcher{Object}) = throw("Incorrect value " * value)
-_propagate_object_shape(value::ObjectShape) = throw("Double shape " * value)
+_propagate_object_shape(value::Matcher{Object}) = Base.error("Incorrect value $value")
+_propagate_object_shape(value::ObjectShape) = Base.error("Double shape $value")
 _propagate_object_shape(value::Set{Object}) = ObjectsGroup(value)
 _propagate_object_shape(value::Matcher{Set{Object}}) = ObjectsGroup(value)
-_propagate_object_shape(::ObjectsGroup) = throw("Double shape" * value)
+_propagate_object_shape(::ObjectsGroup) = Base.error("Double shape $value")
 _propagate_object_shape(value::Either) =
     Either([Option(_propagate_object_shape(option.value), option.option_hash) for option in value.options])
 
