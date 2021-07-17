@@ -27,6 +27,7 @@ TASKS = [
 ]
 
 UNSOLVED_TASKS = [
+    "../data/training/23b5c85d.json",
     "../data/training/5521c0d9.json",
 ]
 

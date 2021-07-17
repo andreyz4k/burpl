@@ -21,7 +21,8 @@ using .Abstractors:
     SeparateAxis,
     VerticalSymmetry,
     HorisontalSymmetry,
-    UniteInRect
+    UniteInRect,
+    GetArea
 
 using .FindSolution: get_taskdef
 
@@ -75,6 +76,24 @@ using .FindSolution: get_taskdef
             (GetPosition(), "output|bgr_grid|spatial_objects", false),
             (CountObjects(), "input|bgr_grid|spatial_objects|grouped", true),
             (GroupMin(), "input|bgr_grid|spatial_objects|grouped|length", true),
+        ]
+        solution = create_solution(task_info["train"], operations)
+        @test test_solution(solution, task_info["test"])
+    end
+
+    @testset "23b5c85d" begin
+        fname = "../data/training/23b5c85d.json"
+        task_info = get_taskdef(fname)
+        operations = [
+            (BackgroundColor(), "input", true),
+            (SolidObjects(), "output", false),
+            (UnwrapSingleList(), "output|spatial_objects", false),
+            (GetPosition(), "output|spatial_objects|single_value", false),
+            (SolidObjects(), "input|bgr_grid", true),
+            (GroupObjectsByColor(), "input|bgr_grid|spatial_objects", true),
+            (UnwrapSingleList(), "input|bgr_grid|spatial_objects|grouped", true),
+            (GetArea(), "input|bgr_grid|spatial_objects|grouped|single_value", true),
+            (GroupMin(), "input|bgr_grid|spatial_objects|grouped|single_value|obj_area", true),
         ]
         solution = create_solution(task_info["train"], operations)
         @test test_solution(solution, task_info["test"])

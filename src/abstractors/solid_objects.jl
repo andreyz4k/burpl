@@ -7,11 +7,9 @@ priority(::SolidObjects) = 6
 
 using ..ObjectPrior: find_objects, draw_object!, get_color
 
-init_create_check_data(::SolidObjects, key, solution) = Dict("effective" => false)
 
 function check_task_value(::SolidObjects, value::AbstractArray{Int,2}, data, aux_values)
-    data["effective"] |= length(unique(value)) > 1
-    return true
+    return any(v != -1 for v in value)
 end
 
 
