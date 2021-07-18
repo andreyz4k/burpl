@@ -70,37 +70,26 @@ end
 @testset "Full tasks" begin
     @info("Numthreads: $(Threads.nthreads())")
     taskref = Ref{Task}()
-    chnl = Channel(taskref=taskref) do ch
-        run_tasks(ch, TASKS)
+    chnl = Channel(10, taskref=taskref) do ch
+        run_tasks(ch, flatten([TASKS, UNSOLVED_TASKS]))
     end
 
     success_count = 0
 
     try
-        for _ in 1:length(TASKS)
+        for _ in 1:length(TASKS) + length(UNSOLVED_TASKS)
             (fname, fut) = take!(chnl)
-            @testset "run task $fname" begin
-                test_result = @test istaskdone(fut) && !istaskfailed(fut) && fetch(fut)
-                if isa(test_result, Pass)
-                    success_count += 1
+            if in(fname, TASKS)
+                @testset "run task $fname" begin
+                    test_result = @test fetch(fut)
+                    if isa(test_result, Pass)
+                        success_count += 1
+                    end
                 end
-            end
-        end
-    catch ex
-        schedule(taskref, ex, error=true)
-        rethrow()
-    end
-
-
-    chnl = Channel(taskref=taskref) do ch
-        run_tasks(ch, UNSOLVED_TASKS)
-    end
-
-    try
-        for _ in 1:length(UNSOLVED_TASKS)
-            (fname, fut) = take!(chnl)
-            @testset "run task $fname" begin
-                @test istaskdone(fut) && !istaskfailed(fut) && !fetch(fut)
+            else
+                @testset "run task $fname" begin
+                    @test !fetch(fut)
+                end
             end
         end
     catch ex

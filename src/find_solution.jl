@@ -213,22 +213,30 @@ end
 
 function solve_task(task_info::Dict, debug::Bool, early_stop = true::Bool)
     answers = []
-    for solution in generate_solutions(task_info["train"], debug)
-        answer = [solution(task["input"]) for task in task_info["test"]]
-        if !in(answer, answers)
-            @info("found")
-            @info(solution)
-            push!(answers, answer)
-        end
-        if length(answers) >= 3
-            break
-        end
-        if early_stop
-            if all(
-                compare_grids(target["output"], out_grid) == 0 for (out_grid, target) in zip(answer, task_info["test"])
-            )
+    try
+        for solution in generate_solutions(task_info["train"], debug)
+            answer = [solution(task["input"]) for task in task_info["test"]]
+            if !in(answer, answers)
+                @info("found")
+                @info(solution)
+                push!(answers, answer)
+            end
+            if length(answers) >= 3
                 break
             end
+            if early_stop
+                if all(
+                    compare_grids(target["output"], out_grid) == 0 for (out_grid, target) in zip(answer, task_info["test"])
+                )
+                    break
+                end
+            end
+        end
+    catch ex
+        if isa(ex, ErrorException) && ex.msg == "Timeout error"
+            @warn "Task timeouted"
+        else
+            rethrow()
         end
     end
     return answers

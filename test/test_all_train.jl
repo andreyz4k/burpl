@@ -12,16 +12,10 @@ skip = [
     "../data/training/e26a3af2.json",
 ]
 
-@testset "Run all train tasks" begin
-    return
-    files = readdir("../data/training", join = true)
-
-    futures = Dict()
-    @info("Numthreads: $(Threads.nthreads())")
-    asyncmap(files, ntasks = Threads.nthreads()) do fname
+function run_tasks(ch, tasks)
+    asyncmap(tasks, ntasks = Threads.nthreads()) do fname
         @time begin
             fut = @spawn solve_and_check(fname)
-            futures[fname] = fut
             timedwait(() -> istaskdone(fut), 300)
             if !istaskdone(fut)
                 try
@@ -30,11 +24,33 @@ skip = [
                     @warn(ex)
                 end
             end
+            put!(ch, (fname, fut))
         end
     end
+end
 
-    @testset "run task $fname" for fname in files
-        fut = futures[fname]
-        @test istaskdone(fut) && fetch(fut)
+@testset "Run all train tasks" begin
+    return
+    files = readdir("../data/training", join = true)[1:100]
+
+    @info("Numthreads: $(Threads.nthreads())")
+    taskref = Ref{Task}()
+    chnl = Channel(10, taskref=taskref) do ch
+        run_tasks(ch, files)
+    end
+
+    try
+        for _ in 1:length(files)
+            if istaskdone(taskref[]) && !isready(chnl)
+                break
+            end
+            (fname, fut) = take!(chnl)
+            @testset "run task $fname" begin
+                @test fetch(fut)
+            end
+        end
+    catch ex
+        schedule(taskref, ex, error=true)
+        rethrow()
     end
 end
