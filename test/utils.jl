@@ -98,6 +98,7 @@ LogFilterTestSet(desc; log_file = nothing, wrap = DefaultTestSet) = LogFilterTes
 record(ts::LogFilterTestSet, t) = record(ts.wrapped, t)
 
 using Serialization: serialize, deserialize
+using Base: @logmsg
 
 function record(ts::LogFilterTestSet, t::Union{Fail,Error})
     println("\n=====================================================")
