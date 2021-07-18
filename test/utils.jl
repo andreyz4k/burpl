@@ -92,18 +92,31 @@ mutable struct LogFilterTestSet{T<:AbstractTestSet} <: AbstractTestSet
     log_file::String
     LogFilterTestSet{T}(desc, log_file) where {T} = new(T(desc), desc, log_file)
 end
-LogFilterTestSet(desc; log_file = nothing, wrap = DefaultTestSet) =
-    LogFilterTestSet{wrap}(desc, log_file)
+LogFilterTestSet(desc; log_file = nothing, wrap = DefaultTestSet) = LogFilterTestSet{wrap}(desc, log_file)
 
 
 record(ts::LogFilterTestSet, t) = record(ts.wrapped, t)
+
+using Serialization: serialize, deserialize
 
 function record(ts::LogFilterTestSet, t::Union{Fail,Error})
     println("\n=====================================================")
     printstyled(ts.description, "\n"; color = :white)
     printstyled("Captured log output:\n"; color = :white)
-    for line in eachline(ts.log_file)
-        println(line)
+    open(ts.log_file) do io
+        while !eof(io)
+            log_args = deserialize(io)
+            @logmsg(
+                log_args.level,
+                log_args.message,
+                log_args.kwargs...,
+                _module = log_args._module,
+                _group = log_args.group,
+                _id = log_args.id,
+                _file = log_args.file,
+                _line = log_args.line
+            )
+        end
     end
     record(ts.wrapped, t)
 end
@@ -111,4 +124,8 @@ end
 
 function finish(ts::LogFilterTestSet)
     finish(ts.wrapped)
+end
+
+function dump_log_event(io, log_args)
+    serialize(io, log_args)
 end

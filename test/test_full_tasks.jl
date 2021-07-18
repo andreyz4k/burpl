@@ -1,4 +1,4 @@
-using Base: with_logger, SimpleLogger
+using Base: with_logger
 
 TASKS = [
     "../data/training/0a938d79.json",
@@ -50,12 +50,13 @@ using Base.Iterators: flatten
 using Base.Threads: @spawn
 using GitHubActions: set_env
 using Test: Pass
+using LoggingExtras: FormatLogger
 
 
 function run_tasks(ch, tasks)
     asyncmap(tasks, ntasks = Threads.nthreads()) do fname
         (log_file, log_io) = mktemp()
-        with_logger(SimpleLogger(log_io)) do
+        with_logger(FormatLogger(dump_log_event, log_io)) do
             @time begin
                 fut = @spawn solve_and_check(fname)
                 timedwait(() -> istaskdone(fut), 300)
