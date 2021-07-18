@@ -1,5 +1,5 @@
 
-using ..ObjectPrior: Object
+using ..ObjectPrior: Object, draw_object!
 
 struct ObjectShape{Object} <: Matcher{Object}
     object::Object
@@ -42,32 +42,30 @@ _common_value(::Matcher, ::ObjectShape) = nothing
 _common_value(::Any, ::ObjectsGroup) = nothing
 
 function _common_value(val1::Set{Object}, val2::ObjectsGroup)
-    val2 = unpack_value(val2.objects)[1]
-
-    function _inner(val1, val2, stride)
-        if isempty(val1) && !isempty(val2)
-            return nothing
-        end
-        for v1 in val1
-            found = false
-            for v2 in val2
-                if v1.shape == v2.shape
-                    str = isnothing(stride) ? v2.position .- v1.position : stride
-                    if v1.position .+ str == v2.position &&
-                       !isnothing(_inner(setdiff(val1, [v1]), setdiff(val2, [v2]), str))
-                        found = true
-                        break
-                    end
-                end
-            end
-            if !found
-                return nothing
-            end
-        end
-        return val1
+    grid_1_min = reduce((a, b) -> min.(a, b), (obj.position for obj in val1), init = (100, 100))
+    grid_1_size =
+        reduce((a, b) -> max.(a, b), (obj.position .+ size(obj.shape) .- grid_1_min for obj in val1), init = (0, 0))
+    grid_1 = fill(-1, grid_1_size)
+    for obj in val1
+        draw_object!(grid_1, Object(obj.shape, obj.position .- grid_1_min .+ (1, 1)))
     end
 
-    return _inner(val1, val2, nothing)
+    for unpacked in unpack_value(val2.objects)
+        grid_2_min = reduce((a, b) -> min.(a, b), (obj.position for obj in unpacked), init = (100, 100))
+        grid_2_size = reduce(
+            (a, b) -> max.(a, b),
+            (obj.position .+ size(obj.shape) .- grid_2_min for obj in unpacked),
+            init = (0, 0),
+        )
+        grid_2 = fill(-1, grid_2_size)
+        for obj in unpacked
+            draw_object!(grid_2, Object(obj.shape, obj.position .- grid_2_min .+ (1, 1)))
+        end
+        if grid_1 == grid_2
+            return val1
+        end
+    end
+    nothing
 end
 
 function _common_value(val1::ObjectsGroup, val2::ObjectsGroup)

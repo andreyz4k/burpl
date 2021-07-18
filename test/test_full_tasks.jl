@@ -50,13 +50,10 @@ using Base.Threads: @spawn
 using GitHubActions: set_env
 using Test: Pass
 
-@testset "Full tasks" begin
-    futures = Dict()
-    @info("Numthreads: $(Threads.nthreads())")
-    asyncmap(flatten([TASKS, UNSOLVED_TASKS]), ntasks = Threads.nthreads()) do fname
+function run_tasks(ch, tasks)
+    asyncmap(tasks, ntasks = Threads.nthreads()) do fname
         @time begin
             fut = @spawn solve_and_check(fname)
-            futures[fname] = fut
             timedwait(() -> istaskdone(fut), 300)
             if !istaskdone(fut)
                 try
@@ -65,23 +62,52 @@ using Test: Pass
                     @warn(ex)
                 end
             end
+            put!(ch, (fname, fut))
         end
+    end
+end
+
+@testset "Full tasks" begin
+    @info("Numthreads: $(Threads.nthreads())")
+    taskref = Ref{Task}()
+    chnl = Channel(taskref=taskref) do ch
+        run_tasks(ch, TASKS)
     end
 
     success_count = 0
 
-    @testset "run task $fname" for fname in TASKS
-        fut = futures[fname]
-        test_result = @test !istaskfailed(fut) && fetch(fut)
-        if isa(test_result, Pass)
-            success_count += 1
+    try
+        for _ in 1:length(TASKS)
+            (fname, fut) = take!(chnl)
+            @testset "run task $fname" begin
+                test_result = @test istaskdone(fut) && !istaskfailed(fut) && fetch(fut)
+                if isa(test_result, Pass)
+                    success_count += 1
+                end
+            end
         end
+    catch ex
+        schedule(taskref, ex, error=true)
+        rethrow()
     end
 
-    @testset "run task $fname" for fname in UNSOLVED_TASKS
-        fut = futures[fname]
-        @test !istaskfailed(fut) && !fetch(fut)
+
+    chnl = Channel(taskref=taskref) do ch
+        run_tasks(ch, UNSOLVED_TASKS)
     end
+
+    try
+        for _ in 1:length(UNSOLVED_TASKS)
+            (fname, fut) = take!(chnl)
+            @testset "run task $fname" begin
+                @test istaskdone(fut) && !istaskfailed(fut) && !fetch(fut)
+            end
+        end
+    catch ex
+        schedule(taskref, ex, error=true)
+        rethrow()
+    end
+
     @info("Success count $success_count")
     get(ENV, "GITHUB_ACTIONS", "false") == "true" && set_env("TRAIN_SOLVES", success_count)
 end
