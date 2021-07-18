@@ -8,6 +8,8 @@ abs_keys(::CompactSimilarObjects) = ["common_shape", "positions"]
 
 init_create_check_data(::CompactSimilarObjects, key, solution) = Dict("effective" => false)
 
+wrap_check_task_value(cls::CompactSimilarObjects, value::ObjectsGroup, data, aux_values) = false
+
 function check_task_value(::CompactSimilarObjects, value::AbstractSet{Object}, data, aux_values)
     data["effective"] |= length(value) > 1
     if isempty(value)
