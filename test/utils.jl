@@ -4,6 +4,9 @@ using .Operations: Operation, Project
 using .DataTransformers: match_fields
 using .Abstractors: create
 using .Taskdata: TaskData
+using Test: AbstractTestSet, Error, Fail, DefaultTestSet
+
+import Test: record, finish
 
 make_sample_taskdata(len) = fill(Dict("input" => Array{Int}(undef, 0, 0), "output" => Array{Int}(undef, 0, 0)), len)
 
@@ -79,4 +82,33 @@ using .FindSolution: validate_results
 function test_solution(solution, test_data)
     answer = [solution(task["input"]) for task in test_data]
     validate_results(test_data, [answer])
+end
+
+
+
+mutable struct LogFilterTestSet{T<:AbstractTestSet} <: AbstractTestSet
+    wrapped::T
+    description::String
+    log_file::String
+    LogFilterTestSet{T}(desc, log_file) where {T} = new(T(desc), desc, log_file)
+end
+LogFilterTestSet(desc; log_file = nothing, wrap = DefaultTestSet) =
+    LogFilterTestSet{wrap}(desc, log_file)
+
+
+record(ts::LogFilterTestSet, t) = record(ts.wrapped, t)
+
+function record(ts::LogFilterTestSet, t::Union{Fail,Error})
+    println("\n=====================================================")
+    printstyled(ts.description, "\n"; color = :white)
+    printstyled("Captured log output:\n"; color = :white)
+    for line in eachline(ts.log_file)
+        println(line)
+    end
+    record(ts.wrapped, t)
+end
+
+
+function finish(ts::LogFilterTestSet)
+    finish(ts.wrapped)
 end
