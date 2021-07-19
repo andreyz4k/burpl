@@ -38,6 +38,8 @@ function match_fields(solution::Solution)
     _match_fields(solution::Solution, Set())
 end
 
+using ..PatternMatching: options_count
+
 function _match_fields(solution::Solution, matched_keys)
     if isempty(solution.unfilled_fields)
         return [solution]
@@ -49,7 +51,7 @@ function _match_fields(solution::Solution, matched_keys)
         try
             matched_results = Dict()
             valid_solutions_count =
-                prod(length(unpack_value(task[key])) for task in solution.taskdata if haskey(task, key))
+                prod(options_count(task[key]) for task in solution.taskdata if haskey(task, key))
             iter = find_matched_fields(key, solution)
             state = ()
             counter = 0

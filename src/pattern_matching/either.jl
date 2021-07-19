@@ -84,6 +84,7 @@ _check_match(val1::Matcher, val2::Either) = invoke(_check_match, Tuple{Any,Eithe
 
 
 unpack_value(value::Either) = vcat([unpack_value(option.value) for option in value.options]...)
+options_count(value::Either) = sum(options_count(option.value) for option in value.options)
 
 unwrap_matcher(value::Either) = [option.value for option in value.options]
 

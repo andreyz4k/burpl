@@ -86,6 +86,11 @@ function unpack_value(value::AbstractVector)
     out
 end
 
+options_count(::Any) = 1
+options_count(value::Vector) = prod(options_count(v) for v in value)
+options_count(value::Dict) = prod(options_count(v) for v in values(value))
+
+
 import ..Complexity: get_complexity
 using Statistics: mean
 

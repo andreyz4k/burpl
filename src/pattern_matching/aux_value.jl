@@ -18,6 +18,7 @@ _common_value(val1::T, val2::AuxValue{T}) where {T} =
 check_match(::AuxValue, ::Any) = false
 
 unpack_value(p::AuxValue) = isa(p.value, Matcher) ? [] : unpack_value(p.value)
+options_count(p::AuxValue) = isa(p.value, Matcher) ? 0 : options_count(p.value)
 
 unwrap_matcher(p::AuxValue) = [p.value]
 

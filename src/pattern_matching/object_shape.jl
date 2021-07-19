@@ -96,12 +96,14 @@ _check_match(val1::SubSet, ::ObjectsGroup) = false
 _check_match(val1::ObjectsGroup, val2::SubSet) = check_match(val1.objects, val2)
 
 unpack_value(p::ObjectShape) = unpack_value(p.object)
+options_count(p::ObjectShape) = options_count(p.object)
 
 unwrap_matcher(p::ObjectShape) = [p.object]
 
 apply_func(value::ObjectShape, func, param) = apply_func(value.object, func, param)
 
 unpack_value(p::ObjectsGroup) = unpack_value(p.objects)
+options_count(p::ObjectsGroup) = options_count(p.objects)
 
 unwrap_matcher(p::ObjectsGroup) = [p.objects]
 

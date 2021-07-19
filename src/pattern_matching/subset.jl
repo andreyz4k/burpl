@@ -117,6 +117,7 @@ function _check_match(val1::Vector{T}, val2::SubSet{Set{T}}) where {T}
 end
 
 unpack_value(p::SubSet) = unpack_value([v for val in p.value for v in val])
+options_count(p::SubSet) = prod(options_count(v) for val in p.value for v in val)
 
 unwrap_matcher(p::SubSet) = [Set(v for val in p.value for v in val)]
 
