@@ -401,6 +401,7 @@ include("symmetry.jl")
 include("flip.jl")
 include("scale.jl")
 include("get_color.jl")
+include("single_value_dict.jl")
 
 include("compute_functions.jl")
 
