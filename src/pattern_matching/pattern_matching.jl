@@ -100,6 +100,7 @@ get_complexity(value::Matcher)::Float64 = mean(get_complexity, unwrap_matcher(va
 include("either.jl")
 include("subset.jl")
 include("object_shape.jl")
+include("object_mask.jl")
 include("aux_value.jl")
 include("update_value.jl")
 

@@ -100,8 +100,13 @@ fetch_input_values(p::Abstractor, task_data) =
 
 using DataStructures: DefaultDict
 
-call_wrappers() =
-    [wrap_func_call_dict_value, wrap_func_call_either_value, wrap_func_call_shape_value, wrap_func_call_obj_group_value]
+call_wrappers() = [
+    wrap_func_call_dict_value,
+    wrap_func_call_either_value,
+    wrap_func_call_shape_value,
+    wrap_func_call_obj_group_value,
+    wrap_func_call_mask_value,
+]
 
 function wrap_func_call_value_root(p::Abstractor, func::Function, source_values...)
     wrap_func_call_value(p, func, call_wrappers(), source_values...)
@@ -238,7 +243,7 @@ function wrap_func_call_either_value(
 end
 
 
-using ..PatternMatching: ObjectShape, ObjectsGroup, Matcher
+using ..PatternMatching: ObjectShape, ObjectsGroup, Matcher, ObjectMask
 using ..ObjectPrior: Object
 
 _propagate_object_shape(value::Any) = value
@@ -278,6 +283,32 @@ function wrap_func_call_obj_group_value(
         unwrapped_values = [isa(v, ObjectsGroup) ? v.objects : v for v in source_values]
         for (key, value) in wrap_func_call_value_root(p, func, unwrapped_values...)
             outputs[key] = _propagate_object_shape(value)
+        end
+        return outputs
+    end
+    wrap_func_call_value(p, func, wrappers, source_values...)
+end
+
+
+
+_propagate_object_mask(value::Any) = value
+_propagate_object_mask(value::Object) = ObjectMask(value)
+_propagate_object_mask(value::Matcher{Object}) = Base.error("Incorrect value $value")
+_propagate_object_mask(value::ObjectMask) = Base.error("Double mask $value")
+# _propagate_object_mask(value::Set{Object}) = ObjectsGroup(value)
+# _propagate_object_mask(value::Matcher{Set{Object}}) = ObjectsGroup(value)
+_propagate_object_mask(value::Either) =
+    Either([Option(_propagate_object_mask(option.value), option.option_hash) for option in value.options])
+
+function wrap_func_call_mask_value(p::Abstractor, func::Function, wrappers::AbstractVector{Function}, source_values...)
+    if any(isa(v, ObjectMask) || isa(v, AbstractVector{ObjectMask}) for v in source_values)
+        outputs = Dict()
+        unwrapped_values = [
+            isa(v, ObjectMask) ? v.object : isa(v, AbstractVector{ObjectMask}) ? [i.object for i in v] : v for
+            v in source_values
+        ]
+        for (key, value) in wrap_func_call_value_root(p, func, unwrapped_values...)
+            outputs[key] = _propagate_object_mask(value)
         end
         return outputs
     end
@@ -369,6 +400,7 @@ include("separate_axis.jl")
 include("symmetry.jl")
 include("flip.jl")
 include("scale.jl")
+include("get_color.jl")
 
 include("compute_functions.jl")
 
