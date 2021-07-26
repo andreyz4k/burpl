@@ -15,7 +15,7 @@ function _common_value(val1::Object, val2::ObjectMask)
     if val1.position != val2.object.position || size(val1.shape) != size(val2.object.shape)
         return nothing
     end
-    if all(v1 == v2 == -1 || (v1 != -1 && v2 != -1) for (v1, v2) in zip(val1.shape, val2.object.shape))
+    if all((v1 == v2 && v2 == -1) || (v1 != -1 && v2 != -1) for (v1, v2) in zip(val1.shape, val2.object.shape))
         return val1
     end
     return nothing
@@ -25,7 +25,7 @@ function _common_value(val1::ObjectMask, val2::ObjectMask)
     if val1.object.position != val2.object.position || size(val1.object.shape) != size(val2.object.shape)
         return nothing
     end
-    if all(v1 == v2 == -1 || (v1 != -1 && v2 != -1) for (v1, v2) in zip(val1.object.shape, val2.object.shape))
+    if all((v1 == v2 && v2 == -1) || (v1 != -1 && v2 != -1) for (v1, v2) in zip(val1.object.shape, val2.object.shape))
         return val1
     end
     return nothing
@@ -42,11 +42,7 @@ _check_match(::Any, ::ObjectMask) = false
 _check_match(val1::Object, val2::ObjectMask) =
     val1.position == val2.object.position &&
     size(val1.shape) == size(val2.object.shape) &&
-    all(v1 == v2 == -1 || (v1 != -1 && v2 != -1) for (v1, v2) in zip(val1.shape, val2.object.shape))
-
-_check_match(val1::ObjectMask, val2) = check_match(val1.object, val2)
-_check_match(val1::ObjectMask, val2::ObjectMask) = check_match(val1.object, val2)
-_check_match(val1::ObjectMask, val2::Either) = check_match(val1.object, val2)
+    all((v1 == v2 && v2 == -1) || (v1 != -1 && v2 != -1) for (v1, v2) in zip(val1.shape, val2.object.shape))
 
 unpack_value(p::ObjectMask) = unpack_value(p.object)
 options_count(p::ObjectMask) = options_count(p.object)

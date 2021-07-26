@@ -5,7 +5,7 @@ struct UnpackDict <: AbstractorClass end
 abs_keys(::UnpackDict) = ["dict_values"]
 _key_for_group(cls::UnpackDict, key, group) = key * "|" * abs_keys(cls)[1] * "|$group"
 abs_keys(cls::UnpackDict, key::String, groups) = [_key_for_group(cls, key, group) for group in groups]
-priority(::UnpackDict) = 14
+priority(::UnpackDict) = 10
 
 
 init_create_check_data(::UnpackDict, key, solution) = Dict{Any,Any}("keys" => nothing)
