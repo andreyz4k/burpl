@@ -36,7 +36,17 @@ struct Abstractor{T<:AbstractorClass} <: Operation
     input_keys::Vector{String}
     output_keys::Vector{String}
     aux_keys::Vector{String}
+    params::Dict
 end
+
+Abstractor(
+    cls::AbstractorClass,
+    to_abstract::Bool,
+    from_output::Bool,
+    input_keys::Vector{String},
+    output_keys::Vector{String},
+    aux_keys::Vector{String},
+) = Abstractor(cls, to_abstract, from_output, input_keys, output_keys, aux_keys, Dict())
 
 function Abstractor(
     cls::AbstractorClass,
@@ -402,6 +412,7 @@ include("flip.jl")
 include("scale.jl")
 include("get_color.jl")
 include("single_value_dict.jl")
+include("unpack_dict.jl")
 
 include("compute_functions.jl")
 
