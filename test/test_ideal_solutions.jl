@@ -22,7 +22,10 @@ using .Abstractors:
     VerticalSymmetry,
     HorisontalSymmetry,
     UniteInRect,
-    GetArea
+    GetArea,
+    UnpackDict,
+    GetColor,
+    SingleValueDict
 
 using .FindSolution: get_taskdef
 
@@ -158,6 +161,43 @@ using .FindSolution: get_taskdef
             (GetPosition(), "input|bgr_grid|spatial_objects|grouped|single_value", true),
             (GetSize(), "input|bgr_grid|spatial_objects|grouped|single_value", true),
             (SeparateAxis(), "input|bgr_grid|spatial_objects|grouped|single_value|obj_size", true),
+        ]
+        solution = create_solution(task_info["train"], operations)
+        @test test_solution(solution, task_info["test"])
+    end
+
+    @testset "ea32f347" begin
+        fname = "../data/training/ea32f347.json"
+        task_info = get_taskdef(fname)
+        operations = [
+            (BackgroundColor(), "input", true),
+            (BackgroundColor(), "output", false),
+            (SolidObjects(), "output|bgr_grid", false),
+            (SolidObjects(), "input|bgr_grid", true),
+            (GroupObjectsByColor(), "output|bgr_grid|spatial_objects", false),
+            (UnwrapSingleList(), "output|bgr_grid|spatial_objects|grouped", false),
+            (UnpackDict(), "output|bgr_grid|spatial_objects|grouped|single_value", false),
+            (GetColor(), "output|bgr_grid|spatial_objects|grouped|single_value|dict_values|Color(1)", false),
+            (SingleValueDict(), "input|bgr_grid|spatial_objects", true),
+            (GetArea(), "input|bgr_grid|spatial_objects|values_dict", true),
+            (GroupMax(), "input|bgr_grid|spatial_objects|values_dict|obj_area", true),
+            (GetColor(), "output|bgr_grid|spatial_objects|grouped|single_value|dict_values|Color(2)", false),
+            (
+                GetArea(),
+                "output|bgr_grid|spatial_objects|grouped|single_value|dict_values|Color(1)|object_mask|rejected",
+                true,
+            ),
+            (
+                GroupMin(),
+                "output|bgr_grid|spatial_objects|grouped|single_value|dict_values|Color(1)|object_mask|rejected|obj_area",
+                true,
+            ),
+            (GetColor(), "output|bgr_grid|spatial_objects|grouped|single_value|dict_values|Color(4)", false),
+            (
+                GroupMax(),
+                "output|bgr_grid|spatial_objects|grouped|single_value|dict_values|Color(1)|object_mask|rejected|obj_area",
+                true,
+            ),
         ]
         solution = create_solution(task_info["train"], operations)
         @test test_solution(solution, task_info["test"])
