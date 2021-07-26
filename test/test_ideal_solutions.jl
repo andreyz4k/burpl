@@ -200,7 +200,6 @@ using .FindSolution: get_taskdef
             ),
         ]
         solution = create_solution(task_info["train"], operations)
-        @info(solution)
         @test test_solution(solution, task_info["test"])
     end
 
