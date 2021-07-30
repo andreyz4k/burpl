@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Debugger = "31a5f54b-26ea-5ae9-a837-f05ce5417438"
 GitHubActions = "6b79fd1a-b13a-48ab-b6b0-aaee1fee41df"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"

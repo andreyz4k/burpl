@@ -1,10 +1,12 @@
 module Runner
 using ..DataStructures: create_finder
+using ..Solve: solve
 
 function solve_task(task_info::Dict, debug::Bool, early_stop = true::Bool)
     answers = []
     solution_finder =
         create_finder(Dict("input" => task_info["train"]["input"]), Dict("output" => task_info["train"]["output"]))
+    solve(solution_finder)
     return answers
 end
 
