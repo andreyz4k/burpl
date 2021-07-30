@@ -5,6 +5,7 @@ module Solve
 using ..DataStructures: SolutionFinder
 using DataStructures
 using Base.Iterators: flatten
+using ..Abstractors: get_valid_abstractors_for_type, get_abstractor_priority
 
 function init_solve_loop(finder::SolutionFinder)
     queue = PriorityQueue()

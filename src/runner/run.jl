@@ -10,9 +10,9 @@ function solve_task(task_info::Dict, debug::Bool, early_stop = true::Bool)
     return answers
 end
 
-function validate_results(test_info::Vector, answers::Vector)::Bool
+function validate_results(test_info::Dict, answers::Vector)::Bool
     for answer in answers
-        if all(compare_grids(target["output"], out_grid) == 0 for (out_grid, target) in zip(answer, test_info))
+        if all(out_grid == target for (out_grid, target) in zip(answer, test_info["output"]))
             return true
         end
     end
