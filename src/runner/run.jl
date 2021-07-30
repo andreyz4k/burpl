@@ -1,6 +1,10 @@
+module Runner
+using ..DataStructures: create_finder
 
 function solve_task(task_info::Dict, debug::Bool, early_stop = true::Bool)
     answers = []
+    solution_finder =
+        create_finder(Dict("input" => task_info["train"]["input"]), Dict("output" => task_info["train"]["output"]))
     return answers
 end
 
@@ -15,10 +19,14 @@ end
 
 function convert_grids(taskdef)
     Dict(
-        "train" =>
-            [Dict("input" => hcat(task["input"]...), "output" => hcat(task["output"]...)) for task in taskdef["train"]],
-        "test" =>
-            [Dict("input" => hcat(task["input"]...), "output" => hcat(task["output"]...)) for task in taskdef["test"]],
+        "train" => Dict(
+            "input" => [hcat(task["input"]...) for task in taskdef["train"]],
+            "output" => [hcat(task["output"]...) for task in taskdef["train"]],
+        ),
+        "test" => Dict(
+            "input" => [hcat(task["input"]...) for task in taskdef["test"]],
+            "output" => [hcat(task["output"]...) for task in taskdef["test"]],
+        ),
     )
 end
 
@@ -34,3 +42,5 @@ function solve_and_check(fname::String; debug = false)::Bool
 end
 
 export solve_and_check
+
+end

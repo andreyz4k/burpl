@@ -1,6 +1,6 @@
 
 
-struct Entry{T}
-    type::T
+struct Entry
+    type::Type
     value
 end
