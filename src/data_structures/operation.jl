@@ -1,6 +1,7 @@
 
+abstract type AbstractOperation end
 
-struct Operation
+struct Operation <: AbstractOperation
     method
     input_keys::Vector
     output_keys::Vector

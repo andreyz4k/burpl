@@ -6,6 +6,7 @@ using ..DataStructures: SolutionFinder
 using DataStructures
 using Base.Iterators: flatten
 using ..Abstractors: get_valid_abstractors_for_type, get_abstractor_priority, try_apply_abstractor
+using ..PatternMatching: match_field
 
 function init_solve_loop(finder::SolutionFinder)
     queue = PriorityQueue()
@@ -29,6 +30,10 @@ function loop_iteration(queue, branch, key, abstractor)
     if isnothing(new_keys)
         return
     end
+    for key in new_keys
+        matching_operations = match_field(branch, key)
+    end
+    @info(branch)
 end
 
 function solve(finder)

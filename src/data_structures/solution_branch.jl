@@ -1,9 +1,9 @@
 
-struct SolutionBranch
+struct SolutionBranch <: AbstractDict{Any,Any}
     known_fields::Dict{Any,Entry}
     unknown_fields::Dict{Any,Entry}
     fill_percentages::Dict{Any,Float64}
-    operations::Vector{Operation}
+    operations::Vector{AbstractOperation}
     parent::Union{Nothing,SolutionBranch}
     children::Vector{SolutionBranch}
 end
@@ -53,3 +53,45 @@ Base.show(io::IO, branch::SolutionBranch) = print(
     ["\t\t$child,\n" for child in branch.children]...,
     "\t\t]\n)"
 )
+
+function Base.iterate(branch::SolutionBranch)
+    return iterate(branch, (1, nothing))
+end
+
+function Base.iterate(branch::SolutionBranch, state::Tuple{Int,Any})
+    br, internal_state = state
+    if br == 1
+        if isnothing(internal_state)
+            next = iterate(branch.unknown_fields)
+        else
+            next = iterate(branch.unknown_fields, internal_state)
+        end
+        if isnothing(next)
+            return iterate(branch, (2, nothing))
+        end
+        return next[1], (1, next[2])
+    elseif br == 2
+        if isnothing(internal_state)
+            next = iterate(branch.known_fields)
+        else
+            next = iterate(branch.known_fields, internal_state)
+        end
+        if isnothing(next)
+            return iterate(branch, (3, nothing))
+        end
+        return next[1], (2, next[2])
+    elseif !isnothing(branch.parent)
+        if isnothing(internal_state)
+            next = iterate(branch.parent)
+        else
+            next = iterate(branch.parent, internal_state)
+        end
+        if isnothing(next)
+            return nothing
+        end
+        if haskey(branch.unknown_fields, next[1][1]) || haskey(branch.known_fields, next[1][1])
+            return iterate(branch, (3, next[2]))
+        end
+        return next[1], (3, next[2])
+    end
+end
