@@ -1,7 +1,9 @@
 
 abstract type Abstractor end
 
-using ..DataStructures: Entry, Operation
+Base.show(io::IO, cls::Type{<:Abstractor}) = print(io, cls.name.name)
+
+using PartialFunctions
 
 function try_apply_abstractor(branch, key, abstractor)
     value = branch[key]
@@ -16,7 +18,7 @@ function try_apply_abstractor(branch, key, abstractor)
             push!(new_keys, out_key)
             branch.known_fields[out_key] = val
         end
-        push!(branch.operations, Operation((abstractor, to_abstract), [key], new_keys))
+        push!(branch.operations, Operation(to_abstract $ abstractor, [key], new_keys))
     else
         for (k, val) in abs_values
             new_key = "$key|$k"
@@ -24,7 +26,7 @@ function try_apply_abstractor(branch, key, abstractor)
             branch.unknown_fields[new_key] = val
             branch.fill_percentages[new_key] = 0.0
         end
-        push!(branch.operations, Operation((abstractor, from_abstract), new_keys, [key]))
+        push!(branch.operations, Operation(from_abstract $ abstractor, new_keys, [key]))
     end
     return new_keys
 end
