@@ -1,9 +1,10 @@
-export Complexity
 module Complexity
 
-using ..ObjectPrior: Object, Color
+using ..DataStructures: Entry
 
 get_complexity(v::Any)::Float64 = length(repr(v))
+
+get_complexity(entry::Entry)::Float64 = sum(get_complexity(v) for v in entry.values)
 
 get_complexity(::Int)::Float64 = 1
 
@@ -17,10 +18,6 @@ get_complexity(value::AbstractArray{Int,2})::Float64 =
     5 + sum(value .!= -1) * 8 * (0.5 + 0.5 * 0.95^(sum(value .!= -1) - 1))
 
 get_complexity(value::String)::Float64 = length(value)
-
-get_complexity(value::Object)::Float64 = get_complexity(value.shape) / 2 + get_complexity(value.position)
-
-get_complexity(value::Color)::Float64 = 1
 
 function get_complexity(value::AbstractDict)::Float64
     denominator = 0

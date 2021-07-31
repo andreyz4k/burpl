@@ -17,6 +17,7 @@ function match_field(branch, key)
         else
             push!(branch.operations, operation)
         end
+        mark_filled_field(branch, key)
     end
     return operations
 end

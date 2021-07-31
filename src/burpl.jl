@@ -1,6 +1,7 @@
 module burpl
 
 include("data_structures/data_structures.jl")
+include("complexity/complexity.jl")
 include("abstractors/abstractors.jl")
 include("operations/operations.jl")
 include("pattern_matching/pattern_matching.jl")
