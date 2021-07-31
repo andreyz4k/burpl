@@ -3,9 +3,9 @@ using Base.Iterators: flatten
 
 function match_field(branch, key)
     if haskey(branch.known_fields, key)
-        matchers = []
+        matchers = [find_exact_match]
     else
-        matchers = [find_const]
+        matchers = [find_const, find_exact_match]
     end
     operations = flatten(imap(matchers) do matcher
         matcher(branch, key)
@@ -18,6 +18,7 @@ function match_field(branch, key)
             push!(branch.operations, operation)
         end
         mark_filled_field(branch, key)
+        return [branch]
     end
-    return operations
+    return [branch]
 end

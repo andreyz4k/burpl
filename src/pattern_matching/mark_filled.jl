@@ -21,6 +21,10 @@ function mark_filled_field(branch, key)
                 if get_key_fill_weight(branch, k) < new_weight
                     branch.fill_percentages[k] = new_weight
                     push!(updated_weights, k)
+                    if new_weight == 1.0
+                        branch.known_fields[k] = branch.unknown_fields[k]
+                        delete!(branch.unknown_fields, k)
+                    end
                 end
             end
         end

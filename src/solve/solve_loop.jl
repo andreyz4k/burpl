@@ -10,12 +10,17 @@ using ..PatternMatching: match_field
 
 function init_solve_loop(finder::SolutionFinder)
     queue = PriorityQueue()
-    for (key, entry) in flatten([finder.root_branch.known_fields, finder.root_branch.unknown_fields])
-        for abstractor in get_valid_abstractors_for_type(entry.type)
-            queue[(finder.root_branch, key, abstractor)] = get_abstractor_priority(abstractor, entry)
-        end
+    for key in flatten([keys(finder.root_branch.known_fields), keys(finder.root_branch.unknown_fields)])
+        enqueue_key!(queue, finder.root_branch, key)
     end
     queue
+end
+
+function enqueue_key!(queue, branch, key)
+    entry = branch[key]
+    for abstractor in get_valid_abstractors_for_type(entry.type)
+        queue[(branch, key, abstractor)] = get_abstractor_priority(abstractor, entry)
+    end
 end
 
 function run_solve_loop(queue)
@@ -30,8 +35,11 @@ function loop_iteration(queue, branch, key, abstractor)
     if isnothing(new_keys)
         return
     end
-    for key in new_keys
-        matching_operations = match_field(branch, key)
+    for k in new_keys
+        new_branches = match_field(branch, k)
+        for new_branch in new_branches
+            enqueue_key!(queue, new_branch, k)
+        end
     end
     @info(branch)
 end
