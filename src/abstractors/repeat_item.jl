@@ -21,7 +21,7 @@ end
 
 function from_abstract(::Type{RepeatItem}, items_entry, counts_entry)
     result = []
-    for (item, count) in zip(items.values, counts.values)
+    for (item, count) in zip(items_entry.values, counts_entry.values)
         push!(result, fill(item, count))
     end
     return (Entry(result),)

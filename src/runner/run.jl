@@ -1,13 +1,31 @@
 module Runner
-using ..DataStructures: create_finder
+using ..DataStructures: create_finder, Entry
 using ..Solve: solve
 
 function solve_task(task_info::Dict, debug::Bool, early_stop = true::Bool)
     answers = []
     solution_finder =
         create_finder(Dict("input" => task_info["train"]["input"]), Dict("output" => task_info["train"]["output"]))
-    solve(solution_finder)
+    test_input = Dict("input" => task_info["test"]["input"])
+    for solution in solve(solution_finder)
+        answer_data = run_solution(solution, test_input)
+        answer = answer_data["output"].values
+        if !in(answer, answers)
+            push!(answers, answer)
+            if length(answers) == 3
+                break
+            end
+        end
+    end
     return answers
+end
+
+function run_solution(operations, task_data)
+    observed_data = Dict(k => Entry(v) for (k, v) in task_data)
+    for op in operations
+        merge!(observed_data, op(observed_data))
+    end
+    return observed_data
 end
 
 function validate_results(test_info::Dict, answers::Vector)::Bool
