@@ -14,3 +14,15 @@ create_root_branch(known_fields, unknown_fields) = SolutionBranch(
     [],
     nothing,
 )
+
+function Base.getindex(branch::SolutionBranch, key)
+    if haskey(branch.known_fields, key)
+        return branch.known_fields[key]
+    elseif haskey(branch.unknown_fields, key)
+        return branch.unknown_fields[key]
+    elseif !isnothing(branch.parent)
+        return branch.parent[key]
+    else
+        throw(KeyError(key))
+    end
+end
