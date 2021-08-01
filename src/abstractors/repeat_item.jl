@@ -16,7 +16,8 @@ function to_abstract(::Type{RepeatItem}, value::Entry)
             return nothing
         end
     end
-    return (Entry(items), Entry(counts))
+    item_type = value.type.parameters[1]
+    return (Entry(item_type, items), Entry(counts))
 end
 
 function from_abstract(::Type{RepeatItem}, items_entry, counts_entry)
@@ -24,5 +25,5 @@ function from_abstract(::Type{RepeatItem}, items_entry, counts_entry)
     for (item, count) in zip(items_entry.values, counts_entry.values)
         push!(result, fill(item, count))
     end
-    return (Entry(result),)
+    return (Entry(Vector{items_entry.type}, result),)
 end
