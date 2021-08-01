@@ -1,5 +1,6 @@
 module DataStructures
 
+include("custom_types.jl")
 include("entry.jl")
 include("operation.jl")
 include("solution_branch.jl")

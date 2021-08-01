@@ -9,8 +9,8 @@ struct SolutionBranch <: AbstractDict{Any,Any}
 end
 
 create_root_branch(known_fields, unknown_fields) = SolutionBranch(
-    Dict(key => Entry(value) for (key, value) in known_fields),
-    Dict(key => Entry(value) for (key, value) in unknown_fields),
+    Dict(key => isa(value, Entry) ? value : Entry(value) for (key, value) in known_fields),
+    Dict(key => isa(value, Entry) ? value : Entry(value) for (key, value) in unknown_fields),
     Dict(k => 0.0 for k in keys(unknown_fields)),
     [],
     nothing,
@@ -51,7 +51,7 @@ Base.show(io::IO, branch::SolutionBranch) = print(
     "\tchildren:\n",
     "\t\t[\n",
     ["\t\t$child,\n" for child in branch.children]...,
-    "\t\t]\n)"
+    "\t\t]\n)",
 )
 
 function Base.iterate(branch::SolutionBranch)

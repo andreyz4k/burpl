@@ -40,12 +40,12 @@ end
 function convert_grids(taskdef)
     Dict(
         "train" => Dict(
-            "input" => [hcat(task["input"]...) for task in taskdef["train"]],
-            "output" => [hcat(task["output"]...) for task in taskdef["train"]],
+            "input" => Entry(Matrix{Color}, [hcat(task["input"]...) for task in taskdef["train"]]),
+            "output" => Entry(Matrix{Color}, [hcat(task["output"]...) for task in taskdef["train"]]),
         ),
         "test" => Dict(
-            "input" => [hcat(task["input"]...) for task in taskdef["test"]],
-            "output" => [hcat(task["output"]...) for task in taskdef["test"]],
+            "input" => Entry(Matrix{Color}, [hcat(task["input"]...) for task in taskdef["test"]]),
+            "output" => Entry(Matrix{Color}, [hcat(task["output"]...) for task in taskdef["test"]]),
         ),
     )
 end
