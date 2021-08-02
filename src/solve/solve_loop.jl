@@ -39,7 +39,7 @@ function loop_iteration(queue, branch, key, abstractor, target_keys)
     if isnothing(new_keys)
         return []
     end
-    # @info(branch)
+    @info(branch)
     flatten(imap(new_keys) do k
         new_branches = match_field(branch, k)
         skipmissing(imap(new_branches) do new_branch

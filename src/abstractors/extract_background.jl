@@ -17,6 +17,9 @@ function to_abstract_inner(::Type{ExtractBackground}, type, matr_val)
     all_bgr_values = unique(matr_val)
     item_type = type.parameters[1]
     null_val = _null_value(item_type)
+    if any(_is_null_value(v, null_val) for v in all_bgr_values)
+        return nothing
+    end
     options = []
     for bgr_value in all_bgr_values
         if _is_null_value(bgr_value, null_val)
@@ -24,9 +27,6 @@ function to_abstract_inner(::Type{ExtractBackground}, type, matr_val)
         end
         bgr_rem = map(v -> _is_null_value(v, null_val) || v == bgr_value ? null_val : v, matr_val)
         push!(options, (bgr_value, bgr_rem))
-    end
-    if length(options) == 0
-        return nothing
     end
     return make_either(options)
 end
