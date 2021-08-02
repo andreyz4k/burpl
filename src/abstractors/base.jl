@@ -30,3 +30,42 @@ function try_apply_abstractor(branch, key, abstractor)
     end
     return new_keys
 end
+
+function to_abstract(cls::Type, value::Entry)
+    results = []
+    for val in value.values
+        res = wrap_inner_function(cls, to_abstract_inner, value.type, val)
+        if isnothing(res)
+            return nothing
+        end
+        push!(results, res)
+    end
+    out_types = return_types(cls, value.type)
+    return tuple((Entry(type, [r[i] for r in results]) for (i, type) in enumerate(out_types))...)
+end
+
+wrap_inner_function(cls, func, type, value) = func(cls, type, value)
+
+using ..DataStructures: Either, Option
+function wrap_inner_function(cls, func, type, value::Either)
+    out_options = []
+    for option in value.options
+        out = wrap_inner_function(cls, func, type, option.value)
+        if isnothing(out)
+            return nothing
+        end
+        push!(out_options, [Option(v, option.option_hash) for v in out])
+    end
+    results = tuple((Either(collect(options), []) for options in zip(out_options...))...)
+    for (i, res_item) in enumerate(results)
+        push!(res_item.connected_items, value)
+        append!(res_item.connected_items, value.connected_items)
+        append!(res_item.connected_items, results[1:i-1])
+        append!(res_item.connected_items, results[i+1:end])
+    end
+    for item in value.connected_items
+        append!(item.connected_items, results)
+    end
+    append!(value.connected_items, results)
+    return results
+end

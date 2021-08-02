@@ -22,7 +22,7 @@ Base.show(io::IO, e::Either) = print(
 
 function make_either(options)
     if length(options) == 1
-        return options
+        return options[1]
     end
     grouped_options = [[] for _ = 1:length(options[1])]
     for option in options

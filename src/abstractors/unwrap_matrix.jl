@@ -4,18 +4,15 @@ struct UnwrapMatrix <: Abstractor end
 abs_keys(::Type{UnwrapMatrix}) = ["items"]
 abstracts_types(::Type{UnwrapMatrix}) = [Matrix]
 
-function to_abstract(::Type{UnwrapMatrix}, value::Entry)
-    items = []
-    for matr_val in value.values
-        out_vals = []
-        s = size(matr_val)
-        for i in 1:s[1], j in 1:s[2]
-            push!(out_vals, (matr_val[i, j], (i, j)))
-        end
-        push!(items, out_vals)
+return_types(::Type{UnwrapMatrix}, type) = (Vector{Tuple{type.parameters[1],Tuple{Int64,Int64}}}, )
+
+function to_abstract_inner(::Type{UnwrapMatrix}, type, matr_val)
+    out_vals = []
+    s = size(matr_val)
+    for i = 1:s[1], j = 1:s[2]
+        push!(out_vals, (matr_val[i, j], (i, j)))
     end
-    item_type = value.type.parameters[1]
-    return (Entry(Vector{Tuple{item_type,Tuple{Int64,Int64}}}, items),)
+    return (out_vals,)
 end
 
 function from_abstract(::Type{UnwrapMatrix}, items_entry)

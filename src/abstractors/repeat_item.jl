@@ -5,19 +5,14 @@ end
 abs_keys(::Type{RepeatItem}) = ["item", "count"]
 abstracts_types(::Type{RepeatItem}) = [Vector]
 
-function to_abstract(::Type{RepeatItem}, value::Entry)
-    items = []
-    counts = []
-    for vec_val in value.values
-        if all(v == vec_val[1] for v in vec_val)
-            push!(items, vec_val[1])
-            push!(counts, length(vec_val))
-        else
-            return nothing
-        end
+return_types(::Type{RepeatItem}, type) = (type.parameters[1], Int64)
+
+function to_abstract_inner(::Type{RepeatItem}, type, vec_val)
+    if all(v == vec_val[1] for v in vec_val)
+        return (vec_val[1], length(vec_val))
+    else
+        return nothing
     end
-    item_type = value.type.parameters[1]
-    return (Entry(item_type, items), Entry(counts))
 end
 
 function from_abstract(::Type{RepeatItem}, items_entry, counts_entry)
