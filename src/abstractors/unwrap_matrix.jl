@@ -8,9 +8,11 @@ function to_abstract(::Type{UnwrapMatrix}, value::Entry)
     items = []
     for matr_val in value.values
         out_vals = []
-        for i in eachindex(matr_val)
-            push!(out_vals, (matr_val[i], (i[1], i[2])))
+        s = size(matr_val)
+        for i in 1:s[1], j in 1:s[2]
+            push!(out_vals, (matr_val[i, j], (i, j)))
         end
+        push!(items, out_vals)
     end
     item_type = value.type.parameters[1]
     return (Entry(Vector{Tuple{item_type,Tuple{Int64,Int64}}}, items),)
