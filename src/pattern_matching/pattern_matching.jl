@@ -1,6 +1,6 @@
 module PatternMatching
 
-using ..DataStructures: Operation
+using ..DataStructures: Operation, Either
 
 include("check_match.jl")
 include("find_const.jl")
