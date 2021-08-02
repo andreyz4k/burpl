@@ -4,6 +4,11 @@ abstract type Abstractor end
 Base.show(io::IO, cls::Type{<:Abstractor}) = print(io, cls.name.name)
 
 using PartialFunctions
+using ..DataStructures: Either, Option
+
+_has_either(::Any) = false
+_has_either(::Either) = true
+_has_either(val::Vector) = any(_has_either(v) for v in val)
 
 function try_apply_abstractor(branch, key, abstractor)
     value = branch[key]
@@ -11,6 +16,10 @@ function try_apply_abstractor(branch, key, abstractor)
     if isnothing(abs_values)
         return nothing
     end
+
+    affected_either_groups = filter(gr -> in(key, gr), branch.either_groups)
+    new_eithers = [i for (i, entry) in enumerate(abs_values) if _has_either(entry.values)]
+
     new_keys = []
     if haskey(branch.known_fields, key)
         for (k, val) in zip(abs_keys(abstractor), abs_values)
@@ -25,6 +34,15 @@ function try_apply_abstractor(branch, key, abstractor)
             push!(new_keys, new_key)
             branch.unknown_fields[new_key] = val
             branch.fill_percentages[new_key] = 0.0
+        end
+        if !isempty(new_eithers)
+            if !isempty(affected_either_groups)
+                for group in affected_either_groups
+                    union!(group, [new_keys[i] for i in new_eithers])
+                end
+            else
+                push!(branch.either_groups, Set(new_keys[i] for i in new_eithers))
+            end
         end
         push!(branch.operations, Operation(from_abstract $ abstractor, new_keys, [key]))
     end
@@ -46,7 +64,6 @@ end
 
 wrap_inner_function(cls, func, type, value) = func(cls, type, value)
 
-using ..DataStructures: Either, Option
 function wrap_inner_function(cls, func, type, value::Either)
     out_options = []
     for option in value.options
@@ -56,16 +73,5 @@ function wrap_inner_function(cls, func, type, value::Either)
         end
         push!(out_options, [Option(v, option.option_hash) for v in out])
     end
-    results = tuple((Either(collect(options), []) for options in zip(out_options...))...)
-    for (i, res_item) in enumerate(results)
-        push!(res_item.connected_items, value)
-        append!(res_item.connected_items, value.connected_items)
-        append!(res_item.connected_items, results[1:i-1])
-        append!(res_item.connected_items, results[i+1:end])
-    end
-    for item in value.connected_items
-        append!(item.connected_items, results)
-    end
-    append!(value.connected_items, results)
-    return results
+    return tuple((Either(collect(options)) for options in zip(out_options...))...)
 end

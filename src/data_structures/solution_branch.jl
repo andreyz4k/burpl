@@ -6,6 +6,7 @@ struct SolutionBranch <: AbstractDict{Any,Any}
     operations::Vector{AbstractOperation}
     parent::Union{Nothing,SolutionBranch}
     children::Vector{SolutionBranch}
+    either_groups::Vector{Set}
 end
 
 create_root_branch(known_fields, unknown_fields) = SolutionBranch(
@@ -14,6 +15,7 @@ create_root_branch(known_fields, unknown_fields) = SolutionBranch(
     Dict(k => 0.0 for k in keys(unknown_fields)),
     [],
     nothing,
+    [],
     [],
 )
 
@@ -44,6 +46,9 @@ Base.show(io::IO, branch::SolutionBranch) = print(
     "\t\tDict(\n",
     ["\t\t\t\"$(keyval[1])\" => $(keyval[2]),\n" for keyval in branch.fill_percentages]...,
     "\t\t)\n",
+    "\teither_groups:\n\t\t",
+    branch.either_groups,
+    "\n",
     "\toperations:\n",
     "\t\t[\n",
     ["\t\t\t$op,\n" for op in branch.operations]...,

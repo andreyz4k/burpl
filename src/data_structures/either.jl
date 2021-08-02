@@ -8,16 +8,13 @@ Base.show(io::IO, op::Option) = print(io, "Option(", op.value, ", ", op.option_h
 
 struct Either
     options::Vector{Option}
-    connected_items::Vector
 end
 
 Base.show(io::IO, e::Either) = print(
     io,
     "Either([",
     vcat([[op, ", "] for op in e.options]...)[1:end-1]...,
-    "], connected count: ",
-    length(e.connected_items),
-    ")",
+    "])",
 )
 
 function make_either(options)
@@ -31,10 +28,5 @@ function make_either(options)
             push!(group, Option(val, option_hash))
         end
     end
-    results = [Either(group, []) for group in grouped_options]
-    for (i, value) in enumerate(results)
-        append!(value.connected_items, results[1:i-1])
-        append!(value.connected_items, results[i+1:end])
-    end
-    return results
+    return tuple((Either(group) for group in grouped_options)...)
 end
