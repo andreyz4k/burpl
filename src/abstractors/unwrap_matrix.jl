@@ -6,11 +6,18 @@ abstracts_types(::Type{UnwrapMatrix}) = [Matrix]
 
 return_types(::Type{UnwrapMatrix}, type) = (Vector{Tuple{type.parameters[1],Tuple{Int64,Int64}}}, )
 
+using ..DataStructures: null_value, is_null_value
+
 function to_abstract_inner(::Type{UnwrapMatrix}, type, matr_val)
     out_vals = []
     s = size(matr_val)
+    item_type = type.parameters[1]
+    null_val = null_value(item_type)
     for i = 1:s[1], j = 1:s[2]
-        push!(out_vals, (matr_val[i, j], (i, j)))
+        v = matr_val[i, j]
+        if !is_null_value(v, null_val)
+            push!(out_vals, (v, (i, j)))
+        end
     end
     return (out_vals,)
 end
